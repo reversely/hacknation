@@ -18,7 +18,7 @@ Selected decisions:
 - **Online backend data store: Google Sheets**, accessed through validated backend endpoints.
 - **Public website and backend API: Next.js on Vercel.**
 - **Customer mailbox: Gmail**, created during onboarding if needed.
-- **Appointments: Google Calendar.** The coordinator holds requested slots as tentative events; Noor confirms them in the weekly review.
+- **Appointments: Google Calendar.** Customer Management holds requested slots as tentative events; Noor confirms them in the weekly review.
 - **Local models: two.** A general instruction model runs conversation, extraction and replies; a separate Qwen coding model generates the website.
 - **Visitor messaging: WhatsApp.** The WhatsApp Cloud API sends and receives messages through the backend. The website's "Book on WhatsApp" button opens a chat with the business number. A `wa.me` deep link, which opens WhatsApp with an approved draft filled in for Noor to send, serves as the offline and failure fallback.
 - **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
@@ -34,32 +34,34 @@ Working assumptions:
 - The target is a phone app with local inference. The iOS Simulator checks functionality only; performance figures come from a team iPhone, and neither measures performance on Noor's Android phone. The video must say so. Generated website source is uploaded when connected; the build and deployment run online rather than requiring a Node.js build environment on the phone.
 - The team has three people. The allowed small-model parameter limit remains unspecified.
 
-## 3. Architecture: coordinator with two specialist agents
+## 3. Architecture: coordinator with three specialist agents
 
-The agent on Noor's phone follows the orchestrator-worker pattern: a coordinator agent talks to Noor and delegates specialist work to two sub-agents. Every sub-agent action passes back through the coordinator, which validates it and records it in the activity log.
+The agent on Noor's phone follows the orchestrator-worker pattern: a coordinator agent talks to Noor and delegates specialist work to three sub-agents. Every sub-agent action passes back through the coordinator, which validates it and records it in the activity log.
 
 | Agent | Serves | Owns |
 | --- | --- | --- |
-| Coordinator | Noor, and every visitor who writes in | The phone app, the general local model, the agent harness, the SQLite store, the Sheets schema and API contracts, WhatsApp replies (Cloud API and `wa.me` fallback), Gmail, Google Calendar slot holds, and the human-in-the-loop queue Noor reviews once a week |
-| Digital Presence agent | Visitors who find the farm online | Website creation with the Qwen coding model, the Next.js frontend with a "Book on WhatsApp" button, Vercel deployment, and the Google Sheets backend setup |
-| Customer Management agent | Visitors searching on Google, Facebook and Instagram | Search and social presence: the Google Business Profile and the Facebook Page in Meta Business Suite, prefilled from the approved farm profile |
+| Coordinator | Noor | Routing between the three specialist agents, and the shared foundation: the phone app, the local models, the agent harness, the SQLite store, the Sheets schema and API contracts, the setup wizard and secret handling |
+| Website Creator | Visitors who find the farm online | Website creation with the Qwen coding model, the Next.js frontend with a "Book on WhatsApp" button, Vercel deployment, and the Google Sheets backend setup |
+| Search and Social | Visitors searching on Google, Facebook and Instagram | The Google Business Profile and the Facebook Page in Meta Business Suite, prefilled from the approved farm profile |
+| Customer Management | Every visitor who writes in | WhatsApp replies (Cloud API and `wa.me` fallback), Gmail, Google Calendar slot holds, and the human-in-the-loop queue Noor reviews once a week |
 
-The coordinator runs setup by calling the Digital Presence agent, then the Customer Management agent. After setup it handles incoming WhatsApp and Gmail messages itself. Every request that commits Noor goes to the human-in-the-loop queue: slot holds, refunds and changes to existing bookings. Noor reviews the queue once a week, which matches the weekend access to the daughter's smartphone, and confirms or declines each item. The coordinator tells each visitor that the slot is held and that Noor confirms within a week.
+The coordinator runs setup by calling the Website Creator, then Search and Social. After setup it routes incoming WhatsApp and Gmail messages to Customer Management. Every request that commits Noor goes to the human-in-the-loop queue: slot holds, refunds and changes to existing bookings. Noor reviews the queue once a week, which matches the weekend access to the daughter's smartphone, and confirms or declines each item. Customer Management tells each visitor that the slot is held and that Noor confirms within a week.
 
 ```mermaid
 flowchart LR
     F["Farmer: Noor"] <--> C["Coordinator"]
-    C --> DP["Digital Presence agent"]
-    DP --> FE["Frontend: Qwen coding model"]
-    DP --> VD["Vercel deployment"]
-    DP --> GS["Google Sheets backend setup"]
-    C --> CM["Customer Management agent"]
-    CM --> GB["Google Business Profile"]
-    CM --> MBS["Meta Business Suite"]
-    C --> WA["WhatsApp"]
-    C --> GM["Gmail"]
-    C --> CAL["Google Calendar slot holds"]
-    CAL --> Q["Human in the loop: slot holds, refunds and booking changes"]
+    C --> WCR["Website Creator"]
+    WCR --> FE["Frontend: Qwen coding model"]
+    WCR --> VD["Vercel deployment"]
+    WCR --> GS["Google Sheets backend setup"]
+    C --> SS["Search and Social"]
+    SS --> GB["Google Business Profile"]
+    SS --> MBS["Meta Business Suite"]
+    C --> CM["Customer Management"]
+    CM --> WA["WhatsApp"]
+    CM --> GM["Gmail"]
+    CM --> CAL["Google Calendar slot holds"]
+    CM --> Q["Human in the loop: slot holds, refunds and booking changes"]
     Q -->|"weekly review"| F
 ```
 
@@ -84,7 +86,7 @@ Model output proposes tool calls. The harness validates arguments, checks permis
 | Customer mailbox | Receive enquiries and send replies | Gmail API with OAuth |
 | Visitor messaging | Receive WhatsApp enquiries and send replies | WhatsApp Cloud API; a webhook on a Vercel API route stores incoming messages in Sheets, and the access token stays on Vercel. A `wa.me` deep link opens WhatsApp with the approved draft when the phone is offline or the API call fails |
 
-A developer supplies the application's Google OAuth configuration once; Noor authorizes access to the business Google account rather than creating Google API keys. The team owns the Meta app and registers a real phone number with the WhatsApp Cloud API; Meta's built-in test number reaches only five pre-registered recipients and is used for development only. On the registered number, the coordinator can reply to any visitor who writes first, with no recipient limit. Conversations the agent starts are limited to 250 recipients a day until Meta Business Verification. A production deployment registers Noor's business number the same way.
+A developer supplies the application's Google OAuth configuration once; Noor authorizes access to the business Google account rather than creating Google API keys. The team owns the Meta app and registers a real phone number with the WhatsApp Cloud API; Meta's built-in test number reaches only five pre-registered recipients and is used for development only. On the registered number, Customer Management can reply to any visitor who writes first, with no recipient limit. Conversations the agent starts are limited to 250 recipients a day until Meta Business Verification. A production deployment registers Noor's business number the same way.
 
 ### Local model execution
 
@@ -130,7 +132,7 @@ The phone generates and edits source locally; the hosted pipeline builds and dep
 
 1. A visitor taps "Book on WhatsApp" on the website, messages the business WhatsApp number directly, or emails the business mailbox.
 2. The hosted API stores incoming WhatsApp messages in Sheets; incoming emails remain in Gmail until the local connector imports them. Neither requires the local model to be online at arrival.
-3. When the coordinator runs and connectivity is available, it downloads new messages.
+3. When Customer Management runs and connectivity is available, it downloads new messages.
 4. The model extracts intent, requested date and time, party size, language and missing details.
 5. Code checks the requested slot against Google Calendar, capacity and policies. Ambiguous requests become clarification replies.
 6. The agent replies on the visitor's channel from the approved farm profile. For a booking request it creates a tentative Calendar event and tells the visitor that the slot is held and that Noor confirms within a week. The reply never states that a booking is confirmed.
@@ -227,13 +229,14 @@ Decisions before implementation:
 
 ## 11. Task split
 
-Each team member owns one agent. The coordinator's owner publishes the Sheets schema (section 7) and the API route contracts first; the other two agents build against them.
+The team splits four agents across three people. The coordinator's owner publishes the Sheets schema (section 7) and the API route contracts first; the other agents build against them.
 
 | Agent | Sub-tasks |
 | --- | --- |
-| Coordinator | 1. Expo development build with `llama.rn`, running in the iOS Simulator<br>2. General and Qwen coding model choice from the iPhone benchmark<br>3. Agent harness: tool validation, approvals, activity log and sub-agent delegation<br>4. Sheets schema and API route contracts<br>5. Setup wizard and connection checks<br>6. SQLite store, offline queue and sync<br>7. WhatsApp Cloud API webhook and send, on a real registered number<br>8. Gmail OAuth, import and send<br>9. Booking endpoint as the single confirmation writer, with Google Calendar holds<br>10. Weekly review queue and the `wa.me` deep-link fallback<br>11. Prompts for profile collection, enquiry extraction and Kiswahili and English replies<br>12. Secret handling on Vercel |
-| Digital Presence agent | 1. Website generation method: template or code generation<br>2. Next.js site with the "Book on WhatsApp" button<br>3. Qwen coding model prompts and the build repair loop<br>4. Vercel preview and publish connector<br>5. Google Sheets backend setup during onboarding |
-| Customer Management agent | 1. Listing content generated from the approved farm profile, in English and Kiswahili<br>2. Google Business Profile guided setup and listing check<br>3. Facebook Page guided setup in Meta Business Suite and listing check |
+| Coordinator | 1. Expo development build with `llama.rn`, running in the iOS Simulator<br>2. General and Qwen coding model choice from the iPhone benchmark<br>3. Agent harness: tool validation, approvals, activity log and sub-agent delegation<br>4. Sheets schema and API route contracts<br>5. Setup wizard and connection checks<br>6. SQLite store, offline queue and sync<br>7. Secret handling on Vercel |
+| Website Creator | 1. Website generation method: template or code generation<br>2. Next.js site with the "Book on WhatsApp" button<br>3. Qwen coding model prompts and the build repair loop<br>4. Vercel preview and publish connector<br>5. Google Sheets backend setup during onboarding |
+| Search and Social | 1. Listing content generated from the approved farm profile, in English and Kiswahili<br>2. Google Business Profile guided setup and listing check<br>3. Facebook Page guided setup in Meta Business Suite and listing check |
+| Customer Management | 1. WhatsApp Cloud API webhook and send, on a real registered number<br>2. Gmail OAuth, import and send<br>3. Booking endpoint as the single confirmation writer, with Google Calendar holds<br>4. Weekly review queue and the `wa.me` deep-link fallback<br>5. Prompts for profile collection, enquiry extraction and Kiswahili and English replies |
 | Submission (shared) | 1. Data sources and coverage write-up<br>2. The 2 to 5 minute submission video |
 
 ## Reference documentation
