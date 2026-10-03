@@ -26,7 +26,13 @@
     "plugins": [
       "llama.rn",
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.849769214373-ueq44o1a0qv8lrr0eghoihtln5cskbru"
+        }
+      ]
     ]
   }
 }
