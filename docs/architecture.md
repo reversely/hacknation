@@ -12,21 +12,25 @@ The end-to-end demonstration is: business information → connected accounts →
 
 Selected decisions:
 
-- **Local inference: llama.cpp**, embedded in the phone app, loading quantised GGUF models. No Ollama installation, terminal or separate local HTTP server is required on the phone.
+- **Phone app: React Native with `llama.rn`**, built as an Expo development build. `llama.rn` supports both Android and iOS, so one codebase serves Noor's Android target and the team's iPhones.
+- **Demonstration hardware:** the iOS Simulator runs the Expo development build to check that the app and model work end to end. All three team members have iPhones, which run the same build for on-device performance measurements.
+- **Local inference: llama.cpp**, embedded in the phone app through `llama.rn`, loading quantised GGUF models. No Ollama installation, terminal or separate local HTTP server is required on the phone.
 - **Online backend data store: Google Sheets**, accessed through validated backend endpoints.
 - **Public website and backend API: Next.js on Vercel.**
-- **Customer mailbox: Gmail**, created during onboarding if needed; Resend remains an optional notification service.
+- **Customer mailbox: Gmail**, created during onboarding if needed.
+- **Visitor messaging: WhatsApp.** The WhatsApp Cloud API sends and receives messages through the backend. A `wa.me` deep link, which opens WhatsApp with the approved draft filled in for Noor to send, serves as the offline and failure fallback.
+- **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
 - **Setup: a central agent-guided wizard** with account authorization, secure key entry and connection checks.
 
 Working assumptions:
 
-- Noor has her own phone for calls, messages and mobile money, and access to her daughter's explicitly identified smartphone on weekends.
+- Noor has a personal phone for calls, messages and mobile money, and access to the daughter's explicitly identified smartphone on weekends.
 - The daughter's smartphone OS, model and RAM are unknown. Entry-level Android is a working assumption, not an established specification.
-- Kikuyu at home, Kiswahili nationally and English for the demonstration visitor are provisional language choices inferred from a Kenyan highland setting. Country and languages require confirmation; model coverage must be tested independently.
+- The challenge brief names no country. Kikuyu at home and Kiswahili nationally are inferred from a Kenyan highland setting. Kikuyu is the answer to the brief's question of how the tool would fare in a less-supported language; model coverage of both languages must be tested independently.
 - Offline means local inference, local records and queued work. Account authorization, email transfer, Sheets access and deployment require connectivity.
 - Noor has no assumed existing email address or domain. Creating a business mailbox is part of onboarding.
-- The target is a phone app with local inference. A laptop can be used for development and debugging, not as a substitute for the target architecture. Generated website source is uploaded when connected; the build and deployment run online rather than requiring a Node.js build environment on the phone.
-- Hackathon duration, team size and the allowed small-model parameter limit remain unspecified.
+- The target is a phone app with local inference. The iOS Simulator checks functionality only; performance figures come from a team iPhone, and neither measures performance on Noor's Android phone. The video must say so. Generated website source is uploaded when connected; the build and deployment run online rather than requiring a Node.js build environment on the phone.
+- The team has three people. The allowed small-model parameter limit remains unspecified.
 
 ## 3. Architecture
 
@@ -42,8 +46,9 @@ flowchart TB
     T --> V["Vercel: website + backend API"]
     C["Visitor"] --> V
     C <--> G
+    C <--> W["WhatsApp Cloud API"]
+    W <--> V
     V --> S
-    V -. "Optional notifications" .-> R["Resend"]
 ```
 
 Model output proposes tool calls. The harness validates arguments, checks permissions, executes the operation and records the result. External content, including emails, is treated as data rather than instructions granting permissions.
@@ -52,8 +57,8 @@ Model output proposes tool calls. The harness validates arguments, checks permis
 
 | Component | Responsibility | Proposed implementation |
 | --- | --- | --- |
-| Local operator frontend | Chat, setup checklist, farm profile, booking cards, activity and connection status | Phone app; Kotlin + Jetpack Compose as the Android implementation proposal |
-| Central harness | Persistent workflow state, context retrieval, tool routing, approvals and bounded retries | Application code on the phone, calling llama.cpp through native bindings |
+| Local operator frontend | Chat, setup checklist, farm profile, booking cards, activity and connection status | React Native app (Expo development build), Android first |
+| Central harness | Persistent workflow state, context retrieval, tool routing, approvals and bounded retries | TypeScript application code on the phone, calling llama.cpp through `llama.rn` |
 | Local inference | Interpret instructions, extract enquiries, draft replies and generate website changes | Embedded llama.cpp with quantised GGUF; exact model selected through task tests |
 | Website source workspace | Read and edit generated site files within a constrained workspace | Next.js starter stored locally; no unrestricted phone shell |
 | Website build pipeline | Run checks, build, return preview and publish approved changes | Hosted build/deployment pipeline with pinned dependencies; Vercel receives generated source through a deployment connector |
@@ -63,9 +68,9 @@ Model output proposes tool calls. The harness validates arguments, checks permis
 | Hosted backend | Validate public submissions, persist requests, serve approved public content and process approved commands | Next.js API routes on Vercel |
 | Online records | Shared business profile, availability, enquiries, bookings, feedback and action receipts | Private Google Sheets |
 | Customer mailbox | Receive enquiries and send Noor-approved responses | Gmail API with OAuth |
-| Optional email service | Platform notifications and domain-based business email | Resend; requires a verified sender domain for general outbound delivery |
+| Visitor messaging | Receive WhatsApp enquiries and send Noor-approved replies | WhatsApp Cloud API; a webhook on a Vercel API route stores incoming messages in Sheets, and the access token stays on Vercel. A `wa.me` deep link opens WhatsApp with the approved draft when the phone is offline or the API call fails |
 
-Gmail is the default mailbox route. Resend is optional, not a prerequisite. A developer supplies the application's Google OAuth configuration once; Noor authorizes access to her account rather than creating Google API keys.
+A developer supplies the application's Google OAuth configuration once; Noor authorizes access to the business Google account rather than creating Google API keys. The team also owns the Meta app and the WhatsApp test number for the demonstration. A production deployment would connect Noor's own number through Meta's Embedded Signup, which requires a verified Meta Business portfolio.
 
 ### Local model execution
 
@@ -84,18 +89,20 @@ llama.cpp is the inference engine, not the agent harness. The application owns c
 Use a deterministic setup wizard with conversational explanations from the agent. Each step has a saved status, an explicit next action and a connection check.
 
 1. **Business information:** collect Noor's tour description, duration, price, capacity, meeting instructions, availability and policies. Review uncertain or missing facts.
-2. **Business mailbox:** her daughter helps create a Gmail account if needed. Noor connects it through Google authorization.
+2. **Business mailbox:** the daughter helps create a Gmail account if needed. Noor connects it through Google authorization.
 3. **Records:** authorize Sheets access and create the predefined spreadsheet tabs. Use separate, narrowly scoped credentials for hosted access; a prototype service account can be granted access to the designated spreadsheet.
 4. **Hosting:** create or connect a Vercel account. For the prototype, guide token creation and collect it in a secure field. A Vercel integration authorization flow is a later improvement.
 5. **Website:** generate a preview and request publication approval. A Vercel-provided URL avoids requiring a custom domain for the demo.
-6. **Optional Resend:** configure an account and verified domain only if this route is selected. Show DNS instructions and verification status.
+6. **WhatsApp:** confirm the business WhatsApp number and run a connection check against the Cloud API. In the demonstration the number is the team's Meta test number.
 
 The model receives only connection status and actionable error summaries, never pasted secrets. Account registration, consent, verification challenges and billing decisions remain user actions.
 
 ## 5. Website creation
 
 - Start from a working Next.js project with a booking form and backend contract already implemented.
-- Let the local coding model customize layout, text, colours and approved images. Website generation remains part of the product; it is not limited to filling text into a single fixed design.
+- Website generation remains part of the product. The generation method is an open decision with two candidates:
+  - **Template:** the local model chooses among predefined section and layout variants, writes the page text in English and Kiswahili, and fills in the approved profile. This costs one small model call per section and gives a predictable demonstration.
+  - **Code generation:** the local coding model edits layout, text, colours and approved images in the Next.js source. This requires a stronger coding model and the repair loop below.
 - When connected, upload the generated source and run type checks, application tests and a production build in the hosted pipeline. Feed failures back to the local model for a bounded repair loop.
 - Return a hosted preview. Publish only after approval. Offline generation does not imply offline Next.js build verification.
 - Keep everyday descriptions, prices and availability as structured data so routine changes need not regenerate source code.
@@ -105,14 +112,14 @@ The phone generates and edits source locally; the hosted pipeline builds and dep
 
 ## 6. Enquiry and booking workflow
 
-1. A visitor submits the website form or emails the business mailbox.
-2. The hosted API stores form submissions in Sheets; incoming emails remain in Gmail until the local connector imports them. Neither requires the local model to be online at arrival.
+1. A visitor submits the website form, emails the business mailbox or sends a WhatsApp message.
+2. The hosted API stores form submissions and incoming WhatsApp messages in Sheets; incoming emails remain in Gmail until the local connector imports them. None of these requires the local model to be online at arrival.
 3. When the agent runs and connectivity is available, it downloads new requests and messages.
 4. The model extracts intent, requested date/time, party size, language and missing details. It drafts a grounded response using the approved farm profile.
 5. Code checks availability, capacity and policies. Ambiguous requests become clarification drafts.
-6. Noor reviews a booking card and reply in a language she understands.
-7. Approval queues a command. On reconnection, the backend rechecks current availability, records the booking and returns a receipt before the agent sends a confirmation.
-8. The interface shows booking and delivery status separately. A saved booking does not imply a successfully sent email.
+6. Noor reviews a booking card and the reply in Kiswahili; the visitor receives the English version.
+7. Approval queues a command. On reconnection, the backend rechecks current availability, records the booking and returns a receipt before the agent sends a confirmation on the channel the visitor used: Gmail, or WhatsApp through the Cloud API. When the Cloud API call fails, the app opens the `wa.me` deep link with the approved text for Noor to send.
+8. The interface shows booking and delivery status separately. A saved booking does not imply a successfully sent message.
 
 Suggested booking states: `REQUESTED`, `NEEDS_INFORMATION`, `PROPOSED`, `CONFIRMED`, `DECLINED`, `CANCELLED`.
 
@@ -136,9 +143,9 @@ Requirements:
 
 - Stable IDs, timestamps and record versions, not row numbers as identifiers.
 - Authentication for operator/agent endpoints, validation and abuse controls on public forms.
-- One controlled confirmation writer. If using Apps Script, put availability check and booking write inside a `LockService` critical section; all confirmation paths must use it. Direct manual edits are not protected by that lock.
+- One controlled confirmation writer: the Vercel booking endpoint checks availability and writes the booking, and every confirmation path goes through it. At six or seven visitors a month this check-then-write is sufficient for the demonstration. Manual edits in the spreadsheet bypass the check; an Apps Script `LockService` critical section is the upgrade if concurrent writers appear.
 - Recheck availability after offline approval. A local cache does not reserve a slot.
-- Deduplicate requests and commands by ID; reconcile uncertain email outcomes before retrying to avoid duplicate sends.
+- Deduplicate requests and commands by ID; reconcile uncertain email and WhatsApp outcomes before retrying to avoid duplicate sends.
 - Batch synchronisation and show the last sync time.
 - Keep credentials outside Sheets and customer data out of publicly served profile responses.
 
@@ -149,7 +156,7 @@ Requirements:
 | Setup | `get_setup_status`, `open_setup_page`, `check_connection`, `create_business_sheet` |
 | Business | `read_farm_profile`, `propose_profile_update`, `save_approved_profile` |
 | Website | `edit_site`, `test_site`, `deploy_preview`, `publish_approved_site` |
-| Customer workflow | `sync_enquiries`, `read_email_thread`, `check_availability`, `propose_booking`, `confirm_approved_booking`, `send_approved_reply` |
+| Customer workflow | `sync_enquiries`, `read_email_thread`, `read_whatsapp_thread`, `check_availability`, `propose_booking`, `confirm_approved_booking`, `send_approved_reply` (Gmail or WhatsApp, with the deep-link fallback) |
 | Feedback extension | `import_feedback`, `analyse_feedback`, `propose_tour_change` |
 
 State-changing tools require validated arguments and appropriate approvals. Publication and customer messages need explicit approval. The coding workspace must not inherit unrestricted access to credentials or unrelated files.
@@ -158,13 +165,13 @@ State-changing tools require validated arguments and appropriate approvals. Publ
 
 ### Core demonstration
 
-- One operator, one farm, one website and one connected mailbox.
+- One operator, one farm, one website, one connected mailbox and one WhatsApp number.
 - Central conversation with persistent setup/workflow state.
 - Embedded llama.cpp on the phone with a locally stored GGUF model; no cloud model fallback.
-- Guided Google and Vercel connection, with secure credential entry and real connection checks.
+- Guided Google, Vercel and WhatsApp connection, with secure credential entry and real connection checks.
 - Farm profile collection and approval.
-- Local-model website customization, build verification, preview and approved deployment.
-- Website and Gmail enquiry import.
+- Local-model website generation, build verification, preview and approved deployment.
+- Website form, Gmail and WhatsApp enquiry import.
 - One booking flow with availability validation, approval, online recheck and customer response.
 - Local drafts and cached records usable offline, with visible pending synchronisation.
 - Activity log linking model proposals, approvals and actual tool results.
@@ -173,9 +180,8 @@ State-changing tools require validated arguments and appropriate approvals. Publ
 
 1. Rescheduling and cancellation using the existing booking workflow.
 2. Feedback analysis tied to source comments and an approved tour improvement.
-3. Resend-based notifications or provisioned business addresses.
-4. Social presence and marketing integrations from the whiteboard.
-5. Validated local speech input/output and additional language support.
+3. Social presence and marketing integrations from the whiteboard.
+4. Validated local speech input/output and additional language support.
 
 Payments and refunds require separate payment-provider integration and approval design. They are not claimed in the core demonstration.
 
@@ -184,7 +190,8 @@ Payments and refunds require separate payment-provider integration and approval 
 Acceptance tests:
 
 - Resume setup after restarting the application.
-- Run the chosen GGUF model through embedded llama.cpp on the target phone with internet disabled; record peak memory, loading time and generation speed.
+- Run the chosen GGUF model through embedded llama.cpp in the iOS Simulator with internet disabled and complete one enquiry end to end.
+- Run the same build on a team iPhone with internet disabled; record peak memory, loading time and generation speed.
 - Create, build, preview and publish a real website using tool calls.
 - Import a real enquiry and show its original text alongside extracted booking fields.
 - Catch conflicting bookings through the controlled online writer.
@@ -194,12 +201,20 @@ Acceptance tests:
 
 Decisions before implementation:
 
-1. Target phone OS, RAM and processor, to select the native integration and usable GGUF size.
-2. Exact language pair and a speaker who can assess translations.
-3. Exact local model, quantisation and hackathon parameter-size limit; whether a separate coding model is justified by tests.
+1. A Kiswahili speaker who can assess translations.
+2. Exact local model, quantisation and hackathon parameter-size limit; whether a separate coding model is justified by tests.
+3. Website generation method: template or code generation (section 5).
 4. Details of the user-owned Vercel onboarding and hosted source-upload/build connector.
-5. Whether optional Resend notifications fit the demo; Gmail remains the baseline mailbox.
-6. Hackathon time/team budget, to determine which extensions fit.
+
+## 11. Task split
+
+The backend role publishes the Sheets schema (section 7) and the API route contracts first; the other two roles build against them.
+
+| Role | Sub-tasks |
+| --- | --- |
+| Backend and integrations | 1. Sheets schema, tab creation and API route contracts<br>2. Booking endpoint as the single confirmation writer<br>3. Gmail OAuth, import and send<br>4. WhatsApp Cloud API webhook and send, on the team's Meta test number<br>5. Secret handling on Vercel |
+| Phone app and agent | 1. Expo development build with `llama.rn`, running in the iOS Simulator<br>2. Agent harness: tool validation, approvals and activity log<br>3. Setup wizard and connection checks<br>4. SQLite store, offline queue and sync<br>5. Booking cards and the `wa.me` deep-link fallback |
+| Model, website and submission | 1. Model and quantisation choice from the iPhone benchmark<br>2. Prompts for profile collection, enquiry extraction and Kiswahili and English drafts<br>3. Website generation method, Next.js site with booking form, Vercel preview and publish<br>4. Data sources and coverage write-up<br>5. The 2 to 5 minute submission video |
 
 ## Reference documentation
 
@@ -209,7 +224,8 @@ Decisions before implementation:
 - Gmail permission scopes: https://developers.google.com/workspace/gmail/api/auth/scopes
 - Sheets API limits and atomic requests: https://developers.google.com/workspace/sheets/api/limits
 - Apps Script locking: https://developers.google.com/apps-script/reference/lock/lock-service
-- Resend inbound email: https://www.resend.com/blog/inbound-emails
+- WhatsApp Cloud API: https://developers.facebook.com/docs/whatsapp/cloud-api
+- llama.rn: https://github.com/mybigday/llama.rn
 - llama.cpp: https://github.com/ggml-org/llama.cpp
 - llama.cpp Android integration: https://github.com/ggml-org/llama.cpp/blob/master/docs/android.md
 
