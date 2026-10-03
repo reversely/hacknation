@@ -25,7 +25,8 @@
     },
     "plugins": [
       "llama.rn",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-secure-store"
     ]
   }
 }

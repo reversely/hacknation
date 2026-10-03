@@ -1,185 +1,58 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import {
-  complete,
-  findModelFile,
-  loadModel,
-  modelsDirectory,
-  type CompletionMetrics,
-  type LoadedModel,
-} from './src/inference/localModel';
+import { ModelCheckScreen } from './src/inference/ModelCheckScreen';
+import { secureVault } from './src/setup/secrets';
+import { SetupScreen } from './src/setup/SetupScreen';
+import { readConfig } from './src/setup/setupStore';
 import { openExpoDatabase } from './src/store/expoDatabase';
 import { LocalStore } from './src/store/localStore';
-import { httpTransport, LAST_SYNC_KEY, startSyncLoop, type SyncResult } from './src/store/sync';
+import { httpTransport, startSyncLoop, type SyncResult } from './src/store/sync';
 
-// The backend URL and device token arrive with the setup wizard (#9) and secret handling (#5).
 const store = new LocalStore(openExpoDatabase());
-const transport = httpTransport(process.env.EXPO_PUBLIC_API_URL ?? '', async () => null);
-
-// Smoke test for #6: load a side-loaded GGUF and stream one completion on the device.
-type ModelState =
-  | { status: 'missing' }
-  | { status: 'loading'; fileName: string }
-  | { status: 'ready'; model: LoadedModel }
-  | { status: 'error'; message: string };
+type Tab = 'setup' | 'model';
 
 export default function App() {
-  const [modelState, setModelState] = useState<ModelState>({ status: 'missing' });
-  const [prompt, setPrompt] = useState('Write one sentence welcoming a visitor to a coffee farm.');
-  const [output, setOutput] = useState('');
-  const [metrics, setMetrics] = useState<CompletionMetrics | null>(null);
-  const [running, setRunning] = useState(false);
-  const loaded = useRef<LoadedModel | null>(null);
+  const [tab, setTab] = useState<Tab>('setup');
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [apiUrl, setApiUrl] = useState(() => readConfig(store).apiUrl);
 
-  async function load() {
-    const file = findModelFile();
-    if (!file) {
-      setModelState({ status: 'missing' });
-      return;
-    }
-    setModelState({ status: 'loading', fileName: file.name });
-    try {
-      loaded.current = await loadModel(file);
-      setModelState({ status: 'ready', model: loaded.current });
-    } catch (error) {
-      setModelState({ status: 'error', message: String(error) });
-    }
-  }
-
-  useEffect(() => {
-    load();
-    return () => {
-      loaded.current?.context.release();
-    };
-  }, []);
-
-  // Lets a scripted check run the prompt without a tap: start Metro with EXPO_PUBLIC_AUTORUN=1.
-  useEffect(() => {
-    if (process.env.EXPO_PUBLIC_AUTORUN === '1' && modelState.status === 'ready') run();
-  }, [modelState.status]);
-
-  async function run() {
-    if (modelState.status !== 'ready') return;
-    setRunning(true);
-    setOutput('');
-    setMetrics(null);
-    try {
-      const result = await complete(modelState.model, prompt, (token) =>
-        setOutput((text) => text + token),
-      );
-      setMetrics(result.metrics);
-    } catch (error) {
-      setOutput(`Completion failed: ${String(error)}`);
-    } finally {
-      setRunning(false);
-    }
-  }
+  // The sync loop restarts when setup saves a new backend address.
+  const transport = useMemo(() => httpTransport(apiUrl ?? '', () => secureVault.get('device_token')), [apiUrl]);
+  useEffect(() => startSyncLoop(store, transport, setSyncResult), [transport]);
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Local model check</Text>
-        <ModelStatus state={modelState} onRetry={load} />
-        <SyncStatus />
-
-        <TextInput
-          style={styles.input}
-          value={prompt}
-          onChangeText={setPrompt}
-          multiline
-          accessibilityLabel="Prompt"
-        />
-        <Pressable
-          style={[styles.button, (running || modelState.status !== 'ready') && styles.buttonDisabled]}
-          onPress={run}
-          disabled={running || modelState.status !== 'ready'}
-        >
-          <Text style={styles.buttonText}>{running ? 'Generating…' : 'Run'}</Text>
-        </Pressable>
-
-        {output !== '' && <Text style={styles.output}>{output}</Text>}
-        {metrics && (
-          <Text style={styles.detail}>
-            Prompt: {metrics.promptTokens} tokens at {metrics.promptTokensPerSecond.toFixed(1)}{' '}
-            tokens/s. Output: {metrics.generatedTokens} tokens at{' '}
-            {metrics.generatedTokensPerSecond.toFixed(1)} tokens/s.
-          </Text>
-        )}
-      </ScrollView>
+      <View style={styles.tabs} accessibilityRole="tablist">
+        {(['setup', 'model'] as const).map((id) => (
+          <Pressable
+            key={id}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === id }}
+            style={[styles.tab, tab === id && styles.tabSelected]}
+            onPress={() => setTab(id)}
+          >
+            <Text style={[styles.tabText, tab === id && styles.tabTextSelected]}>{id === 'setup' ? 'Setup' : 'Model'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {tab === 'setup' ? (
+        <SetupScreen store={store} onApiUrlChange={setApiUrl} />
+      ) : (
+        <ModelCheckScreen store={store} syncResult={syncResult} />
+      )}
       <StatusBar style="auto" />
     </View>
   );
 }
 
-function SyncStatus() {
-  const [result, setResult] = useState<SyncResult | null>(null);
-  useEffect(() => startSyncLoop(store, transport, setResult), []);
-  const lastSync = store.getMeta(LAST_SYNC_KEY);
-  const waiting = store.outbox().filter((entry) => entry.status === 'QUEUED').length;
-  return (
-    <Text style={styles.detail}>
-      {lastSync ? `Last synced ${new Date(lastSync).toLocaleString()}.` : 'Not synced yet.'} {waiting}{' '}
-      {waiting === 1 ? 'action is' : 'actions are'} waiting to send.
-      {result?.error ? ` ${result.error}` : ''}
-    </Text>
-  );
-}
-
-function ModelStatus({ state, onRetry }: { state: ModelState; onRetry: () => void }) {
-  switch (state.status) {
-    case 'missing':
-      return (
-        <View>
-          <Text style={styles.detail}>
-            No model found. Copy a .gguf file into {modelsDirectory.uri}, then check again.
-          </Text>
-          <Pressable style={styles.button} onPress={onRetry}>
-            <Text style={styles.buttonText}>Check again</Text>
-          </Pressable>
-        </View>
-      );
-    case 'loading':
-      return <Text style={styles.detail}>Loading {state.fileName}…</Text>;
-    case 'error':
-      return <Text style={styles.error}>The model failed to load: {state.message}</Text>;
-    case 'ready': {
-      const { fileName, loadMs, gpu, reasonNoGPU } = state.model;
-      return (
-        <Text style={styles.detail}>
-          {fileName} loaded in {(loadMs / 1000).toFixed(1)} s on the{' '}
-          {gpu ? 'GPU' : `CPU (${reasonNoGPU || 'no GPU reported'})`}.
-        </Text>
-      );
-    }
-  }
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#fff' },
-  // Clears the status bar and notch without a safe-area dependency on a single test screen.
-  content: { padding: 16, paddingTop: 72, gap: 12 },
-  title: { fontSize: 22, fontWeight: '600' },
-  detail: { fontSize: 14, color: '#444' },
-  error: { fontSize: 14, color: '#b00020' },
-  input: {
-    minHeight: 80,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    textAlignVertical: 'top',
-  },
-  button: {
-    backgroundColor: '#1f4e79',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  output: { fontSize: 16, lineHeight: 22 },
+  // Clears the status bar and notch without a safe-area dependency.
+  screen: { flex: 1, backgroundColor: '#fff', paddingTop: 60 },
+  tabs: { flexDirection: 'row', marginHorizontal: 16, borderRadius: 8, backgroundColor: '#eef1f4', padding: 4 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 6, minHeight: 44, justifyContent: 'center' },
+  tabSelected: { backgroundColor: '#fff' },
+  tabText: { fontSize: 15, color: '#555' },
+  tabTextSelected: { color: '#111', fontWeight: '600' },
 });
