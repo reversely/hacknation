@@ -23,6 +23,10 @@ Selected decisions:
 - **Visitor messaging: WhatsApp.** The WhatsApp Cloud API sends and receives messages through the backend. The website's "Book on WhatsApp" button opens a chat with the business number. A `wa.me` deep link, which opens WhatsApp with an approved draft filled in for Noor to send, serves as the offline and failure fallback.
 - **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
 - **Setup: a central agent-guided wizard** with account authorization, secure key entry and connection checks.
+- **Toolchain: bun** installs packages and **Node 24 LTS** runs the Expo CLI, Metro and Next.js (`docs/setup.md`).
+- **Validation: zod.** One schema package, `@noor/contracts`, validates tool arguments on the phone and request bodies on the backend (`docs/contracts.md`).
+- **Sheets client: `@googleapis/sheets`** on the Vercel backend.
+- **On-device storage: Expo modules.** `expo-sqlite` for the local store, `expo-secure-store` for credentials (iOS Keychain, Android Keystore) and `expo-file-system` for model files.
 
 Working assumptions:
 

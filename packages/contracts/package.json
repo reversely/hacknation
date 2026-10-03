@@ -1,0 +1,19 @@
+{
+  "name": "@noor/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "~6.0.3"
+  }
+}
