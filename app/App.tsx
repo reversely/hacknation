@@ -14,7 +14,8 @@ const store = new LocalStore(openExpoDatabase());
 type Tab = 'setup' | 'model';
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('setup');
+  // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the model tab, where the run starts by itself.
+  const [tab, setTab] = useState<Tab>(process.env.EXPO_PUBLIC_AUTORUN ? 'model' : 'setup');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [apiUrl, setApiUrl] = useState(() => readConfig(store).apiUrl);
 
