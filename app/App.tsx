@@ -10,6 +10,13 @@ import {
   type CompletionMetrics,
   type LoadedModel,
 } from './src/inference/localModel';
+import { openExpoDatabase } from './src/store/expoDatabase';
+import { LocalStore } from './src/store/localStore';
+import { httpTransport, LAST_SYNC_KEY, startSyncLoop, type SyncResult } from './src/store/sync';
+
+// The backend URL and device token arrive with the setup wizard (#9) and secret handling (#5).
+const store = new LocalStore(openExpoDatabase());
+const transport = httpTransport(process.env.EXPO_PUBLIC_API_URL ?? '', async () => null);
 
 // Smoke test for #6: load a side-loaded GGUF and stream one completion on the device.
 type ModelState =
@@ -75,6 +82,7 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Local model check</Text>
         <ModelStatus state={modelState} onRetry={load} />
+        <SyncStatus />
 
         <TextInput
           style={styles.input}
@@ -102,6 +110,20 @@ export default function App() {
       </ScrollView>
       <StatusBar style="auto" />
     </View>
+  );
+}
+
+function SyncStatus() {
+  const [result, setResult] = useState<SyncResult | null>(null);
+  useEffect(() => startSyncLoop(store, transport, setResult), []);
+  const lastSync = store.getMeta(LAST_SYNC_KEY);
+  const waiting = store.outbox().filter((entry) => entry.status === 'QUEUED').length;
+  return (
+    <Text style={styles.detail}>
+      {lastSync ? `Last synced ${new Date(lastSync).toLocaleString()}.` : 'Not synced yet.'} {waiting}{' '}
+      {waiting === 1 ? 'action is' : 'actions are'} waiting to send.
+      {result?.error ? ` ${result.error}` : ''}
+    </Text>
   );
 }
 

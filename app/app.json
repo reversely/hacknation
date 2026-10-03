@@ -24,7 +24,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "llama.rn"
+      "llama.rn",
+      "expo-sqlite"
     ]
   }
 }

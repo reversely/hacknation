@@ -6,6 +6,7 @@
     "@noor/contracts": "file:../packages/contracts",
     "expo": "~57.0.26",
     "expo-file-system": "~57.0.7",
+    "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "llama.rn": "0.12.9",
     "react": "19.2.3",
