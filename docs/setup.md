@@ -111,4 +111,36 @@ bunx expo run:ios        # macOS: builds the development build and opens it in t
 bunx expo run:android    # any OS: builds it and opens it in a running Android emulator
 ```
 
-GGUF model files stay outside git (`*.gguf` is ignored) and load from app storage.
+## Loading a model
+
+GGUF model files stay outside git (`*.gguf` is ignored). The app loads the first `.gguf` file it
+finds in its `Documents/models` folder. The test model for #6 is Qwen2.5 0.5B Instruct, Q4_K_M
+quantisation, 491 MB, Apache 2.0 licence:
+
+```sh
+mkdir -p ~/models
+curl -fL -o ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf \
+  https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+shasum -a 256 ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf
+# 74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db
+```
+
+Copy it into the app after the app has been installed once.
+
+iOS Simulator (macOS):
+
+```sh
+DATA=$(xcrun simctl get_app_container booted com.reversely.noor data)
+mkdir -p "$DATA/Documents/models"
+cp ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf "$DATA/Documents/models/"
+```
+
+Android emulator (any OS; the debug build allows `run-as`):
+
+```sh
+adb push ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf /data/local/tmp/
+adb shell run-as com.reversely.noor mkdir -p files/models
+adb shell run-as com.reversely.noor cp /data/local/tmp/qwen2.5-0.5b-instruct-q4_k_m.gguf files/models/
+```
+
+Then tap "Check again" in the app.
