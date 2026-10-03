@@ -125,7 +125,16 @@ shasum -a 256 ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf
 # 74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db
 ```
 
-Copy it into the app after the app has been installed once.
+The chosen models (`docs/architecture.md` section 2) download the same way:
+
+```sh
+curl -fL -o ~/models/Qwen3-1.7B-Q4_K_M.gguf \
+  https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf
+curl -fL -o ~/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf \
+  https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+```
+
+Copy each model into the app after the app has been installed once.
 
 iOS Simulator (macOS):
 

@@ -20,6 +20,9 @@ Selected decisions:
 - **Customer mailbox: Gmail**, created during onboarding if needed.
 - **Appointments: Google Calendar.** Customer Management holds requested slots as tentative events; Noor confirms them in the weekly review.
 - **Local models: two.** A general instruction model runs conversation, extraction and replies; a separate Qwen coding model generates the website.
+  - General: **Qwen3 1.7B, Q4_K_M** (1.1 GB, Apache 2.0; `unsloth/Qwen3-1.7B-GGUF`, because Qwen's own repository publishes only Q8_0 at 1.8 GB). The Qwen3 model card lists Swahili among 119 languages; Llama 3.2's eight supported languages do not include it.
+  - Coding: **Qwen2.5-Coder 1.5B Instruct, Q4_K_M** (1.1 GB, Apache 2.0; `Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF`).
+  - Chosen at the user's request without the planned iPhone benchmark. Memory, load time and speed on a phone are unmeasured.
 - **Visitor messaging: WhatsApp.** The WhatsApp Cloud API sends and receives messages through the backend. The website's "Book on WhatsApp" button opens a chat with the business number. A `wa.me` deep link, which opens WhatsApp with an approved draft filled in for Noor to send, serves as the offline and failure fallback.
 - **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
 - **Setup: a central agent-guided wizard** with account authorization, secure key entry and connection checks.
@@ -100,7 +103,7 @@ A developer supplies the application's Google OAuth configuration once; Noor aut
 4. Unload one model before loading the other rather than keeping both resident. Model swapping trades memory savings for loading latency.
 5. Keep context bounded and retrieve relevant local records instead of passing the entire message history. Store workflow memory in SQLite, not only in the model context.
 6. Validate structured tool requests in application code. Valid JSON or constrained decoding does not establish that the proposed action is correct.
-7. Benchmark memory, loading time, generation speed and thermal behaviour on the actual target phone before fixing the model and quantisation. Model choice remains open; runtime choice does not.
+7. Measure memory, loading time, generation speed and thermal behaviour on the target phone. The models in section 2 were chosen before any phone measurement.
 
 llama.cpp is the inference engine, not the agent harness. The application owns credentials, tools, approvals, memory and synchronisation. Android and iOS require their respective native integrations; an Android build does not establish iOS support for the app.
 
@@ -227,7 +230,7 @@ Acceptance tests:
 Decisions before implementation:
 
 1. A Kiswahili speaker who can assess translations.
-2. Exact general model, exact Qwen coding model, quantisation and the hackathon parameter-size limit.
+2. The hackathon parameter-size limit. The models and quantisation are chosen (section 2).
 3. Website generation method: template or code generation (section 5).
 4. Details of the user-owned Vercel onboarding and hosted source-upload/build connector.
 
