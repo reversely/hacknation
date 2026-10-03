@@ -18,6 +18,9 @@ export type ToolDefinition<Args extends z.ZodType = z.ZodType, Result = unknown>
   approval: Approval;
   // Required when approval is 'policy': returns null to allow, or the reason to ask the operator.
   policy?: (args: z.infer<Args>) => string | null;
+  // Returns null when the call can go ahead, or why it cannot. Runs before any approval is
+  // requested, so the operator is never asked to approve a call that would fail.
+  precondition?: (args: z.infer<Args>) => string | null;
   run: (args: z.infer<Args>) => Promise<Result>;
 };
 
@@ -120,6 +123,12 @@ export class Harness {
       return { status: 'REJECTED', activityId, reason };
     }
 
+    const blocked = tool.precondition?.(parsed.data) ?? this.alreadyWaiting(agent, tool.name, parsed.data);
+    if (blocked) {
+      record({ tool: tool.name, args: parsed.data, outcome: 'REJECTED', detail: blocked, result: null });
+      return { status: 'REJECTED', activityId, reason: blocked };
+    }
+
     const reasonToAsk =
       tool.approval === 'operator'
         ? 'This action needs your approval.'
@@ -150,6 +159,17 @@ export class Harness {
   decline(activityId: string, reason: string): void {
     if (!this.pending.delete(activityId)) return;
     this.deps.log.update(activityId, { outcome: 'REJECTED', detail: `Declined: ${reason}` });
+  }
+
+  // A model that repeats a held call would otherwise put a second approval in front of the operator.
+  private alreadyWaiting(agent: AgentName, toolName: string, args: unknown): string | null {
+    const key = JSON.stringify(args);
+    for (const entry of this.pending.values()) {
+      if (entry.agent === agent && entry.tool.name === toolName && JSON.stringify(entry.args) === key) {
+        return 'This call is already waiting for the operator\'s approval.';
+      }
+    }
+    return null;
   }
 
   pendingApprovals(): PendingApproval[] {

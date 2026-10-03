@@ -84,3 +84,31 @@ test('a placeholder the model invents is rejected, so the field stays missing', 
   expect(ProfileDraft.safeParse({ availability: 'TBD' }).success).toBe(false);
   expect(ProfileDraft.safeParse({ availability: 'Saturdays at 9' }).success).toBe(true);
 });
+
+test('a repeated call that is already waiting for approval is not shown twice', async () => {
+  const model = scripted([{ content: '', toolCalls: [call('approve_profile_draft', {}), call('approve_profile_draft', {})] }]);
+  const { outcomes } = await runTurn({ model, harness, agent: 'coordinator', history: user });
+  expect(outcomes.map((o) => o.status)).toEqual(['AWAITING_APPROVAL', 'REJECTED']);
+  expect(harness.pendingApprovals()).toHaveLength(1);
+});
+
+test('a failed precondition rejects the call before the operator is asked', async () => {
+  harness.register(
+    defineTool({
+      name: 'publish_profile',
+      description: 'Publish.',
+      args: z.object({}),
+      approval: 'operator',
+      precondition: () => 'The draft is missing: availability.',
+      run: async () => ({}),
+    }),
+    ['coordinator'],
+  );
+  const model = scripted([
+    { content: '', toolCalls: [call('publish_profile', {})] },
+    { content: 'What days do tours run?', toolCalls: [] },
+  ]);
+  const { outcomes } = await runTurn({ model, harness, agent: 'coordinator', history: user });
+  expect(outcomes[0]).toMatchObject({ status: 'REJECTED', reason: 'The draft is missing: availability.' });
+  expect(harness.pendingApprovals()).toHaveLength(0);
+});

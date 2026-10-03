@@ -17,13 +17,13 @@ const stated = (hint: string) =>
   z.string().trim().min(1).refine((value) => !PLACEHOLDER.test(value), 'Leave out fields the operator has not stated').describe(hint);
 
 export const ProfileDraft = z.object({
-  description: stated('The tour in the operator\'s words').optional(),
-  duration: stated('e.g. "2 hours"').optional(),
-  price: stated('Per person, with currency').optional(),
+  description: stated('What the tour is, in the operator\'s words').optional(),
+  duration: stated('How long the tour lasts, for example "2 hours"').optional(),
+  price: stated('Price per person with currency, for example "1500 KES"').optional(),
   capacity: z.number().int().positive().describe('Most visitors per tour').optional(),
-  meeting_instructions: stated('Where visitors meet').optional(),
-  availability: stated('Days and times').optional(),
-  policies: stated('Cancellation and other rules').optional(),
+  meeting_instructions: stated('Where and how visitors meet the operator').optional(),
+  availability: stated('Days and times tours run').optional(),
+  policies: stated('Cancellation, children, weather and other rules').optional(),
 });
 export type ProfileDraft = z.infer<typeof ProfileDraft>;
 
@@ -48,7 +48,7 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
   harness.register(
     defineTool({
       name: 'get_setup_status',
-      description: 'Setup steps and their status.',
+      description: 'List the setup steps with their status, so you can tell the operator what to do next.',
       args: z.object({}),
       approval: 'none',
       run: async () => setupSummary(readProgress(store)),
@@ -58,7 +58,7 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
   harness.register(
     defineTool({
       name: 'read_profile_draft',
-      description: 'The profile draft and its missing fields.',
+      description: 'Read the business profile draft and the fields still missing.',
       args: z.object({}),
       approval: 'none',
       run: async () => {
@@ -71,7 +71,7 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
   harness.register(
     defineTool({
       name: 'save_profile_draft',
-      description: 'Save details the operator stated. Omit anything not stated.',
+      description: 'Save tour details the operator stated to the business profile draft. Only include fields the operator actually said.',
       args: ProfileDraft,
       approval: 'none',
       run: async (fields) => {
@@ -87,13 +87,15 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
   harness.register(
     defineTool({
       name: 'approve_profile_draft',
-      description: 'Ask the operator to approve the complete draft.',
+      description: 'Ask the operator to approve the profile draft so it can be used for the website and listings.',
       args: z.object({}),
       approval: 'operator',
+      precondition: () => {
+        const missing = missingFields(readDraft(store).fields);
+        return missing.length ? `The draft is missing: ${missing.join(', ')}. Ask the operator for them.` : null;
+      },
       run: async () => {
         const draft = readDraft(store);
-        const missing = missingFields(draft.fields);
-        if (missing.length) throw new Error(`The draft is missing: ${missing.join(', ')}`);
         writeDraft(store, { ...draft, status: 'APPROVED', updatedAt: now() });
         return { status: 'APPROVED' };
       },
