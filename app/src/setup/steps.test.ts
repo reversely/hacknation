@@ -33,8 +33,15 @@ describe('resume', () => {
   test('setup reopens at the first step that is not done', () => {
     const progress = emptyProgress();
     progress.business = { status: 'DONE', checkedAt: now, error: null };
-    progress.backend = { status: 'DONE', checkedAt: now, error: null };
+    progress.gmail = { status: 'DONE', checkedAt: now, error: null };
     const restarted = parseProgress(JSON.stringify(progress));
+    expect(currentStep(restarted)).toBe('vercel');
+  });
+
+  test('progress saved by a build that had the removed backend step still resumes', () => {
+    const saved = { business: { status: 'DONE', checkedAt: now, error: null }, backend: { status: 'DONE', checkedAt: now, error: null } };
+    const restarted = parseProgress(JSON.stringify(saved));
+    expect(Object.keys(restarted)).not.toContain('backend');
     expect(currentStep(restarted)).toBe('gmail');
   });
 
@@ -44,9 +51,9 @@ describe('resume', () => {
 });
 
 describe('checks', () => {
-  test('the backend check sends the device token and passes on a valid health answer', async () => {
+  test('the website check sends the device token to the deployed project and passes on a valid health answer', async () => {
     let sent = null as string | null;
-    const state = await runCheck('backend', deps({ fetch: fakeFetch((_, auth) => ((sent = auth), healthy({}))) }), now);
+    const state = await runCheck('website', deps({ fetch: fakeFetch((_, auth) => ((sent = auth), healthy({}))) }), now);
     expect(state.status).toBe('DONE');
     expect(sent).toBe(`Bearer ${DEVICE_TOKEN}`);
   });
@@ -56,10 +63,13 @@ describe('checks', () => {
     expect(state).toMatchObject({ status: 'FAILED', error: 'WhatsApp is not set up on the backend yet' });
   });
 
-  test('a missing token fails before any request', async () => {
+  test('before the website is published, the checks that need it fail without a request', async () => {
     let called = false;
-    const state = await runCheck('backend', deps({ vault: vault({}), fetch: fakeFetch(() => ((called = true), healthy({}))) }), now);
-    expect(state.error).toBe('Please enter the device token');
+    const fetch = fakeFetch(() => ((called = true), healthy({})));
+    const noToken = await runCheck('website', deps({ vault: vault({}), fetch }), now);
+    const noAddress = await runCheck('sheets', deps({ config: { apiUrl: null, business: null }, fetch }), now);
+    expect(noToken.error).toBe('Please publish the website first');
+    expect(noAddress.error).toBe('Please publish the website first');
     expect(called).toBe(false);
   });
 
@@ -78,10 +88,10 @@ describe('secrets never reach the model', () => {
   test('error text from a server that echoes the token is not passed on', async () => {
     const echo = fakeFetch((_, auth) => new Response(`bad token ${auth}`, { status: 500 }));
     const progress = emptyProgress();
-    progress.backend = await runCheck('backend', deps({ fetch: echo }), now);
+    progress.website = await runCheck('website', deps({ fetch: echo }), now);
     progress.vercel = await runCheck('vercel', deps({ fetch: echo }), now);
     const forModel = JSON.stringify(setupSummary(progress));
     expect(forModel).not.toContain('SECRET');
-    expect(progress.backend.error).toBe('The backend answered with error 500');
+    expect(progress.website.error).toBe('The backend answered with error 500');
   });
 });

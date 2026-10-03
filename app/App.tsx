@@ -17,9 +17,9 @@ export default function App() {
   // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the model tab, where the run starts by itself.
   const [tab, setTab] = useState<Tab>(process.env.EXPO_PUBLIC_AUTORUN ? 'model' : 'setup');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
-  const [apiUrl, setApiUrl] = useState(() => readConfig(store).apiUrl);
-
-  // The sync loop restarts when setup saves a new backend address.
+  // The backend is the operator's own Vercel project; its address exists once the website deploy
+  // (#18) has saved it, and the sync loop reports "not connected" until then.
+  const [apiUrl] = useState(() => readConfig(store).apiUrl);
   const transport = useMemo(() => httpTransport(apiUrl ?? '', () => secureVault.get('device_token')), [apiUrl]);
   useEffect(() => startSyncLoop(store, transport, setSyncResult), [transport]);
 
@@ -39,7 +39,7 @@ export default function App() {
         ))}
       </View>
       {tab === 'setup' ? (
-        <SetupScreen store={store} onApiUrlChange={setApiUrl} />
+        <SetupScreen store={store} />
       ) : (
         <ModelCheckScreen store={store} syncResult={syncResult} />
       )}

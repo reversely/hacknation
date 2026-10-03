@@ -3,13 +3,14 @@ import { HealthResponse } from '@noor/contracts';
 import type { SecretVault } from './secrets';
 
 // Setup wizard steps (docs/architecture.md section 4), in the order the operator meets them.
+// The backend is the operator's own Vercel project, so every check that goes through it comes
+// after the website step that deploys it.
 export const STEP_IDS = [
   'business',
-  'backend',
   'gmail',
-  'sheets',
   'vercel',
   'website',
+  'sheets',
   'whatsapp',
   'calendar',
   'listings',
@@ -64,10 +65,11 @@ const E164 = /^\+[1-9]\d{6,14}$/;
 
 // Error strings are written here, never copied from a response body, so a server or token
 // value cannot reach the screen, the log or the model through an error.
+// The website deploy (#18) writes the backend address and the device token; the operator never
+// types either.
 async function health(deps: CheckDeps): Promise<HealthResponse | string> {
-  if (!deps.config.apiUrl) return 'Please enter the backend address';
   const token = await deps.vault.get('device_token');
-  if (!token) return 'Please enter the device token';
+  if (!deps.config.apiUrl || !token) return 'Please publish the website first';
   try {
     const response = await deps.fetch(`${deps.config.apiUrl}/api/health`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -101,13 +103,8 @@ export const CHECKS: Record<StepId, ((deps: CheckDeps) => Promise<CheckResult>) 
     if (!E164.test(b.whatsappNumber)) return { ok: false, error: 'Please enter the WhatsApp number with its country code' };
     return { ok: true };
   },
-  backend: async (deps) => {
-    const result = await health(deps);
-    return typeof result === 'string' ? { ok: false, error: result } : { ok: true };
-  },
-  // Gmail sign-in arrives with #3 and the website with #18; until then these steps cannot pass.
+  // Gmail sign-in arrives with #3; until then this step cannot pass.
   gmail: null,
-  sheets: serviceCheck('sheets', 'Google Sheets'),
   vercel: async ({ vault, fetch }) => {
     const token = await vault.get('vercel_token');
     if (!token) return { ok: false, error: 'Please enter the Vercel token' };
@@ -119,7 +116,12 @@ export const CHECKS: Record<StepId, ((deps: CheckDeps) => Promise<CheckResult>) 
       return { ok: false, error: 'Vercel could not be reached' };
     }
   },
-  website: null,
+  // Passes once the deployed project answers its health check.
+  website: async (deps) => {
+    const result = await health(deps);
+    return typeof result === 'string' ? { ok: false, error: result } : { ok: true };
+  },
+  sheets: serviceCheck('sheets', 'Google Sheets'),
   whatsapp: serviceCheck('whatsapp', 'WhatsApp'),
   calendar: serviceCheck('calendar', 'Google Calendar'),
   // The operator creates both listings by hand and confirms here (architecture section 4, step 8).

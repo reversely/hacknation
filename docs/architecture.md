@@ -6,6 +6,8 @@ Draft architecture and hackathon scope | 3 October 2026
 
 A central conversational agent helps Noor establish a digital presence and manage visitor requests. It guides account setup, creates a farm website, reads customer enquiries, proposes bookings and replies, and presents actions for approval. Models run locally; external services provide hosting, email and shared records.
 
+Every account and service belongs to the operator. The agent creates or connects each one in the operator's own name, and nothing runs on a server the team operates for all users. The hosted pieces in this prototype (the Sheets record store, the booking API, sync and Calendar holds) are demo paths: ready-made setups that show what the agent can do for an operator, chosen to keep each setup step as short as possible.
+
 The end-to-end demonstration is: business information → connected accounts → website and listings → visitor message → reply and held slot → Noor's weekly review → confirmation.
 
 ## 2. Selected stack and working assumptions
@@ -16,7 +18,7 @@ Selected decisions:
 - **Demonstration hardware:** the iOS Simulator runs the Expo development build to check that the app and model work end to end. All three team members have iPhones, which run the same build for on-device performance measurements.
 - **Local inference: llama.cpp**, embedded in the phone app through `llama.rn`, loading quantised GGUF models. No Ollama installation, terminal or separate local HTTP server is required on the phone.
 - **Online backend data store: Google Sheets**, accessed through validated backend endpoints.
-- **Public website and backend API: Next.js on Vercel.**
+- **Public website and backend API: Next.js on Vercel, one project per operator.** The app deploys the website and its API routes as one project into the operator's own Vercel account. The deployment URL becomes the app's backend address, and the app generates the device token, keeps it in secure storage and sets it as an environment variable in that project. The operator never types either.
 - **Customer mailbox: Gmail**, created during onboarding if needed.
 - **Appointments: Google Calendar.** Customer Management holds requested slots as tentative events; Noor confirms them in the weekly review.
 - **Local models: two.** A general instruction model runs conversation, extraction and replies; a separate Qwen coding model generates the website.
@@ -113,9 +115,9 @@ Use a deterministic setup wizard with conversational explanations from the agent
 
 1. **Business information:** collect Noor's tour description, duration, price, capacity, meeting instructions, availability and policies. Review uncertain or missing facts.
 2. **Business mailbox:** the daughter helps create a Gmail account if needed. Noor connects it through Google authorization.
-3. **Records:** authorize Sheets access and create the predefined spreadsheet tabs. Use separate, narrowly scoped credentials for hosted access; a prototype service account can be granted access to the designated spreadsheet.
-4. **Hosting:** create or connect a Vercel account. For the prototype, guide token creation and collect it in a secure field. A Vercel integration authorization flow is a later improvement.
-5. **Website:** generate a preview and request publication approval. A Vercel-provided URL avoids requiring a custom domain for the demo.
+3. **Hosting:** create or connect a Vercel account. For the prototype, guide token creation and collect it in a secure field. A Vercel integration authorization flow is a later improvement.
+4. **Website:** generate a preview and request publication approval. Publishing deploys the website and its API routes to the operator's own project (section 2). A Vercel-provided URL avoids requiring a custom domain for the demo.
+5. **Records:** authorize Sheets access and create the predefined spreadsheet tabs. The operator signs in with Google through the team's published OAuth client; the resulting refresh token, limited to Sheets and Calendar scopes, is stored only as an environment variable in the operator's Vercel project. No service account is used. This step follows the website because its check goes through the deployed API.
 6. **WhatsApp:** confirm the business WhatsApp number and run a connection check against the Cloud API. In the demonstration the number is a real number the team registers with the Cloud API.
 7. **Calendar:** authorize Google Calendar and create a calendar for tour slots from the availability Noor gave in step 1.
 8. **Search and social listings:** guide Noor through creating a Google Business Profile and a Facebook Page in Meta Business Suite, prefilled from the approved profile. The Google Business Profile API requires Google to approve API access, and Meta's Page messaging requires App Review for public users, so the demonstration creates both listings through guided manual steps and the agent checks the result.

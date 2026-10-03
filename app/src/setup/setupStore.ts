@@ -20,6 +20,7 @@ export function readConfig(store: LocalStore): SetupConfig {
   return { apiUrl: store.getMeta(API_URL_KEY), business: business ? (JSON.parse(business) as BusinessBasics) : null };
 }
 
+// Written by the website deploy (#18) with the address of the operator's own Vercel project.
 export function saveApiUrl(store: LocalStore, url: string): void {
   store.setMeta(API_URL_KEY, url.trim().replace(/\/+$/, ''));
 }

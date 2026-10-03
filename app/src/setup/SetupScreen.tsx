@@ -3,12 +3,11 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import type { LocalStore } from '../store/localStore';
 import { secureVault, type SecretName } from './secrets';
-import { readConfig, readProgress, saveApiUrl, saveBusiness, saveProgress } from './setupStore';
+import { readConfig, readProgress, saveBusiness, saveProgress } from './setupStore';
 import { currentStep, runCheck, STEP_IDS, type SetupProgress, type StepId } from './steps';
 
 const TITLES: Record<StepId, string> = {
   business: 'Business details',
-  backend: 'Backend',
   gmail: 'Gmail',
   sheets: 'Google Sheets',
   vercel: 'Vercel',
@@ -20,21 +19,20 @@ const TITLES: Record<StepId, string> = {
 
 const HINTS: Record<StepId, string> = {
   business: 'Please enter your farm name and WhatsApp number',
-  backend: 'Please enter the backend address and device token from your team',
   gmail: 'Gmail sign-in is not available in this build',
-  sheets: 'Check that the backend can reach your spreadsheet',
+  sheets: 'Check that your booking service can reach your spreadsheet',
   vercel: 'Please paste a token from your Vercel account settings',
-  website: 'Website publishing is not available in this build',
-  whatsapp: 'Check that the backend can reach your WhatsApp number',
-  calendar: 'Check that the backend can reach your tour calendar',
+  website: 'Publishing creates your website and its booking service in your own Vercel account',
+  whatsapp: 'Check that your booking service can reach your WhatsApp number',
+  calendar: 'Check that your booking service can reach your tour calendar',
   listings: 'Please create your Google and Facebook listings and then mark this step done',
 };
 
 const TAGS = { NOT_STARTED: 'not started', DONE: 'done', FAILED: 'failed' } as const;
 
-type Props = { store: LocalStore; onApiUrlChange: (url: string | null) => void };
+type Props = { store: LocalStore };
 
-export function SetupScreen({ store, onApiUrlChange }: Props) {
+export function SetupScreen({ store }: Props) {
   const [progress, setProgress] = useState<SetupProgress>(() => readProgress(store));
   const [open, setOpen] = useState<StepId | null>(() => currentStep(readProgress(store)));
   const [checking, setChecking] = useState(false);
@@ -83,7 +81,7 @@ export function SetupScreen({ store, onApiUrlChange }: Props) {
             {expanded && (
               <View style={styles.stepBody}>
                 <Text style={styles.detail}>{HINTS[id]}</Text>
-                <StepFields step={id} store={store} onApiUrlChange={onApiUrlChange} />
+                <StepFields step={id} store={store} />
                 {state.error && <Text style={styles.error}>{state.error}</Text>}
                 {id === 'listings' ? (
                   <Button
@@ -102,27 +100,10 @@ export function SetupScreen({ store, onApiUrlChange }: Props) {
   );
 }
 
-function StepFields({ step, store, onApiUrlChange }: { step: StepId } & Props) {
+function StepFields({ step, store }: { step: StepId } & Props) {
   const config = readConfig(store);
   if (step === 'business') {
     return <BusinessFields store={store} initial={config.business} />;
-  }
-  if (step === 'backend') {
-    return (
-      <>
-        <Field
-          label="Backend address"
-          initial={config.apiUrl ?? ''}
-          placeholder="https://your-farm.vercel.app"
-          keyboardType="url"
-          onSave={(value) => {
-            saveApiUrl(store, value);
-            onApiUrlChange(readConfig(store).apiUrl);
-          }}
-        />
-        <SecretField name="device_token" label="Device token" />
-      </>
-    );
   }
   if (step === 'vercel') return <SecretField name="vercel_token" label="Vercel token" />;
   return null;
@@ -147,26 +128,6 @@ function BusinessFields({ store, initial }: { store: LocalStore; initial: Return
         keyboardType="phone-pad"
       />
     </>
-  );
-}
-
-function Field(props: {
-  label: string;
-  initial: string;
-  placeholder?: string;
-  keyboardType?: 'url';
-  onSave: (value: string) => void;
-}) {
-  const [value, setValue] = useState(props.initial);
-  return (
-    <LabeledInput
-      label={props.label}
-      value={value}
-      onChangeText={setValue}
-      onEndEditing={() => props.onSave(value)}
-      placeholder={props.placeholder}
-      keyboardType={props.keyboardType}
-    />
   );
 }
 
