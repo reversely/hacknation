@@ -1,0 +1,28 @@
+# Mechanical, deterministic checks only. Judgment calls (data-structure fit, module boundaries,
+# whether a complex change explains itself) aren't enforceable here; see the clean-code skill.
+#
+# Setup:
+#   pre-commit install
+#   detect-secrets scan > .secrets.baseline
+#
+# Language-specific linters and formatters get added once the app and site toolchains are chosen.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: check-json
+      - id: detect-private-key
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]

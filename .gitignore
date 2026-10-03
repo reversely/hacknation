@@ -1,0 +1,28 @@
+# secrets baseline is committed; the actual secrets it would catch are not
+.env
+.env.*
+!.env.example
+
+# Node / Next.js / Vercel
+node_modules/
+.next/
+out/
+.vercel/
+
+# Local model files: large, downloaded or side-loaded, never committed
+*.gguf
+
+# OS noise
+.DS_Store
+
+# agent-local files: instructions, skills, settings, worklogs, plans, PRDs
+CLAUDE.md
+AGENTS.md
+.claude/
+docs/log.md
+docs/progress/
+docs/plans/
+docs/prd*.md
+
+# challenge brief: marked Official Use Only, kept local
+docs/spec.pdf
