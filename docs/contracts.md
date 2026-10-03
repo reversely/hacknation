@@ -63,6 +63,9 @@ webhook. Errors return `{ "error": { "code", "message" } }` with one of the code
 | --- | --- | --- | --- |
 | `GET /api/health` | Setup wizard | Reports `OK`, `NOT_CONFIGURED` or `FAILED` for Sheets, Calendar and WhatsApp | `HealthResponse` |
 | `GET /api/profile` | Public website | Returns the approved profile's public fields only | `PublicProfileResponse` |
+| `POST /api/setup/sheets` | Setup wizard | Creates or reuses the business spreadsheet, creates all six contract tabs and verifies read/write access | Device bearer token |
+| `GET /api/records/:tab` | Phone | Reads validated rows from a contract tab | Device bearer token |
+| `PUT /api/records/:tab` | Phone | Validates and writes one row to a contract tab | Device bearer token and tab record schema |
 | `GET /api/sync?since=` | Phone | Returns messages, enquiries, bookings and the profile changed after `since`, plus `server_time` for the next call | `SyncResponse` |
 | `POST /api/actions` | Phone offline queue | Executes up to 50 approved actions and returns one receipt each | `ActionsRequest`, `ActionsResponse` |
 | `GET /api/whatsapp/webhook` | Meta | Answers Meta's verification handshake | Meta's format |

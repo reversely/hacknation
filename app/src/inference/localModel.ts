@@ -16,6 +16,7 @@ export type LoadedModel = {
   loadMs: number;
   gpu: boolean;
   reasonNoGPU: string;
+  contextTokens: number;
 };
 
 export type CompletionMetrics = {
@@ -36,11 +37,12 @@ export function findModelFile(): File | null {
   return ggufs.find((file) => file.name === GENERAL_MODEL_FILE) ?? ggufs[0] ?? null;
 }
 
-export async function loadModel(file: File): Promise<LoadedModel> {
+export async function loadModel(file: File, options: { contextTokens?: number } = {}): Promise<LoadedModel> {
   const started = Date.now();
+  const contextTokens = options.contextTokens ?? 2048;
   const context = await initLlama({
     model: file.uri,
-    n_ctx: 2048,
+    n_ctx: contextTokens,
     // Offload every layer when a GPU is available; llama.rn falls back to the CPU and reports why.
     // EXPO_PUBLIC_CPU_ONLY=1 keeps the model on the CPU: the Simulator's emulated GPU runs a 1.7B
     // model at well under one token per second.
@@ -52,6 +54,7 @@ export async function loadModel(file: File): Promise<LoadedModel> {
     loadMs: Date.now() - started,
     gpu: context.gpu,
     reasonNoGPU: context.reasonNoGPU,
+    contextTokens,
   };
 }
 
@@ -59,11 +62,12 @@ export async function complete(
   model: LoadedModel,
   prompt: string,
   onToken: (token: string) => void,
+  options: { maxTokens?: number } = {},
 ): Promise<{ text: string; metrics: CompletionMetrics }> {
   const result = await model.context.completion(
     {
       messages: [{ role: 'user', content: prompt }],
-      n_predict: 128,
+      n_predict: options.maxTokens ?? 128,
       stop: STOP_WORDS,
     },
     (data) => onToken(data.token),

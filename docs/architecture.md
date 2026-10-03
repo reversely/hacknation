@@ -126,16 +126,14 @@ The model receives only connection status and actionable error summaries, never 
 
 ## 5. Website creation
 
-- Start from a working Next.js project with a "Book on WhatsApp" button that opens a chat with the business number.
-- Website generation remains part of the product. The generation method is an open decision with two candidates:
-  - **Template:** the local model chooses among predefined section and layout variants, writes the page text in English and Kiswahili, and fills in the approved profile. This costs one small model call per section and gives a predictable demonstration.
-  - **Code generation:** the Qwen coding model edits layout, text, colours and approved images in the Next.js source. This requires the repair loop below.
-- When connected, upload the generated source and run type checks, application tests and a production build in the hosted pipeline. Feed failures back to the local model for a bounded repair loop.
+- Use **Qwen code generation**. The local coding model edits page copy and visual presentation in a constrained Next.js workspace; the app validates every changed path before a hosted build. This keeps the selected coding model in the product path and supports custom layouts without allowing shell access.
+- The generator contract is documented in `docs/website-creator.md`. Its input is a validated, approved public profile plus the existing starter files; its output is a patch to permitted site files. Validation rejects paths outside the workspace, oversized files, secrets and unapproved profile fields.
+- When connected, upload the generated source and run type checks, application tests and a production build in the hosted pipeline. Feed sanitized failures back to the local model for at most two repair attempts.
 - Return a hosted preview. Publish only after approval. Offline generation does not imply offline Next.js build verification.
 - Keep everyday descriptions, prices and availability as structured data so routine changes need not regenerate source code.
 - Publish only approved public fields. Never expose the spreadsheet, customer records, OAuth tokens or API keys through the frontend.
 
-The phone generates and edits source locally; the hosted pipeline builds and deploys it. Next.js and Vercel are retained. Arbitrary shell execution and a full Node.js installation on the phone are not required. Native integration and model performance must still be verified on the selected phone.
+The phone generates and edits source locally; Vercel's deployment API builds and deploys it. Preview deployments are allowed after validation; production publication requires a distinct operator approval recorded by the app. Arbitrary shell execution and a full Node.js installation on the phone are not required. Native integration and model performance must still be verified on the selected phone.
 
 ## 6. Enquiry and booking workflow
 

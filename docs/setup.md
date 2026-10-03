@@ -111,6 +111,23 @@ bunx expo run:ios        # macOS: builds the development build and opens it in t
 bunx expo run:android    # any OS: builds it and opens it in a running Android emulator
 ```
 
+## Running the website
+
+Install the monorepo workspaces using the repository's package-manager convention, then start the
+Next.js dev server from `website/`:
+
+```sh
+bun install
+cd website
+bun run dev
+```
+
+For the hosted site, configure `DEVICE_TOKEN` and `GOOGLE_SERVICE_ACCOUNT_JSON` in Vercel. Grant
+the service account access to Sheets and Drive file creation. `GOOGLE_SHEETS_SPREADSHEET_ID` is
+optional; without it the backend finds or creates the `Noor Farm Business Records` spreadsheet.
+The website reads only an `APPROVED` Farm record. `USE_DEMO_PROFILE=true` enables the explicit
+demo-only sample page; leave it unset for real deployments.
+
 ## Loading a model
 
 GGUF model files stay outside git (`*.gguf` is ignored). The app loads the first `.gguf` file it

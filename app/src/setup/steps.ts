@@ -111,7 +111,9 @@ export const CHECKS: Record<StepId, ((deps: CheckDeps) => Promise<CheckResult>) 
     try {
       const response = await fetch('https://api.vercel.com/v2/user', { headers: { Authorization: `Bearer ${token}` } });
       if (response.status === 401 || response.status === 403) return { ok: false, error: 'Vercel rejected the token' };
-      return response.ok ? { ok: true } : { ok: false, error: `Vercel answered with error ${response.status}` };
+      if (!response.ok) return { ok: false, error: `Vercel answered with error ${response.status}` };
+      const projectId = await vault.get('vercel_project_id');
+      return projectId ? { ok: true } : { ok: false, error: 'Please enter the Vercel project ID' };
     } catch {
       return { ok: false, error: 'Vercel could not be reached' };
     }

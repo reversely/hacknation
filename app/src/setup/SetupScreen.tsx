@@ -21,7 +21,7 @@ const HINTS: Record<StepId, string> = {
   business: 'Please enter your farm name and WhatsApp number',
   gmail: 'Gmail sign-in is not available in this build',
   sheets: 'Check that your booking service can reach your spreadsheet',
-  vercel: 'Please paste a token from your Vercel account settings',
+  vercel: 'Add a Vercel access token and project ID for preview and approved production deploys',
   website: 'Publishing creates your website and its booking service in your own Vercel account',
   whatsapp: 'Check that your booking service can reach your WhatsApp number',
   calendar: 'Check that your booking service can reach your tour calendar',
@@ -105,7 +105,7 @@ function StepFields({ step, store }: { step: StepId } & Props) {
   if (step === 'business') {
     return <BusinessFields store={store} initial={config.business} />;
   }
-  if (step === 'vercel') return <SecretField name="vercel_token" label="Vercel token" />;
+  if (step === 'vercel') return <><SecretField name="vercel_token" label="Vercel token" /><SecretField name="vercel_project_id" label="Vercel project ID" /></>;
   return null;
 }
 

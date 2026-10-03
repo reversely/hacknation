@@ -1,0 +1,9 @@
+{
+  "name": "noor-workspace",
+  "private": true,
+  "engines": { "node": ">=24 <25" },
+  "workspaces": ["app", "packages/contracts", "website"],
+  "scripts": {
+    "build:website": "bun --cwd website run build"
+  }
+}
