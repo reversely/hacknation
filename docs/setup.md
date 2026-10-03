@@ -153,3 +153,25 @@ adb shell run-as com.reversely.noor cp /data/local/tmp/qwen2.5-0.5b-instruct-q4_
 ```
 
 Then tap "Check again" in the app.
+
+## Testing the agent on a model server
+
+A development machine that cannot hold the model in memory (an 8 GB Mac with the Simulator ran Qwen3 1.7B at under one token per second) can run the agent's model on a llama.cpp server instead. The agent's tools, harness and approvals still run in the app; only the model call moves.
+
+Build `llama-server` from the llama.cpp commit that `llama.rn` bundles, so prompt formatting and tool-call parsing match the phone. The commit is `LLAMA_COMMIT` in `app/node_modules/llama.rn/cpp/common/build-info.cpp`.
+
+```sh
+git clone https://github.com/ggml-org/llama.cpp && cd llama.cpp && git checkout 6c8dcaa
+cmake -B build -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release   # drop -DGGML_CUDA=ON without an NVIDIA GPU
+cmake --build build --target llama-server -j
+build/bin/llama-server -m Qwen3-1.7B-Q4_K_M.gguf --jinja -ngl 99 -c 8192 --host <server address> --port 8090
+```
+
+iOS refuses plain `http://` to any host but localhost, so forward the port and point the app at localhost:
+
+```sh
+ssh -fN -L 8090:<server address>:8090 <user>@<server address>
+cd app && EXPO_PUBLIC_MODEL_URL=http://localhost:8090 bunx expo start --dev-client
+```
+
+`EXPO_PUBLIC_AUTORUN=agent` sends a scripted message to the agent when the app opens. Leave `EXPO_PUBLIC_MODEL_URL` unset to run the model on the phone.

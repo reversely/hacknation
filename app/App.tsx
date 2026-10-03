@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AgentScreen } from './src/agent/AgentScreen';
 import { ModelCheckScreen } from './src/inference/ModelCheckScreen';
 import { secureVault } from './src/setup/secrets';
 import { SetupScreen } from './src/setup/SetupScreen';
@@ -11,11 +12,13 @@ import { LocalStore } from './src/store/localStore';
 import { httpTransport, startSyncLoop, type SyncResult } from './src/store/sync';
 
 const store = new LocalStore(openExpoDatabase());
-type Tab = 'setup' | 'model';
+type Tab = 'agent' | 'setup' | 'model';
+const TAB_LABELS: Record<Tab, string> = { agent: 'Agent', setup: 'Setup', model: 'Model' };
 
 export default function App() {
-  // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the model tab, where the run starts by itself.
-  const [tab, setTab] = useState<Tab>(process.env.EXPO_PUBLIC_AUTORUN ? 'model' : 'setup');
+  // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the tab where its run starts by itself.
+  const autorun = process.env.EXPO_PUBLIC_AUTORUN;
+  const [tab, setTab] = useState<Tab>(autorun === 'agent' ? 'agent' : autorun ? 'model' : 'agent');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   // The backend is the operator's own Vercel project; its address exists once the website deploy
   // (#18) has saved it, and the sync loop reports "not connected" until then.
@@ -26,7 +29,7 @@ export default function App() {
   return (
     <View style={styles.screen}>
       <View style={styles.tabs} accessibilityRole="tablist">
-        {(['setup', 'model'] as const).map((id) => (
+        {(['agent', 'setup', 'model'] as const).map((id) => (
           <Pressable
             key={id}
             accessibilityRole="tab"
@@ -34,15 +37,13 @@ export default function App() {
             style={[styles.tab, tab === id && styles.tabSelected]}
             onPress={() => setTab(id)}
           >
-            <Text style={[styles.tabText, tab === id && styles.tabTextSelected]}>{id === 'setup' ? 'Setup' : 'Model'}</Text>
+            <Text style={[styles.tabText, tab === id && styles.tabTextSelected]}>{TAB_LABELS[id]}</Text>
           </Pressable>
         ))}
       </View>
-      {tab === 'setup' ? (
-        <SetupScreen store={store} />
-      ) : (
-        <ModelCheckScreen store={store} syncResult={syncResult} />
-      )}
+      {tab === 'agent' && <AgentScreen store={store} />}
+      {tab === 'setup' && <SetupScreen store={store} />}
+      {tab === 'model' && <ModelCheckScreen store={store} syncResult={syncResult} />}
       <StatusBar style="auto" />
     </View>
   );
