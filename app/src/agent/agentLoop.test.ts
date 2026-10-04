@@ -172,6 +172,9 @@ test('a tool call written as text is recovered as a call', async () => {
   const broken = { content: 'reply_to_operator{text:<|"|>Which item first?<|"|>}<tool_call|>\nWhich item first?', toolCalls: [] };
   expect(repairTurn(broken).toolCalls[0].function).toEqual({ name: 'reply_to_operator', arguments: '{"text":"Which item first?"}' });
   expect(repairTurn({ content: 'Sawa. 🌻</|turn>\n<|turn>user', toolCalls: [] }).content).toBe('Sawa. 🌻');
+  expect(repairTurn({ content: 'approve_profile_draft()', toolCalls: [] }).toolCalls[0].function).toEqual({ name: 'approve_profile_draft', arguments: '{}' });
+  expect(repairTurn({ content: 'save_profile_draft({"price": "2000 KES"})', toolCalls: [] }).toolCalls[0].function.arguments).toBe('{"price": "2000 KES"}');
+  expect(repairTurn({ content: 'Ziara inachukua muda gani?', toolCalls: [] }).toolCalls).toEqual([]);
 });
 
 test('a failed precondition ends the turn with its reason, written by the app', async () => {
@@ -191,4 +194,17 @@ test('"what have you saved" is answered by the app from the stored draft', async
     'Nimehifadhi: Bei: 2000 KES; Idadi ya wageni: 12. Ziara zinafanyika siku gani na saa ngapi?',
   );
   expect(describeDraft({}, ['description'], 'sw')).toBe('Bado sijahifadhi chochote kuhusu ziara yako. Ungeielezaje ziara yako kwa mgeni?');
+});
+
+test('a repeated approval request ends the turn instead of looping', async () => {
+  const model = scripted([
+    { content: '', toolCalls: [call('approve_profile_draft', {})] },
+    { content: '', toolCalls: [call('approve_profile_draft', {})] },
+  ]);
+  await runTurn({ model, harness, agent: 'coordinator', history: user, text: TEXT.en });
+  const second = scripted([{ content: '', toolCalls: [call('approve_profile_draft', {})] }]);
+  const { reply, outcomes } = await runTurn({ model: second, harness, agent: 'coordinator', history: user, text: TEXT.en });
+  expect(outcomes[0]).toMatchObject({ status: 'REJECTED', waiting: true });
+  expect(reply).toEqual({ text: TEXT.en.awaitingApproval, fromApp: true });
+  expect(second.seen).toHaveLength(1);
 });

@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
+import type { Translate } from '../inference/translator';
 import { readConfig, readProgress } from '../setup/setupStore';
 import { currentStep, setupSummary } from '../setup/steps';
-import type { FarmProfile } from '@wren/contracts';
-
-import type { Translate } from '../inference/translator';
 import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
-import { buildFarmRecord, farmRecordProblems } from './farmRecord';
+import { farmRecordProblems } from './farmRecord';
+import { preparePublication, previewIsCurrent, publish, type PublicationDeps } from './publication';
+import type { JsonGenerator } from './websiteCreator';
 import { defineTool, type Harness } from './harness';
 import { TEXT, type Language } from './language';
 
@@ -102,7 +102,9 @@ export function registerCoordinatorTools(
   now: () => string,
   language: () => Language,
   translate: Translate | null = null,
+  generateCopy: JsonGenerator | null = null,
 ): void {
+  const publication: PublicationDeps = { translate, generateCopy, newId, now };
   // Every turn must call a tool (tool_choice "required"): Gemma 4 understood Kiswahili requests
   // but, left to choose, answered in text and never called a tool. Plain conversation goes here.
   harness.register(
@@ -170,7 +172,7 @@ export function registerCoordinatorTools(
   harness.register(
     defineTool({
       name: 'approve_profile_draft',
-      description: 'Ask the operator to approve the profile draft so it can be used for the website and listings.',
+      description: 'Ask the operator to approve the profile draft; approving publishes it to the website and listings.',
       args: z.object({}),
       approval: 'operator',
       // Approval builds the Farm record the website and listings read, so everything that record
@@ -185,20 +187,15 @@ export function registerCoordinatorTools(
         if (!ask.length) return problems.length ? text.whatsappMissing : null;
         return `${text.draftIncomplete} ${text.stillNeeded}: ${ask.map((field) => text.fields[field]).join(', ')}. ${text.questions[ask[0]]}`;
       },
+      // The approval card showed this same page (preparePublication keeps one per draft).
       run: async () => {
         const draft = readDraft(store);
-        const existing = store.list<FarmProfile>('Farm')[0] ?? null;
-        const record = await buildFarmRecord({
-          fields: draft.fields,
-          business: readConfig(store).business,
-          existing,
-          translate,
-          newId,
-          now: now(),
-        });
-        store.upsert('Farm', record);
+        // The operator approved the page in the preview; a draft changed since then is not published.
+        if (!previewIsCurrent(store, draft.fields)) throw new Error(TEXT[language()].draftChanged);
+        const prepared = await preparePublication(store, draft.fields, publication);
+        publish(store, prepared, publication);
         writeDraft(store, { ...draft, status: 'APPROVED', updatedAt: now() });
-        return { status: 'APPROVED', farm_id: record.id, version: record.version, reply: TEXT[language()].profilePublished };
+        return { status: 'APPROVED', farm_id: prepared.record.id, version: prepared.record.version, reply: TEXT[language()].profilePublished };
       },
     }),
     ['coordinator'],

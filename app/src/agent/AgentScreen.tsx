@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 import { chat, findModelFile, loadModel, type LoadedModel } from '../inference/localModel';
-import { REMOTE_MODEL_URL, remoteChatModel } from '../inference/remoteModel';
+import { REMOTE_MODEL_URL, REMOTE_WEBSITE_MODEL_URL, remoteChatModel, remoteJsonCompletion } from '../inference/remoteModel';
 import { remoteTranslator, TRANSLATOR_URL } from '../inference/translator';
 import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
 import { runTurn, type ChatMessage, type ModelTurn, type ToolSpec } from './agentLoop';
-import { registerCoordinatorTools } from './coordinatorTools';
+import { readDraft, registerCoordinatorTools } from './coordinatorTools';
+import { preparePublication, type PublicationDeps } from './publication';
 import { Harness, memoryActivityStore, type PendingApproval } from './harness';
 import { LANGUAGE_NAMES, readLanguage, saveLanguage, TEXT, type Language } from './language';
 import { coordinatorPrompt } from './prompts';
@@ -33,17 +35,28 @@ type AgentModel = {
 };
 
 const SHARED_TRANSLATOR = TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null;
+// The website copy model, on a server in development (EXPO_PUBLIC_WEBSITE_MODEL_URL).
+const WEBSITE_COPY = REMOTE_WEBSITE_MODEL_URL ? remoteJsonCompletion(REMOTE_WEBSITE_MODEL_URL) : null;
+const PUBLICATION: PublicationDeps = { translate: SHARED_TRANSLATOR, generateCopy: WEBSITE_COPY, newId, now: () => new Date().toISOString() };
+
+// Development only: EXPO_PUBLIC_AUTORUN=chat-to-website sends these messages, then approves the
+// profile and opens the website, so the whole workflow can be recorded without a tap.
+const SCRIPTED_CONVERSATION = [
+  'Tunaendesha matembezi ya shamba la kahawa ya saa mbili kwa KES 1500 kwa kila mtu, wageni wasiozidi 8. Tunakutana kwenye lango la soko la Ondera.',
+  'Ziara zinafanyika Jumamosi na Jumapili saa tatu asubuhi.',
+];
+const SCRIPTED_APPROVAL = __DEV__ && process.env.EXPO_PUBLIC_AUTORUN === 'chat-to-website';
 
 type ModelState = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; model: AgentModel } | { status: 'error'; message: string };
 
-export function AgentScreen({ store }: { store: LocalStore }) {
+export function AgentScreen({ store, onOpenWebsite }: { store: LocalStore; onOpenWebsite?: () => void }) {
   const [language, setLanguage] = useState<Language>(() => readLanguage(store));
   const languageRef = useRef(language);
   languageRef.current = language;
   const harness = useRef<Harness | null>(null);
   if (!harness.current) {
     harness.current = new Harness({ log: memoryActivityStore(), newId, now: () => new Date().toISOString() });
-    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current, SHARED_TRANSLATOR);
+    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current, SHARED_TRANSLATOR, WEBSITE_COPY);
   }
   // With a translator, the agent works in English and only the operator reads Kiswahili
   // (docs/language.md). Without one, the agent is told to reply in the operator's language.
@@ -92,6 +105,11 @@ export function AgentScreen({ store }: { store: LocalStore }) {
 
   useEffect(() => {
     if (process.env.EXPO_PUBLIC_AUTORUN === 'agent' && modelState.status === 'ready') send(SCRIPTED_MESSAGE[languageRef.current]);
+    if (SCRIPTED_APPROVAL && modelState.status === 'ready') {
+      (async () => {
+        for (const message of SCRIPTED_CONVERSATION) await send(message);
+      })();
+    }
   }, [modelState.status]);
 
   async function send(text: string) {
@@ -186,7 +204,7 @@ export function AgentScreen({ store }: { store: LocalStore }) {
         </View>
         <ModelLine state={modelState} />
         {lines.map((line, index) => (
-          <LineView key={index} line={line} onAnswer={answer} text={text} />
+          <LineView key={index} line={line} onAnswer={answer} text={text} store={store} onOpenWebsite={onOpenWebsite} />
         ))}
         {streaming !== null && <Text style={[styles.bubble, styles.agent]}>{streaming || '…'}</Text>}
       </ScrollView>
@@ -229,16 +247,33 @@ function ModelLine({ state }: { state: ModelState }) {
   return <Text style={styles.status}>{state.model.label}</Text>;
 }
 
-function LineView({ line, onAnswer, text }: { line: Line; onAnswer: (approval: PendingApproval, approved: boolean) => void; text: (typeof TEXT)[Language] }) {
+type LineProps = {
+  line: Line;
+  onAnswer: (approval: PendingApproval, approved: boolean) => void;
+  text: (typeof TEXT)[Language];
+  store: LocalStore;
+  onOpenWebsite?: () => void;
+};
+
+function LineView({ line, onAnswer, text, store, onOpenWebsite }: LineProps) {
   if (line.kind === 'tool') return <Text style={styles.tool}>{line.text}</Text>;
   if (line.kind !== 'approval') {
-    return <Text style={[styles.bubble, line.kind === 'operator' ? styles.operator : styles.agent]}>{line.text}</Text>;
+    const bubble = <Text style={[styles.bubble, line.kind === 'operator' ? styles.operator : styles.agent]}>{line.text}</Text>;
+    if (line.kind !== 'agent' || line.text !== text.profilePublished || !onOpenWebsite) return bubble;
+    return (
+      <View style={styles.published}>
+        {bubble}
+        <OpenWebsite label={text.openWebsite} onPress={onOpenWebsite} />
+      </View>
+    );
   }
   const { approval, answer } = line;
+  const publishing = approval.tool === 'approve_profile_draft';
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{text.approvalNeeded}: {approval.tool}</Text>
       <Text style={styles.status}>{approval.reason}</Text>
+      {publishing && !answer && <PublicationPreview store={store} text={text} onReady={() => SCRIPTED_APPROVAL && setTimeout(() => onAnswer(approval, true), 6000)} />}
       {answer ? (
         <Text style={styles.status}>{answer === 'approved' ? text.youApproved : text.youDeclined}</Text>
       ) : (
@@ -255,8 +290,54 @@ function LineView({ line, onAnswer, text }: { line: Line; onAnswer: (approval: P
   );
 }
 
+// The page approving will publish, shown in the approval card (docs/website-creator.md).
+function PublicationPreview({ store, text, onReady }: { store: LocalStore; text: (typeof TEXT)[Language]; onReady: () => void }) {
+  const [html, setHtml] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    preparePublication(store, readDraft(store).fields, PUBLICATION)
+      .then((publication) => {
+        setHtml(publication.html);
+        onReady();
+      })
+      .catch(() => setFailed(true));
+  }, []);
+  if (failed) return <Text style={styles.error}>{text.previewFailed}</Text>;
+  if (!html) {
+    return (
+      <View style={styles.previewLoading}>
+        <ActivityIndicator />
+        <Text style={styles.status}>{text.previewLoading}</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.previewFrame}>
+      <WebView source={{ html }} originWhitelist={['*']} javaScriptEnabled={false} domStorageEnabled={false} accessibilityLabel="Website preview" />
+    </View>
+  );
+}
+
+function OpenWebsite({ label, onPress }: { label: string; onPress: () => void }) {
+  useEffect(() => {
+    if (SCRIPTED_APPROVAL) {
+      const timer = setTimeout(onPress, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  return (
+    <Pressable style={[styles.button, styles.openWebsite]} onPress={onPress} accessibilityRole="button">
+      <Text style={styles.sendText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff' },
+  published: { gap: 8, alignItems: 'flex-start' },
+  openWebsite: { flex: 0, paddingHorizontal: 16, alignSelf: 'flex-start' },
+  previewLoading: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12 },
+  previewFrame: { height: 420, overflow: 'hidden', borderWidth: 1, borderColor: '#d6dbe0', borderRadius: 10 },
   content: { padding: 16, gap: 10 },
   status: { fontSize: 13, color: '#555' },
   error: { fontSize: 14, color: '#b00020' },

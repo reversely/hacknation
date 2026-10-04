@@ -40,12 +40,31 @@ test('output that is not the schema\'s JSON is rejected', async () => {
   await expect(generateWebsitePage(fenced, translate, profile)).rejects.toThrow('not valid JSON');
 });
 
-test('markup in the copy is rejected even when it fits the schema', async () => {
+test('markup in the copy is never published; the page falls back to copy from the profile', async () => {
   const markup = async () => JSON.stringify({ headline: '<script>alert(1)</script>', introduction: 'Fine.', theme: 'leaf' });
-  await expect(generateWebsitePage(markup, translate, profile)).rejects.toThrow('plain text');
+  const page = await generateWebsitePage(markup, translate, profile);
+  expect(page.headline.en).toBe('Coffee farm walk at Ondera Coffee Farm');
 });
 
 test('a draft profile cannot get a website', async () => {
   const generate = async () => '{}';
   await expect(generateWebsitePage(generate, translate, { ...profile, status: 'DRAFT' })).rejects.toThrow('Approve the farm profile');
+});
+
+test('copy that names places the profile does not, or contains non-Latin text, is replaced', async () => {
+  const { copyProblems } = await import('./websiteCreator');
+  const farm = { ...profile, page: null } as never;
+  expect(copyProblems({ headline: 'Join Us for a Coffee Farm Tour in Nairobi', introduction: 'From the Bub farm.' }, farm)).toEqual([
+    '"Nairobi" is not in the profile',
+    '"Bub" is not in the profile',
+  ]);
+  expect(copyProblems({ headline: 'Walk the coffee rows', introduction: 'Experience local culture and詳' }, farm)).toEqual(['non-Latin text']);
+  expect(copyProblems({ headline: 'Walk the coffee rows at Ondera', introduction: 'Taste fresh coffee.' }, farm)).toEqual([]);
+
+  let calls = 0;
+  const inventive = async () => (calls++, JSON.stringify({ headline: 'A tour in Nairobi', introduction: 'Fresh coffee.', theme: 'coffee' }));
+  const page = await generateWebsitePage(inventive, translate, profile);
+  expect(calls).toBe(3);
+  expect(page.headline.en).toBe('Coffee farm walk at Ondera Coffee Farm');
+  expect(page.introduction.en).toBe('A family coffee farm above Ondera.');
 });

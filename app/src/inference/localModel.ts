@@ -69,6 +69,11 @@ export async function loadModel(file: File, options: { contextTokens?: number } 
   };
 }
 
+export async function loadWebsiteModel(file: File): Promise<LoadedModel> {
+  if (!file.name.toLowerCase().includes('coder')) throw new Error('Choose the Qwen2.5-Coder GGUF file');
+  return loadModel(file, { contextTokens: 4096 });
+}
+
 // One completion constrained to a JSON schema; llama.cpp only lets the model emit matching JSON.
 export async function completeJson(model: LoadedModel, prompt: string, schema: object, maxTokens: number): Promise<string> {
   const result = await model.context.completion({

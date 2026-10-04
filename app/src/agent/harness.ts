@@ -76,7 +76,8 @@ export type HarnessDeps = {
 
 export type CallOutcome =
   // precondition: the call was valid but its precondition failed; the reason is written for the operator.
-  | { status: 'REJECTED'; activityId: string; reason: string; precondition?: true }
+  // waiting: the same call is already waiting for the operator.
+  | { status: 'REJECTED'; activityId: string; reason: string; precondition?: true; waiting?: true }
   | { status: 'AWAITING_APPROVAL'; activityId: string; approval: PendingApproval }
   | { status: 'COMPLETED'; activityId: string; result: unknown }
   | { status: 'FAILED'; activityId: string; error: string };
@@ -132,7 +133,7 @@ export class Harness {
     const waiting = this.alreadyWaiting(agent, tool.name, parsed.data);
     if (waiting) {
       record({ tool: tool.name, args: parsed.data, outcome: 'REJECTED', detail: waiting, result: null });
-      return { status: 'REJECTED', activityId, reason: waiting };
+      return { status: 'REJECTED', activityId, reason: waiting, waiting: true };
     }
 
     const reasonToAsk =

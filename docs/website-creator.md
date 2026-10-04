@@ -7,18 +7,27 @@ approves it, and an Apps Script in Noor's Google account serves it. This file sp
 
 ## Generation
 
-The Website Creator loads Qwen2.5-Coder-1.5B-Instruct with a 4,096-token context to write short
-page copy and choose a theme and section order. Input is the approved Farm record's public fields,
+The Website Creator loads Qwen2.5-Coder-1.5B-Instruct with a 4,096-token context to write a short
+English headline and introduction and choose a theme, in one call constrained by a JSON schema. The
+app fixes the section order, the translation service writes the Kiswahili (docs/language.md), and a
+headline or introduction that names something absent from the profile, contains non-Latin text or
+markup is regenerated up to three times, then replaced by copy built from the profile. Input is the approved Farm record's public fields,
 passed as untrusted data. The model returns a small JSON object; it cannot write HTML. The app
 validates the exact schema and rejects markup, URLs and secret-like text. A fixed HTML template in
 the app renders the copy and structured public profile fields with HTML escaping.
 
 ## Preview and publication
 
-The app renders the page in a WebView for an offline preview. Publication requires a second,
-explicit operator confirmation; the model cannot create that approval. Publishing queues the
-updated Farm record locally and writes it to the Farm row when Google access and internet are
-available. It increments the profile version and preserves the existing profile fields.
+Publication happens in the chat, with one approval (decided by the user on 3 October 2026). When
+the profile draft is complete, the agent asks for approval; the approval card shows the page this
+draft produces, rendered offline in a WebView. Approving saves the Farm record with that page and
+queues the Farm row write; the model cannot create the approval. If the draft changes after the
+preview, approval is refused and must be asked again, so the published page is always the one the
+operator saw. The write runs when Google access and internet are available, increments the profile
+version and preserves the existing profile fields. The Website tab shows the published page.
+
+Until Google sign-in and the Apps Script deployment are set up, the write stays queued and the
+Website tab renders the page from the phone's copy of the Farm record (the simulated path).
 
 The phone writes the row with the Sheets API (`spreadsheets.values.update` on the Farm tab) using
 the `drive.file` scope (`docs/google-access.md`). The model's copy and presentation choices go in a

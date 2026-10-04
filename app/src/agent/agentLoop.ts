@@ -75,6 +75,10 @@ export type TurnResult = { added: ChatMessage[]; outcomes: CallOutcome[]; reply:
 const BROKEN_CALL = /([a-z_]+)\{(\w+):<\|"\|>([\s\S]*?)<\|"\|>\}/;
 const MARKUP = /<\|"\|>|<tool_call\|>|<\/?\|?\/?turn\|?>|<\|tool/;
 
+// It also writes a whole reply that is only a call in function syntax: `approve_profile_draft()` or
+// `save_profile_draft({"price": "2000 KES"})`.
+const CALL_AS_TEXT = /^\s*`?([a-z][a-z0-9_]*)\((\{[\s\S]*\})?\)`?\s*$/;
+
 export function repairTurn(turn: ModelTurn): ModelTurn {
   if (turn.toolCalls.length) return turn;
   const broken = BROKEN_CALL.exec(turn.content);
@@ -82,6 +86,8 @@ export function repairTurn(turn: ModelTurn): ModelTurn {
     const [, name, field, value] = broken;
     return { content: '', toolCalls: [{ type: 'function', function: { name, arguments: JSON.stringify({ [field]: value }) } }] };
   }
+  const asText = CALL_AS_TEXT.exec(turn.content);
+  if (asText) return { content: '', toolCalls: [{ type: 'function', function: { name: asText[1], arguments: asText[2] ?? '{}' } }] };
   return MARKUP.test(turn.content) ? { content: turn.content.split(MARKUP)[0].trim(), toolCalls: [] } : turn;
 }
 
@@ -126,7 +132,11 @@ export async function runTurn(params: {
       added.push({ role: 'assistant', content: text });
       return { added, outcomes, reply: { text, fromApp } };
     };
-    if (roundOutcomes.some((outcome) => outcome.status === 'AWAITING_APPROVAL')) return end(params.text.awaitingApproval, true);
+    // A repeat of a call that is already waiting ends the turn too, instead of looping until the
+    // round limit.
+    if (roundOutcomes.some((o) => o.status === 'AWAITING_APPROVAL' || (o.status === 'REJECTED' && o.waiting))) {
+      return end(params.text.awaitingApproval, true);
+    }
     // A failed precondition carries an operator-facing reason, such as which profile fields are missing.
     const unmet = roundOutcomes.find((outcome) => outcome.status === 'REJECTED' && outcome.precondition);
     if (unmet?.status === 'REJECTED') return end(unmet.reason, true);

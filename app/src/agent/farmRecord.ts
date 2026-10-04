@@ -72,7 +72,8 @@ export type FarmRecordInput = {
 // What blocks the record, named by draft field, so the agent can ask the operator for it.
 export function farmRecordProblems(fields: DraftFields, business: BusinessBasics | null): string[] {
   const problems: string[] = [];
-  if (!(fields.name ?? business?.name)?.trim()) problems.push('name');
+  // The name entered in Setup wins: the model has filled the draft's name with the tour description.
+  if (!(business?.name || fields.name)?.trim()) problems.push('name');
   if (!fields.description) problems.push('description');
   if (!fields.duration || parseDurationMinutes(fields.duration) === null) problems.push('duration');
   if (!fields.price || parsePrice(fields.price) === null) problems.push('price');
@@ -105,7 +106,7 @@ export async function buildFarmRecord(input: FarmRecordInput): Promise<FarmProfi
     updated_at: now,
     status: 'APPROVED',
     approved_at: now,
-    name: (fields.name ?? business!.name).trim(),
+    name: (business?.name || fields.name!).trim(),
     description,
     offerings: [{
       id: existing?.offerings[0]?.id ?? input.newId(),

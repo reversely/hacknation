@@ -1,9 +1,7 @@
 import { FarmProfile, PublicProfileResponse } from '@wren/contracts';
 import { z } from 'zod';
 
-import { loadModel, type LoadedModel } from '../inference/localModel';
 import type { Translate } from '../inference/translator';
-import type { File } from 'expo-file-system';
 import { quoteUntrusted } from './harness';
 
 const LocalizedCopy = z.object({
@@ -30,10 +28,6 @@ export const DEFAULT_WEBSITE_PAGE: WebsitePage = {
   sectionOrder: ['offerings', 'visit', 'policies'],
 };
 
-export async function loadWebsiteModel(file: File): Promise<LoadedModel> {
-  if (!file.name.toLowerCase().includes('coder')) throw new Error('Choose the Qwen2.5-Coder GGUF file');
-  return loadModel(file, { contextTokens: 4096 });
-}
 
 // One-shot generation. The model writes only the English headline, introduction and theme, under a
 // JSON schema that llama.cpp enforces while decoding, so the answer is always parseable. Measured on
@@ -89,8 +83,45 @@ export function parseWebsiteCopy(response: string): z.infer<typeof WebsiteCopy> 
   }
 }
 
+// Capitalised words must come from the profile: the model has placed the farm "in Nairobi" and
+// named it "the Bub". Non-Latin characters are rejected too (one reply contained "and詳").
+const COMMON_CAPITALS = new Set(['A', 'An', 'The', 'Our', 'We', 'Us', 'You', 'Your', 'Join', 'Come', 'Discover', 'Experience', 'Enjoy', 'Visit', 'Taste', 'Walk', 'Explore', 'Welcome', 'Meet', 'Book', 'Coffee', 'Farm', 'Tour', 'Tours', 'Walks', 'With', 'At', 'On', 'In', 'Of', 'And', 'For', 'From', 'To', 'Fresh', 'Day']);
+
+export function copyProblems(copy: { headline: string; introduction: string }, profile: FarmProfile): string[] {
+  const known = JSON.stringify(PublicProfileResponse.parse(profile)).toLowerCase();
+  const text = `${copy.headline} ${copy.introduction}`;
+  const problems: string[] = [];
+  if (/[^\u0000-\u024F\u2010-\u2027\s]/.test(text)) problems.push('non-Latin text');
+  if (secretOrMarkup.test(text)) problems.push('markup or a link');
+  // A capitalised word at the start of a sentence is ordinary; elsewhere it names something.
+  for (const sentence of [copy.headline, ...copy.introduction.split(/(?<=[.!?])\s+/)]) {
+    for (const word of (sentence.match(/\b[A-Z][a-z]+\b/g) ?? []).filter((w, index) => index > 0 || !sentence.trimStart().startsWith(w))) {
+      if (!COMMON_CAPITALS.has(word) && !known.includes(word.toLowerCase())) problems.push(`"${word}" is not in the profile`);
+    }
+  }
+  return problems;
+}
+
+// Used when the model's copy keeps adding facts: built only from the profile.
+export function fallbackCopy(profile: FarmProfile): z.infer<typeof WebsiteCopy> {
+  const offering = profile.offerings[0];
+  return {
+    headline: offering ? `${offering.name.en} at ${profile.name}`.slice(0, 80) : profile.name.slice(0, 80),
+    introduction: profile.description.en.slice(0, 160),
+    theme: 'leaf',
+  };
+}
+
+const COPY_ATTEMPTS = 3;
+
 export async function generateWebsitePage(generate: JsonGenerator, translate: Translate, profile: unknown): Promise<WebsitePage> {
-  const copy = parseWebsiteCopy(await generate(websitePrompt(profile), WEBSITE_COPY_SCHEMA, 300));
+  const farm = FarmProfile.parse(profile);
+  let copy: z.infer<typeof WebsiteCopy> | null = null;
+  for (let attempt = 0; attempt < COPY_ATTEMPTS && !copy; attempt++) {
+    const candidate = parseWebsiteCopy(await generate(websitePrompt(farm), WEBSITE_COPY_SCHEMA, 300));
+    if (copyProblems(candidate, farm).length === 0) copy = candidate;
+  }
+  copy ??= fallbackCopy(farm);
   const [headlineSw, introductionSw] = await Promise.all([
     translate(copy.headline, 'en', 'sw'),
     translate(copy.introduction, 'en', 'sw'),

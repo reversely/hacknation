@@ -1,172 +1,52 @@
-import type { FarmProfile } from '@wren/contracts';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import '../gmail/gmailConnector';
-import { completeJson, findWebsiteModelFile } from '../inference/localModel';
-import { REMOTE_WEBSITE_MODEL_URL, remoteJsonCompletion } from '../inference/remoteModel';
-import { remoteTranslator, TRANSLATOR_URL } from '../inference/translator';
 import type { GoogleApi } from '../store/google';
-import { newId } from '../store/ids';
-import { SPREADSHEET_ID_KEY } from '../store/outbox';
-import { syncOnce } from '../store/outbox';
 import type { LocalStore } from '../store/localStore';
 import { WEBSITE_URL_KEY } from '../website/appsScriptWebsite';
-import { generateWebsitePage, loadWebsiteModel, renderWebsitePreviewHtml, type JsonGenerator, type WebsitePage } from './websiteCreator';
+import { publishedFarm } from './publication';
+import { renderWebsitePreviewHtml, validateWebsitePage } from './websiteCreator';
 
-// The Kiswahili copy comes from the translation service (docs/language.md).
-const translate = TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null;
-
-export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; google: GoogleApi }) {
-  const [generate, setGenerate] = useState<JsonGenerator | null>(null);
-  const [modelMessage, setModelMessage] = useState('Loading the website model…');
-  const [page, setPage] = useState<WebsitePage | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [profile, setProfile] = useState<FarmProfile | null>(() =>
-    store.list<FarmProfile>('Farm').find((record) => record.status === 'APPROVED') ?? null,
-  );
-  const [websiteUrl, setWebsiteUrl] = useState<string | null>(() => store.getMeta(WEBSITE_URL_KEY));
-
-  useEffect(() => {
-    let active = true;
-    if (REMOTE_WEBSITE_MODEL_URL) {
-      setGenerate(() => remoteJsonCompletion(REMOTE_WEBSITE_MODEL_URL));
-      setModelMessage(`Model server ${REMOTE_WEBSITE_MODEL_URL}`);
-      return;
-    }
-    let loaded: Awaited<ReturnType<typeof loadWebsiteModel>> | null = null;
-    const file = findWebsiteModelFile();
-    if (!file) {
-      setModelMessage('Add the Qwen2.5-Coder GGUF file to Documents/models to create a page offline.');
-      return;
-    }
-    loadWebsiteModel(file).then((result) => {
-      loaded = result;
-      if (active) {
-        setGenerate(() => (prompt: string, schema: object, maxTokens: number) => completeJson(result, prompt, schema, maxTokens));
-        setModelMessage(`${result.fileName} ready on the ${result.gpu ? 'GPU' : 'CPU'}`);
-      } else {
-        result.context.release();
-      }
-    }).catch(() => {
-      if (active) setModelMessage('The website model could not be loaded. Check the GGUF file and try again.');
-    });
-    return () => {
-      active = false;
-      loaded?.context.release();
-    };
-  }, []);
-
-  // Lets a scripted check run without a tap: start Metro with EXPO_PUBLIC_AUTORUN=website.
-  useEffect(() => {
-    if (process.env.EXPO_PUBLIC_AUTORUN === 'website' && generate && profile && !page && !busy) createPreview();
-  }, [generate]);
-
-  async function createPreview() {
-    if (!generate || !profile) return;
-    if (!translate) {
-      setMessage('The Kiswahili copy needs the translation service. Set EXPO_PUBLIC_TRANSLATOR_URL.');
-      return;
-    }
-    setBusy(true);
-    setMessage(null);
-    setConfirming(false);
-    try {
-      setPage(await generateWebsitePage(generate, translate, profile));
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The page could not be created.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function publish() {
-    if (!profile || !page) return;
-    if (!store.getMeta(SPREADSHEET_ID_KEY)) {
-      setMessage('Finish setting up the business spreadsheet before publishing.');
-      setConfirming(false);
-      return;
-    }
-    const deployedUrl = store.getMeta(WEBSITE_URL_KEY);
-    if (!deployedUrl) {
-      setMessage('Build the public website in Setup before publishing this page.');
-      setConfirming(false);
-      return;
-    }
-    setBusy(true);
-    setConfirming(false);
-    const now = new Date().toISOString();
-    const updated = { ...profile, page, version: profile.version + 1, updated_at: now };
-    const actionId = newId();
-    store.enqueue({ id: actionId, type: 'save_profile', approved_by: 'OPERATOR', approved_at: now, profile: updated }, now);
-    await syncOnce(store, google, () => new Date().toISOString());
-    const receipt = store.outbox().find((entry) => entry.id === actionId);
-    // The general sync can fail on an unrelated calendar pull after the page write completed.
-    // Check the specific action receipt so the UI describes the publication result accurately.
-    if (receipt?.status === 'COMPLETED') {
-      setProfile(updated);
-      setWebsiteUrl(deployedUrl);
-      setMessage('The approved page is live on the public website.');
-    } else if (receipt?.status === 'FAILED') {
-      setMessage('Google rejected this page write. Check the spreadsheet access and try again.');
-    } else {
-      setMessage('Publication is queued on this phone. It will sync when Google access and internet are available.');
-    }
-    setBusy(false);
-  }
+// The published website, as the Apps Script page renders it from the Farm row. Publishing happens
+// in the chat: approving the profile there writes the row (docs/website-creator.md). Until the row
+// reaches the spreadsheet, this view renders it from the phone's own copy.
+export function WebsiteCreatorScreen({ store }: { store: LocalStore; google: GoogleApi }) {
+  const [farm] = useState(() => publishedFarm(store));
+  const websiteUrl = store.getMeta(WEBSITE_URL_KEY);
+  const waiting = store.outbox().some((entry) => entry.type === 'save_profile' && entry.status !== 'COMPLETED');
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.title}>Website</Text>
-      <Text style={styles.detail}>{modelMessage}</Text>
-      {!profile ? (
-        <Text style={styles.detail}>Save and approve the farm profile first. The website uses only approved profile details.</Text>
+      {!farm ? (
+        <Text style={styles.detail}>Tell Wren about your tour in the Agent tab and approve the profile. Your page appears here.</Text>
       ) : (
         <>
-          <Text style={styles.detail}>Create a page in English and Kiswahili, preview it offline, then approve publication.</Text>
-          <Button label={busy ? 'Working…' : 'Create page preview'} disabled={busy || !generate} onPress={createPreview} />
-        </>
-      )}
-      {message && <Text accessibilityRole="alert" style={styles.detail}>{message}</Text>}
-      {websiteUrl && (
-        <Pressable onPress={() => void Linking.openURL(websiteUrl)} accessibilityRole="link">
-          <Text style={styles.link}>Open Noor’s website: {websiteUrl}</Text>
-        </Pressable>
-      )}
-      {page && profile && (
-        <>
+          <Text style={styles.detail}>
+            {!websiteUrl
+              ? 'Published on this phone. Build the public website in Setup to put it online.'
+              : waiting
+                ? 'Published on this phone. It goes online when your Google account syncs.'
+                : 'Your public website shows this page.'}
+          </Text>
+          {websiteUrl && (
+            <Pressable onPress={() => void Linking.openURL(websiteUrl)} accessibilityRole="link">
+              <Text style={styles.link}>Open your website: {websiteUrl}</Text>
+            </Pressable>
+          )}
           <View style={styles.preview}>
             <WebView
-              source={{ html: renderWebsitePreviewHtml(profile, page) }}
+              source={{ html: renderWebsitePreviewHtml(farm, validateWebsitePage(farm.page)) }}
               originWhitelist={['*']}
               javaScriptEnabled={false}
               domStorageEnabled={false}
-              accessibilityLabel="Offline farm website preview"
+              accessibilityLabel="Your published farm website"
             />
           </View>
-          {confirming ? (
-            <View style={styles.confirm}>
-              <Text style={styles.detail}>This publishes the approved page to Noor’s public website.</Text>
-              <Button label="Confirm and publish" disabled={busy} onPress={publish} />
-              <Button label="Cancel" disabled={busy} onPress={() => setConfirming(false)} secondary />
-            </View>
-          ) : (
-            <Button label="Publish this page" disabled={busy} onPress={() => setConfirming(true)} />
-          )}
         </>
       )}
     </ScrollView>
-  );
-}
-
-function Button({ label, disabled, onPress, secondary = false }: { label: string; disabled?: boolean; onPress: () => void; secondary?: boolean }) {
-  return (
-    <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]}>
-      <Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -175,11 +55,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', color: '#1d2c20' },
   detail: { fontSize: 14, lineHeight: 20, color: '#425247' },
   link: { fontSize: 14, lineHeight: 20, color: '#315c3a', textDecorationLine: 'underline' },
-  button: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingHorizontal: 16, backgroundColor: '#315c3a' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  secondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#315c3a' },
-  secondaryText: { color: '#315c3a' },
-  disabled: { opacity: 0.5 },
-  preview: { height: 560, overflow: 'hidden', borderWidth: 1, borderColor: '#d9dfd5', borderRadius: 14 },
-  confirm: { gap: 10, padding: 14, borderWidth: 1, borderColor: '#d9dfd5', borderRadius: 12, backgroundColor: '#f7faf5' },
+  preview: { height: 600, overflow: 'hidden', borderWidth: 1, borderColor: '#d9dfd5', borderRadius: 14 },
 });
