@@ -2,7 +2,14 @@
 
 The brief asks: "Please explain in 60 sec what was challenging to build, how you overcame the
 challenges and what are remaining limitations." The voice-over is the team's own text, with the
-figures checked against the sources below and one sentence added on the remaining limitation.
+context figures and the operator's challenges added at the start, the figures checked against the
+sources below, and one sentence added on the remaining limitation.
+
+Kenya's coffee auction price fell 27.5% in early 2026, and more than 800,000 smallholder farmers grow
+coffee. Yet 2.55 million international visitors came to Kenya in 2025. Farmers like Noor could host
+them, but without a computer, reliable internet or time away from the farm, managing bookings, reviews
+and a website is hard. With Wren, small tour operators respond to inquiries quickly, summarize
+customer insights, and manage their digital presence from a phone, checking in once a week.
 
 During our build, we quickly ran into a problem: small, local models don't work very well on obscure
 languages.
@@ -27,6 +34,13 @@ and inclusive access to Internet resources across the globe, and we hope our too
 demonstration of this principle put in practice.
 
 ## Sources for the figures
+
+- Coffee auction price, US$7.82/kg in January to US$5.67/kg in March 2026, a 27.5% fall calculated
+  from the table; the figures are provisional: KNBS, *Leading Economic Indicators, June 2026*,
+  Table 6, p. 13.
+- More than 800,000 smallholder farmers in Kenya's coffee sector: FAO Kenya, 21 July 2025.
+- International visitor arrivals, 2,550,600 in 2025: KNBS, *Economic Survey 2026: Popular Version*,
+  p. 12.
 
 - About 1 in 20 typed Kiswahili requests understood by Qwen3 1.7B on llama.cpp, the first agent model
   tried: `docs/architecture.md`.
