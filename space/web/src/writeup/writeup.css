@@ -115,3 +115,7 @@
 .wu-points { max-width: 780px; padding-left: 20px; font: 16px/1.6 var(--sans); color: var(--ink2); display: grid; gap: 8px; margin-top: 18px; }
 .wu-points strong { color: var(--ink); }
 @media (max-width: 900px) { .wu-split { grid-template-columns: minmax(0, 1fr); } .wu-fields li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.wu-lead { font-style: normal; font-weight: 600; font-size: clamp(19px, 1.6vw, 24px); opacity: 1; }
+.wu-lead-small { max-width: 680px; margin: 12px 0 0; font: 15px/1.55 var(--sans); opacity: 0.75; }
+.wu-key { max-width: 780px; margin: 14px 0 0; font-size: clamp(20px, 1.8vw, 25px); font-weight: 600; line-height: 1.35; color: var(--ink); }
+.wu-detail { max-width: 720px; margin: 10px 0 0; font: 16px/1.6 var(--sans); color: var(--ink2); }

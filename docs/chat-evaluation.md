@@ -4,7 +4,9 @@ The demonstration Space's visitor chat answers questions on a farm's website wit
 Instruct. This document measures how often it hallucinates, meaning it delivers a reply that states
 something the site's facts do not say or that contradicts them, under three configurations. The
 strict pipeline delivered a hallucinated reply for 1 of 58 questions, against 27 of 58 for the
-chat's first prompt.
+chat's first prompt. Put as accuracy, the share of replies that say nothing false (a correct answer,
+"I don't know", or a hand-over to the owner), it rose from 53% (31 of 58) to 98% (57 of 58); the
+guidelines alone reached 64% (37 of 58).
 
 The Space shows these results as an animated page at `https://reversely-wren.hf.space/?view=evaluation`,
 also linked from the demonstration's role panel; `space/web/src/writeup/data.ts` holds its figures.
