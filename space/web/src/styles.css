@@ -570,3 +570,29 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 .chart .fill { background: var(--green); border-radius: 5px 5px 0 0; min-height: 4px; max-height: calc(100% - 18px); }
 .chart .axis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; text-align: center; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .bars { display: none; }
+
+/* The dashboard fits one phone screen: a compact live row, one row of four figures, a slim rating
+   line, a low chart and tight insights, leaving the first request in view. */
+.live-card { grid-template-columns: 44px minmax(0, 1fr) 36px; align-items: center; padding: 12px; gap: 10px; }
+.site-thumb { width: 44px; height: 44px; border-radius: 8px; }
+.site-thumb .thumb-bar { flex-basis: 6px; }
+.live-title { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-text .url { font-size: 12px; margin-top: 1px; }
+.open-site { margin: 0; width: 36px; height: 36px; min-height: 0; padding: 0; border-radius: 10px; font-size: 17px; position: relative; }
+.open-site::before { content: ''; position: absolute; inset: -4px; }
+.dash { padding: 12px; gap: 8px; }
+.dash .kind { margin-top: 2px; font-size: 10px; }
+.kpis { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.kpi { padding: 8px 6px; border-radius: 8px; text-align: center; justify-items: center; }
+.kpi strong { font-size: 20px; }
+.kpi span { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.kpi.rating { display: flex; justify-content: flex-start; align-items: baseline; gap: 8px; margin: 0; padding: 7px 10px; text-align: left; }
+.kpi.rating strong { font-size: 18px; }
+.kpi.rating .stars { font-size: 14px; letter-spacing: 1px; color: #c98a1b; }
+.kpi.rating .rating-text { font-size: 12px; color: var(--ink-2); }
+.chart { gap: 4px; }
+.chart .plot { height: 58px; gap: 8px; }
+.chart .value { font-size: 10px; min-height: 12px; }
+.chart .fill { max-height: calc(100% - 14px); }
+.chart .axis { font-size: 10px; gap: 8px; }
+.insights { font-size: 13px; gap: 2px; line-height: 1.35; }

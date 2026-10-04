@@ -276,8 +276,8 @@ function siteScreen(ctx: Context): Screen {
       { class: 'live-text' },
       h('div', { class: 'live-title' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live),
       h('div', { class: 'url' }, ctx.inbox.url),
-      h('button', { type: 'button', class: 'open-site', onclick: () => ctx.inbox.openSite() }, `${t.open} ↗`),
     ),
+    h('button', { type: 'button', class: 'open-site', 'aria-label': t.open, title: t.open, onclick: () => ctx.inbox.openSite() }, '↗'),
   );
   const items = [...ctx.inbox.items].reverse();
   const actions = (...buttons: [string, () => void, boolean?][]) => h('div', { class: 'actions' }, ...buttons.map(([label, action, primary]) => h('button', { type: 'button', class: primary ? 'approve' : '', onclick: action }, label)));
@@ -354,8 +354,9 @@ function dashboard(ctx: Context, items: VisitorItem[]): HTMLElement {
     h(
       'div',
       { class: 'kpi rating' },
-      h('div', {}, h('strong', {}, reviews.length ? average.toFixed(1) : '–'), h('span', {}, t.kpiRating)),
-      h('div', { class: 'rating-side' }, h('span', { class: 'stars', 'aria-label': `${average.toFixed(1)} / 5` }, '★'.repeat(rounded) + '☆'.repeat(5 - rounded)), h('span', {}, reviews.length === 1 ? t.fromOne : t.fromMany.replace('{n}', String(reviews.length)))),
+      h('strong', {}, reviews.length ? average.toFixed(1) : '–'),
+      h('span', { class: 'stars', 'aria-label': `${average.toFixed(1)} / 5` }, '★'.repeat(rounded) + '☆'.repeat(5 - rounded)),
+      h('span', { class: 'rating-text' }, `${t.kpiRating}, ${reviews.length === 1 ? t.fromOne : t.fromMany.replace('{n}', String(reviews.length))}`),
     ),
     h('div', { class: 'kind' }, t.chart),
     h(
