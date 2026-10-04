@@ -13,10 +13,10 @@ export function svg(tag: string, attrs: Record<string, string | number> = {}, ..
 export type Bar = { label: string; value: number; of?: number; tone: 'base' | 'mid' | 'good' };
 
 // Horizontal bars, one per row, with the value at the bar's end.
-export function barChart(rows: Bar[], max: number, unit = ''): SVGElement {
+export function barChart(rows: Bar[], max: number, unit = '', labelWidth = 178): SVGElement {
   const rowH = 44;
-  const labelW = 178;
-  const width = 480;
+  const labelW = labelWidth;
+  const width = 480 + (labelWidth - 178);
   const plotW = width - labelW - 76;
   const chart = svg('svg', { viewBox: `0 0 ${width} ${rows.length * rowH + 8}`, class: 'chart bars-h', role: 'img' });
   rows.forEach((r, i) => {
@@ -85,12 +85,14 @@ export function runLines(runs: { run: string; a: number; b: number }[], labels: 
 export function countUp(root: Element): void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   for (const el of root.querySelectorAll<SVGTextElement | HTMLElement>('[data-count]')) {
-    const target = Number(el.getAttribute('data-count'));
-    const suffix = (el.textContent ?? '').replace(/^\d+/, '');
+    const raw = el.getAttribute('data-count') ?? '0';
+    const target = Number(raw);
+    const decimals = raw.includes('.') ? raw.split('.')[1].length : 0;
+    const suffix = (el.textContent ?? '').replace(/^[\d.]+/, '');
     const start = performance.now();
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / 900);
-      el.textContent = `${Math.round(target * (1 - Math.pow(1 - t, 3)))}${suffix}`;
+      el.textContent = `${(target * (1 - Math.pow(1 - t, 3))).toFixed(decimals)}${suffix}`;
       if (t < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);

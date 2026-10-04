@@ -8,6 +8,9 @@ chat's first prompt.
 
 The Space shows these results as an animated page at `https://reversely-wren.hf.space/?view=evaluation`,
 also linked from the demonstration's role panel; `space/web/src/writeup/data.ts` holds its figures.
+The page also covers the move from the spoken interview to the form (`docs/interview.md`,
+`app/src/survey`), the benchmarks behind the model choices (`docs/interview.md`), and privacy and data
+retention (`docs/architecture.md` for the phone; Caching in `docs/space.md` for the Space).
 
 ## Configurations
 

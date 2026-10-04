@@ -102,3 +102,16 @@
 .wu-panel .chart .row-label { font-size: 15px; }
 .wu-panel .chart .row-value { font-size: 15px; }
 .chart.lines { max-height: 300px; }
+.wu-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.wu-fields { list-style: none; margin: 12px 0 6px; padding: 0; display: grid; gap: 6px; font-family: var(--sans); }
+.wu-fields li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 10px; align-items: baseline; padding: 8px 10px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.05); font-size: 14px; }
+.wu-fields strong { font-weight: 600; }
+.wu-fields span { color: var(--ink2); }
+.wu-fields em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #dceadf; color: var(--g2); white-space: nowrap; }
+.wu-fields li.model em { background: #f3e7cf; color: #7a5410; }
+.wu-table { width: 100%; max-width: 780px; margin-top: 18px; border-collapse: collapse; font: 15px var(--sans); }
+.wu-table th { text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); padding: 8px 10px; border-bottom: 1px solid rgb(0 0 0 / 0.15); }
+.wu-table td { padding: 10px; border-bottom: 1px solid rgb(0 0 0 / 0.07); }
+.wu-points { max-width: 780px; padding-left: 20px; font: 16px/1.6 var(--sans); color: var(--ink2); display: grid; gap: 8px; margin-top: 18px; }
+.wu-points strong { color: var(--ink); }
+@media (max-width: 900px) { .wu-split { grid-template-columns: minmax(0, 1fr); } .wu-fields li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }

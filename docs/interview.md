@@ -114,6 +114,13 @@ the deciding run no benchmark process made a connection outside the machine.
 | Whisper large-v3 | 49% | 50% |
 | Whisper small | 73% | 80% |
 
+`bench/interview/finetune_ctc.py` fine-tuned the w2v-BERT 2.0 model on the 196-clip training split of
+the synthetic domain set (15 epochs, 261 seconds on the Veriton's GPU). On the 122 persona clips,
+which share no voice or sentence with the training clips, word error rate fell from 24.5% to 15.7%.
+The synthetic set's own development split reached 0%, which reflects its shared voices and sentence
+patterns rather than general accuracy. The fine-tuned model has not yet run through the full
+interview benchmark.
+
 Stock Whisper models garbled Kiswahili numbers ("shilingi elfu moja na mia tano" heard as
 "Shilingelf mudia na miatano"), and no translation model recovered them. The phone stack misses
 English names said inside Kiswahili and answers given in English; the read-back is where the

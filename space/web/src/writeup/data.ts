@@ -75,3 +75,41 @@ export const LAYERS: { name: string; does: string }[] = [
   { name: 'Checks after the model', does: 'Unknown topics, new numbers, links, commitments and wrong open days are held back' },
   { name: 'Visitor or owner', does: 'A supported answer reaches the visitor; anything else reaches the owner\'s phone' },
 ];
+
+// From conversation to a form (docs/interview.md and app/src/survey). The spoken interview had a
+// model extract every field; the survey takes values from form controls, and the model only writes
+// short copy that code checks against the facts.
+export const INTERVIEW_PIPELINES: { label: string; fieldsCorrect: number }[] = [
+  { label: 'Ceiling stack', fieldsCorrect: 71 },
+  { label: 'Phone stack', fieldsCorrect: 70 },
+  { label: 'Smaller agent (E4B)', fieldsCorrect: 62 },
+];
+export const FORM_FIELDS: { field: string; source: string; model: boolean }[] = [
+  { field: 'Prices', source: 'Number field', model: false },
+  { field: 'Durations', source: 'Hours and minutes fields', model: false },
+  { field: 'Group size', source: 'Number field', model: false },
+  { field: 'Open days', source: 'Day buttons', model: false },
+  { field: 'Time slots', source: 'Time pickers', model: false },
+  { field: 'Phone number', source: 'Phone field, country code added in code', model: false },
+  { field: 'Headline, introduction, service sentences', source: 'Coding model, as JSON, checked against the facts', model: true },
+];
+
+// Benchmarks run offline on the Veriton (docs/interview.md).
+export const STT_WER: { model: string; persona: number; synthetic: number }[] = [
+  { model: 'w2v-BERT 2.0 Kiswahili fine-tune', persona: 24, synthetic: 18 },
+  { model: 'Whisper large-v3 Kiswahili fine-tune', persona: 26, synthetic: 16 },
+  { model: 'MMS-1B-all', persona: 29, synthetic: 23 },
+  { model: 'Whisper large-v3', persona: 49, synthetic: 50 },
+  { model: 'Whisper small', persona: 73, synthetic: 80 },
+];
+export const FINE_TUNE = { before: 24.5, after: 15.7, trainingClips: 196, heldOutClips: 122 };
+
+// Every model the project runs, open-weight at a pinned revision (space/models.json, docs/interview.md).
+export const MODELS_USED: { model: string; role: string; licence: string }[] = [
+  { model: 'Gemma 4 E2B Instruct', role: 'Phone agent, reply drafts, insights', licence: 'Apache 2.0' },
+  { model: 'Qwen2.5-Coder 1.5B Instruct', role: 'Website copy', licence: 'Apache 2.0' },
+  { model: 'Qwen2.5 0.5B Instruct', role: 'Visitor chat', licence: 'Apache 2.0' },
+  { model: 'NLLB-200 distilled 600M', role: 'Translation', licence: 'CC BY-NC 4.0' },
+  { model: 'w2v-BERT 2.0 Kiswahili fine-tune', role: 'Speech to text', licence: 'CC BY 4.0' },
+  { model: 'MMS-TTS Kiswahili', role: 'Wren\'s voice', licence: 'CC BY-NC 4.0' },
+];
