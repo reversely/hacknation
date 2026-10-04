@@ -132,3 +132,13 @@
 .wu-next .wu-key + .wu-detail + .wu-key { margin-top: 26px; }
 @media (prefers-reduced-motion: reduce) { .wu-fact, .wu-steps li { opacity: 1 !important; transform: none !important; transition: none !important; } }
 @media (max-width: 900px) { .wu-context-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* The checks' layers as a vertical flow: one wide row per step, joined by a line, so each name and
+   description reads at full size. */
+.wu-layers { grid-template-columns: minmax(0, 1fr); gap: 0; max-width: 820px; position: relative; }
+.wu-layers li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 18px; align-items: start; padding: 18px 22px; margin: 0 0 12px; border-radius: 14px; }
+.wu-layers li::after { content: ''; position: absolute; left: 41px; top: 100%; width: 2px; height: 12px; background: #b9c8bc; }
+.wu-layers li:last-child::after { display: none; }
+.wu-layers .wu-step { width: 36px; height: 36px; font-size: 15px; }
+.wu-layers strong { margin-top: 4px; font-size: 22px; }
+.wu-layers p { margin-top: 6px; font-size: 16px; line-height: 1.5; }
