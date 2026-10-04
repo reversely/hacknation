@@ -19,7 +19,7 @@ export function remoteChatModel(baseUrl: string): ChatModel {
       body: JSON.stringify({
         messages,
         tools,
-        tool_choice: 'auto',
+        tool_choice: 'required',
         temperature: 0.3,
         max_tokens: 384,
         // Same settings as the phone (localModel.chat): no thinking, reasoning split from the reply.

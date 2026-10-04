@@ -27,7 +27,7 @@ export type CompletionMetrics = {
 };
 
 // The chosen general model (docs/architecture.md section 2); any other GGUF is a fallback.
-export const GENERAL_MODEL_FILE = 'Qwen3-1.7B-Q4_K_M.gguf';
+export const GENERAL_MODEL_FILE = 'gemma-4-E2B-it-Q4_K_M.gguf';
 export const WEBSITE_MODEL_FILE = 'qwen2.5-coder-1.5b-instruct-q4_k_m.gguf';
 
 export function findWebsiteModelFile(): File | null {
@@ -111,7 +111,8 @@ export async function chat(
       messages: messages as RNLlamaOAICompatibleMessage[],
       jinja: true,
       tools,
-      tool_choice: 'auto',
+      // See reply_to_operator in coordinatorTools.ts for why every turn must call a tool.
+      tool_choice: 'required',
       enable_thinking: false,
       // Moves the empty <think></think> block Qwen3 still writes out of the reply text.
       reasoning_format: 'auto',

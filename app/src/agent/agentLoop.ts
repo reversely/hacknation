@@ -19,8 +19,6 @@ export type ToolSpec = { type: 'function'; function: { name: string; description
 
 export type ChatModel = (messages: ChatMessage[], tools: ToolSpec[]) => Promise<ModelTurn>;
 
-export const AWAITING_APPROVAL_REPLY = 'This needs your approval. Please approve or decline it below.';
-
 // Each tool round costs a full generation on the phone, so a turn stops after a few rounds.
 const MAX_ROUNDS = 4;
 
@@ -51,13 +49,49 @@ export function outcomeForModel(outcome: CallOutcome): string {
   }
 }
 
-export type TurnResult = { added: ChatMessage[]; outcomes: CallOutcome[] };
+// A completed tool can hand the turn its closing line: `reply` from the reply tool, or a
+// `follow_up` question from a save that left fields missing.
+function resultField(outcomes: CallOutcome[], field: 'reply' | 'follow_up'): string | null {
+  for (const outcome of [...outcomes].reverse()) {
+    if (outcome.status !== 'COMPLETED') continue;
+    const value = (outcome.result as Record<string, unknown> | null)?.[field];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function lastFollowUp(outcomes: CallOutcome[]): string | null {
+  return resultField(outcomes.slice(-1), 'follow_up');
+}
+
+// The operator's closing line for the turn, and whether the app (not the model) wrote it. App
+// lines are already in the operator's language; model lines may need translating.
+export type TurnResult = { added: ChatMessage[]; outcomes: CallOutcome[]; reply: { text: string; fromApp: boolean } | null };
+
+// Gemma 4 E2B sometimes writes a tool call as text instead of a call, for example
+// `reply_to_operator{text:<|"|>Which item first?<|"|>}<tool_call|>`, which llama.cpp passes through as
+// content. The call is recovered; any other leftover chat markup is cut off, so it never reaches
+// the translator or the operator.
+const BROKEN_CALL = /([a-z_]+)\{(\w+):<\|"\|>([\s\S]*?)<\|"\|>\}/;
+const MARKUP = /<\|"\|>|<tool_call\|>|<\/?\|?\/?turn\|?>|<\|tool/;
+
+export function repairTurn(turn: ModelTurn): ModelTurn {
+  if (turn.toolCalls.length) return turn;
+  const broken = BROKEN_CALL.exec(turn.content);
+  if (broken) {
+    const [, name, field, value] = broken;
+    return { content: '', toolCalls: [{ type: 'function', function: { name, arguments: JSON.stringify({ [field]: value }) } }] };
+  }
+  return MARKUP.test(turn.content) ? { content: turn.content.split(MARKUP)[0].trim(), toolCalls: [] } : turn;
+}
 
 export async function runTurn(params: {
   model: ChatModel;
   harness: Harness;
   agent: AgentName;
   history: ChatMessage[];
+  // The app's own lines, in the operator's language.
+  text: { awaitingApproval: string; stopped: string };
 }): Promise<TurnResult> {
   const { model, harness, agent } = params;
   const tools = toolSpecs(harness, agent);
@@ -65,22 +99,43 @@ export async function runTurn(params: {
   const outcomes: CallOutcome[] = [];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
-    const turn = await model([...params.history, ...added], tools);
+    const turn = repairTurn(await model([...params.history, ...added], tools));
     added.push({ role: 'assistant', content: turn.content, ...(turn.toolCalls.length ? { tool_calls: turn.toolCalls } : {}) });
-    if (turn.toolCalls.length === 0) return { added, outcomes };
+    if (turn.toolCalls.length === 0) {
+      // A tool can name the question the operator should be asked next. When the model's reply asks
+      // nothing, the app asks it, so the conversation never stalls on a small model's reply.
+      const followUp = lastFollowUp(outcomes);
+      if (followUp && !turn.content.includes('?')) {
+        added.push({ role: 'assistant', content: followUp });
+        return { added, outcomes, reply: { text: followUp, fromApp: true } };
+      }
+      return { added, outcomes, reply: turn.content ? { text: turn.content, fromApp: false } : null };
+    }
 
+    const roundOutcomes: CallOutcome[] = [];
     for (const call of turn.toolCalls) {
       const outcome = await harness.propose(agent, fromModelToolCall(call));
-      outcomes.push(outcome);
+      roundOutcomes.push(outcome);
       added.push({ role: 'tool', name: call.function.name, tool_call_id: call.id, content: outcomeForModel(outcome) });
     }
-    // A small model asked to describe a held call has claimed it was done. The app says what is
-    // waiting instead, which also saves a model round.
-    if (outcomes.some((outcome) => outcome.status === 'AWAITING_APPROVAL')) {
-      added.push({ role: 'assistant', content: AWAITING_APPROVAL_REPLY });
-      return { added, outcomes };
-    }
+    outcomes.push(...roundOutcomes);
+    // The turn ends after an action instead of asking the model to describe it: a small model asked
+    // to describe a held call has claimed it was done, and Gemma 4 E2B's text after a tool call
+    // loops. What the operator reads next comes from the app or from the reply tool.
+    const end = (text: string, fromApp: boolean): TurnResult => {
+      added.push({ role: 'assistant', content: text });
+      return { added, outcomes, reply: { text, fromApp } };
+    };
+    if (roundOutcomes.some((outcome) => outcome.status === 'AWAITING_APPROVAL')) return end(params.text.awaitingApproval, true);
+    // A failed precondition carries an operator-facing reason, such as which profile fields are missing.
+    const unmet = roundOutcomes.find((outcome) => outcome.status === 'REJECTED' && outcome.precondition);
+    if (unmet?.status === 'REJECTED') return end(unmet.reason, true);
+    // The reply tool's text comes from the model; summaries and follow-up questions come from the app.
+    const said = resultField(roundOutcomes, 'reply');
+    if (said) return end(said, !roundOutcomes.some((o) => o.status === 'COMPLETED' && (o.result as { said_by_model?: boolean } | null)?.said_by_model));
+    const followUp = resultField(roundOutcomes, 'follow_up');
+    if (followUp) return end(followUp, true);
   }
-  added.push({ role: 'assistant', content: 'I stopped after several steps. Please tell me how to continue.' });
-  return { added, outcomes };
+  added.push({ role: 'assistant', content: params.text.stopped });
+  return { added, outcomes, reply: { text: params.text.stopped, fromApp: true } };
 }

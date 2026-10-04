@@ -3,19 +3,23 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 
 import { chat, findModelFile, loadModel, type LoadedModel } from '../inference/localModel';
 import { REMOTE_MODEL_URL, remoteChatModel } from '../inference/remoteModel';
+import { remoteTranslator, TRANSLATOR_URL } from '../inference/translator';
 import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
 import { runTurn, type ChatMessage, type ModelTurn, type ToolSpec } from './agentLoop';
 import { registerCoordinatorTools } from './coordinatorTools';
 import { Harness, memoryActivityStore, type PendingApproval } from './harness';
-import { COORDINATOR_PROMPT } from './prompts';
+import { LANGUAGE_NAMES, readLanguage, saveLanguage, TEXT, type Language } from './language';
+import { coordinatorPrompt } from './prompts';
 
 // The operator's conversation with the coordinator agent (#8). Tool calls run through the harness;
 // the ones that need approval wait here as cards until the operator answers.
 
 // Lets a scripted check run without a tap: start Metro with EXPO_PUBLIC_AUTORUN=agent.
-const SCRIPTED_MESSAGE =
-  'We run a two-hour coffee farm walk for 1500 KES per person, at most 8 visitors. We meet at the Ondera market gate. Please save that.';
+const SCRIPTED_MESSAGE: Record<Language, string> = {
+  sw: 'Tunaendesha matembezi ya shamba la kahawa ya saa mbili kwa KES 1500 kwa kila mtu, wageni wasiozidi 8. Tunakutana kwenye lango la soko la Ondera.',
+  en: 'We run a two-hour coffee farm walk for 1500 KES per person, at most 8 visitors. We meet at the Ondera market gate. Please save that.',
+};
 
 type Line =
   | { kind: 'operator' | 'agent'; text: string }
@@ -31,12 +35,26 @@ type AgentModel = {
 type ModelState = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; model: AgentModel } | { status: 'error'; message: string };
 
 export function AgentScreen({ store }: { store: LocalStore }) {
+  const [language, setLanguage] = useState<Language>(() => readLanguage(store));
+  const languageRef = useRef(language);
+  languageRef.current = language;
   const harness = useRef<Harness | null>(null);
   if (!harness.current) {
     harness.current = new Harness({ log: memoryActivityStore(), newId, now: () => new Date().toISOString() });
-    registerCoordinatorTools(harness.current, store, () => new Date().toISOString());
+    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current);
   }
-  const history = useRef<ChatMessage[]>([{ role: 'system', content: COORDINATOR_PROMPT }]);
+  // With a translator, the agent works in English and only the operator reads Kiswahili
+  // (docs/language.md). Without one, the agent is told to reply in the operator's language.
+  const translate = useRef(TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null).current;
+  const agentLanguage = (operator: Language): Language => (translate ? 'en' : operator);
+  const history = useRef<ChatMessage[]>([{ role: 'system', content: coordinatorPrompt(agentLanguage(language)) }]);
+  const text = TEXT[language];
+
+  function chooseLanguage(next: Language) {
+    saveLanguage(store, next);
+    setLanguage(next);
+    history.current[0] = { role: 'system', content: coordinatorPrompt(agentLanguage(next)) };
+  }
   const [modelState, setModelState] = useState<ModelState>({ status: 'loading' });
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState('');
@@ -71,7 +89,7 @@ export function AgentScreen({ store }: { store: LocalStore }) {
   }, []);
 
   useEffect(() => {
-    if (process.env.EXPO_PUBLIC_AUTORUN === 'agent' && modelState.status === 'ready') send(SCRIPTED_MESSAGE);
+    if (process.env.EXPO_PUBLIC_AUTORUN === 'agent' && modelState.status === 'ready') send(SCRIPTED_MESSAGE[languageRef.current]);
   }, [modelState.status]);
 
   async function send(text: string) {
@@ -80,9 +98,13 @@ export function AgentScreen({ store }: { store: LocalStore }) {
     setBusy(true);
     setDraft('');
     setLines((current) => [...current, { kind: 'operator', text }]);
-    history.current.push({ role: 'user', content: text });
+    const operatorLanguage = languageRef.current;
+    const translating = translate !== null && operatorLanguage === 'sw';
     try {
-      const { added, outcomes } = await runTurn({
+      const forAgent = translating ? await translate(text, 'sw', 'en') : text;
+      if (translating) setLines((current) => [...current, { kind: 'tool', text: `English: ${forAgent}` }]);
+      history.current.push({ role: 'user', content: forAgent });
+      const { added, outcomes, reply } = await runTurn({
         model: async (messages, tools) => {
           setStreaming('');
           const turn = await model.chat(messages, tools, setStreaming);
@@ -92,12 +114,18 @@ export function AgentScreen({ store }: { store: LocalStore }) {
         harness: harness.current!,
         agent: 'coordinator',
         history: history.current,
+        text: TEXT[operatorLanguage],
       });
       history.current.push(...added);
       const shown: Line[] = [];
       for (const message of added) {
         if (message.role === 'tool') shown.push({ kind: 'tool', text: toolLine(message.name, message.content) });
-        else if (message.role === 'assistant' && message.content) shown.push({ kind: 'agent', text: message.content });
+      }
+      // Only the turn's closing line reaches the operator. App lines are already in their language;
+      // the model's English replies go through the translator.
+      if (reply) {
+        const forOperator = translating && !reply.fromApp ? await translate(reply.text, 'en', 'sw') : reply.text;
+        shown.push({ kind: 'agent', text: forOperator });
       }
       for (const outcome of outcomes) {
         if (outcome.status === 'AWAITING_APPROVAL') shown.push({ kind: 'approval', approval: outcome.approval, answer: null });
@@ -136,9 +164,22 @@ export function AgentScreen({ store }: { store: LocalStore }) {
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scroll} contentContainerStyle={styles.content} onContentSizeChange={() => scroll.current?.scrollToEnd()}>
+        <View style={styles.languages} accessibilityRole="radiogroup">
+          {(['sw', 'en'] as const).map((id) => (
+            <Pressable
+              key={id}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: language === id }}
+              style={[styles.language, language === id && styles.languageSelected]}
+              onPress={() => chooseLanguage(id)}
+            >
+              <Text style={[styles.languageText, language === id && styles.languageTextSelected]}>{LANGUAGE_NAMES[id]}</Text>
+            </Pressable>
+          ))}
+        </View>
         <ModelLine state={modelState} />
         {lines.map((line, index) => (
-          <LineView key={index} line={line} onAnswer={answer} />
+          <LineView key={index} line={line} onAnswer={answer} text={text} />
         ))}
         {streaming !== null && <Text style={[styles.bubble, styles.agent]}>{streaming || '…'}</Text>}
       </ScrollView>
@@ -147,7 +188,7 @@ export function AgentScreen({ store }: { store: LocalStore }) {
           style={styles.input}
           value={draft}
           onChangeText={setDraft}
-          placeholder="Tell Noor's assistant about your tour"
+          placeholder={text.placeholder}
           multiline
           accessibilityLabel="Message"
         />
@@ -157,7 +198,7 @@ export function AgentScreen({ store }: { store: LocalStore }) {
           disabled={busy || modelState.status !== 'ready'}
           accessibilityRole="button"
         >
-          <Text style={styles.sendText}>{busy ? '…' : 'Send'}</Text>
+          <Text style={styles.sendText}>{busy ? '…' : text.send}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -181,7 +222,7 @@ function ModelLine({ state }: { state: ModelState }) {
   return <Text style={styles.status}>{state.model.label}</Text>;
 }
 
-function LineView({ line, onAnswer }: { line: Line; onAnswer: (approval: PendingApproval, approved: boolean) => void }) {
+function LineView({ line, onAnswer, text }: { line: Line; onAnswer: (approval: PendingApproval, approved: boolean) => void; text: (typeof TEXT)[Language] }) {
   if (line.kind === 'tool') return <Text style={styles.tool}>{line.text}</Text>;
   if (line.kind !== 'approval') {
     return <Text style={[styles.bubble, line.kind === 'operator' ? styles.operator : styles.agent]}>{line.text}</Text>;
@@ -189,17 +230,17 @@ function LineView({ line, onAnswer }: { line: Line; onAnswer: (approval: Pending
   const { approval, answer } = line;
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Approval needed: {approval.tool}</Text>
+      <Text style={styles.cardTitle}>{text.approvalNeeded}: {approval.tool}</Text>
       <Text style={styles.status}>{approval.reason}</Text>
       {answer ? (
-        <Text style={styles.status}>You {answer} this.</Text>
+        <Text style={styles.status}>{answer === 'approved' ? text.youApproved : text.youDeclined}</Text>
       ) : (
         <View style={styles.row}>
           <Pressable style={[styles.button, styles.decline]} onPress={() => onAnswer(approval, false)} accessibilityRole="button">
-            <Text style={styles.declineText}>Decline</Text>
+            <Text style={styles.declineText}>{text.decline}</Text>
           </Pressable>
           <Pressable style={styles.button} onPress={() => onAnswer(approval, true)} accessibilityRole="button">
-            <Text style={styles.sendText}>Approve</Text>
+            <Text style={styles.sendText}>{text.approve}</Text>
           </Pressable>
         </View>
       )}
@@ -227,4 +268,9 @@ const styles = StyleSheet.create({
   send: { backgroundColor: '#1f4e79', borderRadius: 8, minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' },
   sendText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   disabled: { opacity: 0.5 },
+  languages: { flexDirection: 'row', gap: 8 },
+  language: { minHeight: 36, paddingHorizontal: 12, borderRadius: 18, borderWidth: 1, borderColor: '#d6dbe0', justifyContent: 'center' },
+  languageSelected: { backgroundColor: '#1f4e79', borderColor: '#1f4e79' },
+  languageText: { fontSize: 14, color: '#333' },
+  languageTextSelected: { color: '#fff', fontWeight: '600' },
 });

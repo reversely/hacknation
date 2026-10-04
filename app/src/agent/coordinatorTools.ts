@@ -1,29 +1,58 @@
 import { z } from 'zod';
 
 import { readConfig, readProgress } from '../setup/setupStore';
-import { setupSummary } from '../setup/steps';
+import { currentStep, setupSummary } from '../setup/steps';
 import type { LocalStore } from '../store/localStore';
 import { defineTool, type Harness } from './harness';
+import { TEXT, type Language } from './language';
 
 // The business profile is the base of every promotional item: the website, the listings and the
 // replies are all written from it (docs/architecture.md section 4, step 1). Until the Sheets store is
 // connected, the draft lives on the phone.
 const DRAFT_KEY = 'profile_draft';
 
-// Small models fill fields the operator never mentioned with placeholders; a placeholder is
-// rejected so the field stays missing and the agent asks for it.
-const PLACEHOLDER = /^(tbd|tba|n\/?a|unknown|none|not specified|-+|\?+)$/i;
-const stated = (hint: string) =>
-  z.string().trim().min(1).refine((value) => !PLACEHOLDER.test(value), 'Leave out fields the operator has not stated').describe(hint);
+// Small models fill fields the operator never mentioned: with a placeholder ("TBD", "not
+// specified") or with the field's own description copied in as the value. Both are rejected, so
+// the field stays missing and the agent asks for it.
+const PLACEHOLDER = /^(tbd|tba|n\/?a|unknown|none|-+|\?+)$|\bnot (specified|stated|provided|given|mentioned)\b/i;
+const sameText = (a: string, b: string) => a.toLowerCase().replace(/\W+/g, ' ').trim() === b.toLowerCase().replace(/\W+/g, ' ').trim();
+const stated = (hint: string) => z.string().trim().min(1).describe(hint);
+
+// Drops invented values field by field, so the details the operator did state are still saved.
+export function keepStated(fields: ProfileDraft): { kept: ProfileDraft; dropped: string[] } {
+  const kept: Record<string, unknown> = {};
+  const dropped: string[] = [];
+  const seen: string[] = [];
+  for (const [key, value] of Object.entries(fields)) {
+    const hint: string = FIELD_HINTS[key as keyof typeof FIELD_HINTS] ?? '';
+    // The model has copied one stated value (the meeting place) into fields never mentioned.
+    const copied = typeof value === 'string' && seen.some((earlier) => sameText(earlier, value));
+    if (typeof value === 'string' && (PLACEHOLDER.test(value) || sameText(value, hint) || copied)) dropped.push(key);
+    else kept[key] = value;
+    if (typeof value === 'string') seen.push(value);
+  }
+  return { kept: kept as ProfileDraft, dropped };
+}
+
+// What each field means, shown to the model as the field's description.
+const FIELD_HINTS = {
+  description: "What the tour is, in the operator's words",
+  duration: 'How long the tour lasts, for example "2 hours"',
+  price: 'Price per person with currency, for example "1500 KES"',
+  capacity: 'Most visitors per tour',
+  meeting_instructions: 'Where and how visitors meet the operator',
+  availability: 'Days and times tours run',
+  policies: 'Cancellation, children, weather and other rules',
+} as const;
 
 export const ProfileDraft = z.object({
-  description: stated('What the tour is, in the operator\'s words').optional(),
-  duration: stated('How long the tour lasts, for example "2 hours"').optional(),
-  price: stated('Price per person with currency, for example "1500 KES"').optional(),
-  capacity: z.number().int().positive().describe('Most visitors per tour').optional(),
-  meeting_instructions: stated('Where and how visitors meet the operator').optional(),
-  availability: stated('Days and times tours run').optional(),
-  policies: stated('Cancellation, children, weather and other rules').optional(),
+  description: stated(FIELD_HINTS.description).optional(),
+  duration: stated(FIELD_HINTS.duration).optional(),
+  price: stated(FIELD_HINTS.price).optional(),
+  capacity: z.number().int().positive().describe(FIELD_HINTS.capacity).optional(),
+  meeting_instructions: stated(FIELD_HINTS.meeting_instructions).optional(),
+  availability: stated(FIELD_HINTS.availability).optional(),
+  policies: stated(FIELD_HINTS.policies).optional(),
 });
 export type ProfileDraft = z.infer<typeof ProfileDraft>;
 
@@ -38,20 +67,53 @@ function writeDraft(store: LocalStore, draft: StoredDraft): void {
   store.setMeta(DRAFT_KEY, JSON.stringify(draft));
 }
 
-const REQUIRED: (keyof ProfileDraft)[] = ['description', 'duration', 'price', 'capacity', 'meeting_instructions', 'availability'];
+const REQUIRED = ['description', 'duration', 'price', 'capacity', 'meeting_instructions', 'availability'] as const;
+type RequiredField = (typeof REQUIRED)[number];
 
-export function missingFields(fields: ProfileDraft): (keyof ProfileDraft)[] {
+export function missingFields(fields: ProfileDraft): RequiredField[] {
   return REQUIRED.filter((key) => fields[key] === undefined);
 }
 
-export function registerCoordinatorTools(harness: Harness, store: LocalStore, now: () => string): void {
+
+
+// What the operator reads for "what have you saved": the stored values and the next question,
+// written by the app in the operator's language.
+export function describeDraft(fields: ProfileDraft, missing: RequiredField[], language: Language): string {
+  const text = TEXT[language];
+  const saved = (Object.keys(text.fields) as (keyof ProfileDraft)[])
+    .filter((key) => fields[key] !== undefined)
+    .map((key) => `${text.fields[key]}: ${fields[key]}`);
+  const parts = [saved.length ? `${text.saved}: ${saved.join('; ')}.` : text.nothingSaved];
+  if (missing.length) parts.push(text.questions[missing[0]]);
+  return parts.join(' ');
+}
+
+export function registerCoordinatorTools(harness: Harness, store: LocalStore, now: () => string, language: () => Language): void {
+  // Every turn must call a tool (tool_choice "required"): Gemma 4 understood Kiswahili requests
+  // but, left to choose, answered in text and never called a tool. Plain conversation goes here.
+  harness.register(
+    defineTool({
+      name: 'reply_to_operator',
+      description: 'Say something to the operator, such as a question or an answer, when no other tool fits.',
+      args: z.object({ text: z.string().trim().min(1).describe('What to say, in the operator\'s language') }),
+      approval: 'none',
+      run: async ({ text }) => ({ reply: text, said_by_model: true }),
+    }),
+    ['coordinator'],
+  );
   harness.register(
     defineTool({
       name: 'get_setup_status',
       description: 'List the setup steps with their status, so you can tell the operator what to do next.',
       args: z.object({}),
       approval: 'none',
-      run: async () => setupSummary(readProgress(store)),
+      // The app answers from the saved progress, so the reply cannot misstate it.
+      run: async () => {
+        const progress = readProgress(store);
+        const next = currentStep(progress);
+        const text = TEXT[language()];
+        return { steps: setupSummary(progress), reply: next ? `${text.nextStep}: ${text.steps[next]}.` : text.allStepsDone };
+      },
     }),
     ['coordinator'],
   );
@@ -63,7 +125,8 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
       approval: 'none',
       run: async () => {
         const draft = readDraft(store);
-        return { business_name: readConfig(store).business?.name ?? null, ...draft, missing: missingFields(draft.fields) };
+        const missing = missingFields(draft.fields);
+        return { business_name: readConfig(store).business?.name ?? null, ...draft, missing, reply: describeDraft(draft.fields, missing, language()) };
       },
     }),
     ['coordinator'],
@@ -76,10 +139,16 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
       approval: 'none',
       run: async (fields) => {
         const draft = readDraft(store);
+        const { kept, dropped } = keepStated(fields);
         // A change after approval needs a fresh approval.
-        writeDraft(store, { fields: { ...draft.fields, ...fields }, status: 'DRAFT', updatedAt: now() });
-        const saved = Object.keys(fields);
-        return { saved, missing: missingFields({ ...draft.fields, ...fields }) };
+        writeDraft(store, { fields: { ...draft.fields, ...kept }, status: 'DRAFT', updatedAt: now() });
+        const missing = missingFields({ ...draft.fields, ...kept });
+        return {
+          saved: Object.keys(kept),
+          ...(dropped.length ? { not_saved_because_not_stated: dropped } : {}),
+          missing,
+          ...(missing.length ? { follow_up: TEXT[language()].questions[missing[0]] } : {}),
+        };
       },
     }),
     ['coordinator'],
@@ -92,7 +161,9 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
       approval: 'operator',
       precondition: () => {
         const missing = missingFields(readDraft(store).fields);
-        return missing.length ? `The draft is missing: ${missing.join(', ')}. Ask the operator for them.` : null;
+        if (!missing.length) return null;
+        const text = TEXT[language()];
+        return `${text.draftIncomplete} ${text.stillNeeded}: ${missing.map((field) => text.fields[field]).join(', ')}. ${text.questions[missing[0]]}`;
       },
       run: async () => {
         const draft = readDraft(store);
