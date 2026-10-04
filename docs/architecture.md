@@ -17,6 +17,7 @@ The end-to-end demonstration is: business information → connected accounts →
 Selected decisions:
 
 - **Phone app: React Native with `llama.rn`**, built as an Expo development build. `llama.rn` supports both Android and iOS, so one codebase serves Noor's Android target and the team's iPhones.
+- **Desktop demonstration: a Hugging Face Space**, `reversely/wren`, built with Gradio on ZeroGPU hardware (section 12).
 - **Demonstration hardware:** the iOS Simulator runs the Expo development build to check that the app and model work end to end. All three team members have iPhones, which run the same build for on-device performance measurements.
 - **Local inference: llama.cpp**, embedded in the phone app through `llama.rn`, loading quantised GGUF models. No Ollama installation, terminal or separate local HTTP server is required on the phone.
 - **Google account: Noor's personal Gmail account.** No paid Google Workspace and no domain. The phone calls the Gmail, Calendar and Sheets APIs directly with Noor's Google sign-in; the refresh token stays in the phone's secure storage.
@@ -319,6 +320,39 @@ The team splits four agents across three people. The coordinator's owner publish
 | Search and Social | 1. Listing content generated from the approved farm profile, in English and Kiswahili<br>2. Google Business Profile guided setup and listing check<br>3. Facebook Page guided setup in Meta Business Suite and listing check |
 | Customer Management | 1. WhatsApp share-in and `wa.me` replies<br>2. Gmail OAuth, import and send<br>3. Calendar holds and confirmation on the phone, the single booking writer<br>4. Weekly review queue<br>5. Prompts for profile collection, enquiry extraction and Kiswahili and English replies |
 | Submission (shared) | 1. Data sources and coverage write-up<br>2. The 2 to 5 minute submission video |
+
+## 12. Demonstration Space
+
+The Space shows judges and visitors Wren's onboarding and website on a desktop screen, without a
+phone or a Google account. It runs at `reversely/wren` with the Gradio SDK on ZeroGPU hardware
+(an A10G lent per call), and `docs/space.md` holds its full design.
+
+- **Page:** a phone panel runs the onboarding survey from the hi-fi design and then shows the
+  created site, where a visitor can ask a question, leave a review or request a slot. When the
+  operator picks Kiswahili, an English twin of the phone stands beside it. A narration panel lists
+  each step the system takes: the survey fields, every translation, each model call with its
+  output, the copy checks, the cache result and the time taken.
+- **Bundle:** a TypeScript bundle built with bun from `space/web/` imports the app's survey modules
+  (`app/src/survey/`: the survey schema, the site pipeline, the page template and the screen
+  labels), so the Space and the phone build the same site from the same answers. Gradio serves the
+  bundle as static files, and the bundle calls the model server through `@gradio/client`.
+- **Model server:** `space/app.py` loads each model from a pinned revision with `transformers` in
+  full precision and exposes three calls, each decorated with `@spaces.GPU`, so ZeroGPU lends a GPU
+  for the length of the call and charges it to the visitor's daily quota.
+
+  | Call | Model | Use |
+  | --- | --- | --- |
+  | `translate` | NLLB-200 distilled 600M | Free text into English and the site's copy into Kiswahili; the operator's words for the English twin |
+  | `json` | Qwen2.5-Coder 1.5B Instruct | The site's English headline, introduction and service lines under a JSON schema |
+  | `chat` | Gemma 4 E2B Instruct | Answers to visitor questions from the site's facts, and review sentiment |
+
+- **Caching:** the model weights and every call's result live in the Space's storage bucket,
+  mounted at `/data`, and the browser keeps results in IndexedDB. Every call is deterministic, so a
+  replayed demonstration uses GPU time only for inputs neither cache has seen.
+- **Difference from the phone:** the phone runs the agent and coding models as 4-bit GGUF files
+  through llama.cpp, while the Space runs them in full precision; the narration states this. The
+  Space answers visitor questions by generating text with `chat`, while the deployed website
+  matches each question to an approved answer (section 5).
 
 ## Reference documentation
 
