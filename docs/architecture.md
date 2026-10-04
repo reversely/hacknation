@@ -95,7 +95,7 @@ Model output proposes tool calls. The harness validates arguments, checks permis
 | Customer mailbox | Receive enquiries and send replies | Gmail API with the `gmail.readonly` and `gmail.send` scopes |
 | Visitor messaging | Receive WhatsApp enquiries and send replies | Noor shares a message into Wren; Wren opens `wa.me` with the approved draft for Noor to send |
 
-A developer supplies the application's Google OAuth configuration once; Noor authorizes access to the business Google account rather than creating Google API keys.
+A developer supplies the application's Google OAuth configuration once; Noor authorizes access to the business Google account rather than creating Google API keys. The component specifications live in `docs/bookings.md`, `docs/messaging.md`, `docs/website-creator.md` and `docs/google-access.md`.
 
 ### Local model execution
 

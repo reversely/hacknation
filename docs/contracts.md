@@ -32,7 +32,8 @@ rows and reject a row that fails validation.
 
 Fields after `id`, `version`, `created_at`, `updated_at`: `status`, `approved_at`, `name`,
 `description`, `offerings`, `meeting_instructions`, `policies`, `whatsapp_number`, `email`,
-`timezone`. The Apps Script web app and the listings read only an `APPROVED` row.
+`timezone`. The Apps Script web app and the listings read only an `APPROVED` row. #34 appends a
+nullable `page` field for the Website Creator's output (`docs/website-creator.md`).
 
 `description`, `meeting_instructions` and `policies` hold an English and a Kiswahili text. Each
 offering in `offerings` has a name, description, duration, price with a currency code, and capacity.
