@@ -64,20 +64,38 @@ function mount(): void {
       'nav',
       { class: 'view-nav', 'aria-label': 'Pages' },
       h('button', { type: 'button', class: view === 'demo' ? 'on' : '', 'aria-current': view === 'demo' ? 'page' : 'false', onclick: () => view !== 'demo' && showDemo() }, 'Demo'),
-      h('button', { type: 'button', class: view === 'evaluation' ? 'on' : '', 'aria-current': view === 'evaluation' ? 'page' : 'false', onclick: () => view !== 'evaluation' && showWriteup() }, 'Chat evaluation'),
+      h('button', { type: 'button', class: view === 'evaluation' ? 'on' : '', 'aria-current': view === 'evaluation' ? 'page' : 'false', onclick: () => view !== 'evaluation' && showWriteup() }, embedded && view === 'demo' ? 'Chat evaluation ↗' : 'Chat evaluation'),
     );
+  // Inside Hugging Face's Space page the app runs in a frame sized to the demonstration, and the host
+  // reloads the frame when the app changes its address. There the write-up opens in its own tab, where
+  // it scrolls at full length; on the Space's own address the two views switch in place.
+  const embedded = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  const ownUrl = (view: 'demo' | 'evaluation') => `${location.origin}${location.pathname}${view === 'evaluation' ? '?view=evaluation' : ''}`;
   const showDemo = () => {
-    history.replaceState(null, '', location.pathname);
-    location.reload();
+    if (embedded) {
+      window.open(ownUrl('demo'), '_blank', 'noopener');
+      return;
+    }
+    location.href = ownUrl('demo');
   };
   // The evaluation write-up: ?view=evaluation, or the bar's second button.
   const showWriteup = () => {
+    if (embedded) {
+      window.open(ownUrl('evaluation'), '_blank', 'noopener');
+      return;
+    }
     history.replaceState(null, '', '?view=evaluation');
     shadow.replaceChildren(h('style', {}, css + writeupCss), navBar('evaluation'), writeupPage(showDemo, wordmarkWhite, poseUrl('celebrate')));
     window.scrollTo(0, 0);
   };
   if (new URLSearchParams(location.search).get('view') === 'evaluation') {
-    showWriteup();
+    shadow.replaceChildren(h('style', {}, css + writeupCss), navBar('evaluation'), writeupPage(showDemo, wordmarkWhite, poseUrl('celebrate')));
     return;
   }
   const phones = { main: h('div', { class: 'screen' }), twin: h('div', { class: 'screen' }) };

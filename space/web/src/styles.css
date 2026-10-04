@@ -757,3 +757,7 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 .view-nav button.on { background: #1f4a35; color: #fff; }
 .view-nav button:active { transform: scale(0.96); }
 @media (max-width: 760px) { .view-nav { top: 8px; right: 8px; } .view-nav button { padding: 7px 11px; font-size: 12px; } }
+/* Hugging Face draws its own badge in the top-right corner of the Space's address, so the bar sits at
+   the bottom right. */
+.view-nav { top: auto; bottom: 16px; right: 16px; }
+@media (max-width: 760px) { .view-nav { top: auto; bottom: 10px; right: 10px; } }
