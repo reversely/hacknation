@@ -214,6 +214,20 @@ from 24.5% to 15.7%. Stock Whisper heard "shilingi elfu moja na mia tano" (1,500
 
 For translation in the visitor's view, NLLB-200 600M beat Qwen2.5 0.5B on every phrase tried.
 
+## Use it on Hugging Face
+
+| What | Link |
+| --- | --- |
+| The demonstration Space | [huggingface.co/spaces/reversely/wren](https://huggingface.co/spaces/reversely/wren) |
+| The app on its own page | [reversely-wren.hf.space](https://reversely-wren.hf.space) |
+| The visitor chat evaluation | [reversely-wren.hf.space/?view=evaluation](https://reversely-wren.hf.space/?view=evaluation) |
+| The models | Linked in the Models table below |
+| The datasets behind the models | Linked in the Datasets section below |
+
+The Space runs on ZeroGPU, which lends a GPU for each model call and counts that time against the
+visitor's daily Hugging Face allowance; signing in to Hugging Face raises it. Results are cached, so
+the walkthrough's sample inputs answer without a GPU.
+
 ## Models
 
 Every model is open-weight and pinned to one version.
@@ -233,17 +247,32 @@ runs the models in full precision on a shared GPU.
 
 ## Datasets
 
-| Dataset | Size | Made by | Used for | Where |
+### Datasets behind the models, on Hugging Face
+
+The team trained none of these models from scratch. Each model card names the data below; the
+Gemma, Qwen and MMS-TTS cards on Hugging Face list no training datasets.
+
+| Dataset | Behind | Language and size | Licence and access |
+| --- | --- | --- | --- |
+| [badrex/swahili-speech-400hr](https://huggingface.co/datasets/badrex/swahili-speech-400hr) | w2v-BERT 2.0 Kiswahili fine-tune (speech to text) | Kiswahili speech, about 400 hours | CC BY 4.0, open |
+| [FLORES+ (openlanguagedata/flores_plus)](https://huggingface.co/datasets/openlanguagedata/flores_plus) | NLLB-200, whose card names FLORES-200 as its evaluation set | Parallel sentences in 200+ languages, Kiswahili included | CC BY-SA 4.0, accept terms on Hugging Face |
+| [google/fleurs](https://huggingface.co/datasets/google/fleurs) | Community Kiswahili speech models tested in the benchmark | Read speech in 102 languages, Kiswahili included | CC BY 4.0, open |
+| [mozilla-foundation/common_voice_17_0](https://huggingface.co/datasets/mozilla-foundation/common_voice_17_0) | Community Kiswahili speech models tested in the benchmark | Crowd-sourced read speech, Kiswahili included | See the dataset card |
+
+### The team's datasets
+
+These live in this repository. None is published on Hugging Face.
+
+| Dataset | Size | Made by | Used for | Files |
 | --- | --- | --- | --- | --- |
-| Visitor chat questions | 58 English questions: 34 development, 24 held-out; 22 answerable, 24 unanswerable, 12 adversarial | One team member, by hand | Chat evaluation | [docs/chat-evaluation.md](docs/chat-evaluation.md), `docs/chat-evaluation/*.json` |
-| Synthetic interview personas | 8 personas with answer sheets; 341 audio clips | The team; audio by ElevenLabs Eleven v3 from Voice Library voices, labelled synthetic | Speech and interview benchmarks | [docs/interview.md](docs/interview.md), `bench/interview/` (audio kept outside git) |
-| Synthetic domain clips | 196 training clips | The team, as above | w2v-BERT fine-tune | `bench/interview/finetune_ctc.py` |
+| Visitor chat questions | 58 English questions: 34 development, 24 held-out; 22 answerable, 24 unanswerable, 12 adversarial | One team member, by hand | Chat evaluation | [development.json](docs/chat-evaluation/development.json), [held-out.json](docs/chat-evaluation/held-out.json), method in [docs/chat-evaluation.md](docs/chat-evaluation.md), rerun with [eval-chat.ts](space/web/scripts/eval-chat.ts) |
+| Synthetic interview personas | 8 personas with answer sheets; 341 audio clips | The team; audio by ElevenLabs Eleven v3 from Voice Library voices, labelled synthetic | Speech and interview benchmarks | [personas.json](bench/interview/personas.json), [synth_prompts.json](bench/interview/synth_prompts.json), [generate_audio.py](bench/interview/generate_audio.py); audio kept outside git |
+| Synthetic domain clips | 196 training clips, 122 held-out persona clips | The team, as above | w2v-BERT fine-tune | [finetune_ctc.py](bench/interview/finetune_ctc.py) |
 | Translation sentences | 14 Kiswahili sentences, 29 checks on prices, counts, times, dates, negation and places | The team | Translation benchmark | [docs/language.md](docs/language.md) |
 | Typed Kiswahili requests | 10 requests, each run twice | The team | Agent model choice | [docs/language.md](docs/language.md) |
-| Context figures | 3 published statistics | KNBS and FAO Kenya | Why it matters | Linked above |
+| Context figures | 3 published statistics | KNBS and FAO Kenya | Why it matters | Linked in Why it matters |
 
-The community Kiswahili speech models tested here were trained by their authors on public read-speech
-sets such as Common Voice and FLEURS. Wren does not retrain on visitor or operator data.
+Wren does not train on visitor or operator data.
 
 ## Privacy
 
