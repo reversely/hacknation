@@ -445,15 +445,32 @@ function mount(): void {
 
   // Fit the devices to the window: scale the phones or the laptop down until they sit side by side
   // and leave room for the step caption below. On a narrow screen only the width counts.
+  // Hugging Face's Space page grows its frame to fit the content, so the frame's own height says
+  // nothing about the screen; the visible height comes from the screen less the browser and page
+  // chrome, whichever is smaller.
   function fit(): void {
     const device = stage.firstElementChild as HTMLElement | null;
     if (!device) return;
+    // With the compact role box above the stage, its height comes off the visible height too.
+    const roleAbove = window.innerWidth < 1600 ? role.offsetHeight + 36 : 0;
+    const visible = Math.min(window.innerHeight, window.screen.availHeight - 160) - roleAbove;
+    // The full-height strip only exists from 1600px up; the compact row sizes itself.
+    if (!roleAbove) page$.style.setProperty('--visible-h', `${visible}px`);
     device.style.zoom = '1';
+    const show = stage.parentElement as HTMLElement;
     const narrow = window.innerWidth < 760;
-    const width = device.scrollWidth;
+    // Stacked phones on a narrow screen: scale to the widest single device.
+    const width = narrow ? Math.max(...[...device.children].map((c) => (c as HTMLElement).scrollWidth), device.scrollWidth > window.innerWidth ? 0 : device.scrollWidth) : device.scrollWidth;
     const height = device.offsetHeight;
-    const room = narrow ? Infinity : window.innerHeight - 290;
-    const scale = Math.max(0.55, Math.min(1, stage.clientWidth / width, room / height));
+    // A short screen puts the step text beside the devices rather than under them.
+    const SIDE_TEXT = 360;
+    const pad = getComputedStyle(show);
+    const showWidth = show.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
+    const below = Math.min(1, showWidth / width, (visible - 240) / height);
+    const beside = Math.min(1, (showWidth - SIDE_TEXT - 40) / width, (visible - 64) / height);
+    const side = !narrow && beside > below + 0.08;
+    show.classList.toggle('side', side);
+    const scale = narrow ? Math.max(0.3, Math.min(1, (window.innerWidth - 32) / width)) : Math.max(0.45, side ? beside : below);
     device.style.zoom = String(scale);
   }
   window.addEventListener('resize', () => requestAnimationFrame(fit));
