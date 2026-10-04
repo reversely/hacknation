@@ -750,3 +750,10 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 
 .role-link { align-self: flex-start; margin: 0 0 14px; font: 600 13px var(--sans-d); color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 999px; padding: 7px 14px; cursor: pointer; opacity: 0.85; }
 .role-link:hover { opacity: 1; }
+
+/* The bar pinned to the top corner on both views. */
+.view-nav { position: fixed; top: 14px; right: 16px; z-index: 50; display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgb(255 255 255 / 0.92); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 6px 18px -8px rgb(0 0 0 / 0.35); backdrop-filter: blur(8px); font-family: "Avenir Next", "Helvetica Neue", "Segoe UI", Arial, sans-serif; }
+.view-nav button { border: 0; background: transparent; color: #15291e; font: 600 13px inherit; font-family: inherit; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.view-nav button.on { background: #1f4a35; color: #fff; }
+.view-nav button:active { transform: scale(0.96); }
+@media (max-width: 760px) { .view-nav { top: 8px; right: 8px; } .view-nav button { padding: 7px 11px; font-size: 12px; } }

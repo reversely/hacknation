@@ -58,12 +58,22 @@ function mount(): void {
   }
   // A shadow root keeps Gradio's page styles away from the design; only styles.css applies inside.
   const shadow = root.shadowRoot ?? root.attachShadow({ mode: 'open' });
-  // The evaluation write-up: ?view=evaluation, or the link in the role panel.
+  // A bar pinned to the top corner on both views: the demonstration and the chat evaluation.
+  const navBar = (view: 'demo' | 'evaluation') =>
+    h(
+      'nav',
+      { class: 'view-nav', 'aria-label': 'Pages' },
+      h('button', { type: 'button', class: view === 'demo' ? 'on' : '', 'aria-current': view === 'demo' ? 'page' : 'false', onclick: () => view !== 'demo' && showDemo() }, 'Demo'),
+      h('button', { type: 'button', class: view === 'evaluation' ? 'on' : '', 'aria-current': view === 'evaluation' ? 'page' : 'false', onclick: () => view !== 'evaluation' && showWriteup() }, 'Chat evaluation'),
+    );
+  const showDemo = () => {
+    history.replaceState(null, '', location.pathname);
+    location.reload();
+  };
+  // The evaluation write-up: ?view=evaluation, or the bar's second button.
   const showWriteup = () => {
-    shadow.replaceChildren(h('style', {}, writeupCss), writeupPage(() => {
-      history.replaceState(null, '', location.pathname);
-      location.reload();
-    }, wordmarkWhite, poseUrl('celebrate')));
+    history.replaceState(null, '', '?view=evaluation');
+    shadow.replaceChildren(h('style', {}, css + writeupCss), navBar('evaluation'), writeupPage(showDemo, wordmarkWhite, poseUrl('celebrate')));
     window.scrollTo(0, 0);
   };
   if (new URLSearchParams(location.search).get('view') === 'evaluation') {
@@ -75,7 +85,7 @@ function mount(): void {
   const stage = h('div', { class: 'stage' });
   const caption = h('div', { class: 'caption' });
   const page$ = h('div', { class: 'demo' }, role, h('div', { class: 'show' }, stage, caption));
-  shadow.replaceChildren(h('style', {}, css), page$);
+  shadow.replaceChildren(h('style', {}, css), navBar('demo'), page$);
   const footers: { button: HTMLButtonElement; enabled: () => boolean }[] = [];
   // The mascot's pose: working while any call is in flight, celebrating for a moment after a
   // success, leaning in after a chat answer, resting after a quiet spell.
@@ -476,7 +486,6 @@ function mount(): void {
         : h('span'),
       // The visitor side's strip is light, so the mascot hops there.
       ...(mode === 'visitor' ? [mascot.element] : [h('div', { class: 'role-spacer' })]),
-      h('button', { type: 'button', class: 'role-link', onclick: () => { history.replaceState(null, '', '?view=evaluation'); showWriteup(); } }, 'Chat evaluation →'),
       h('p', { class: 'role-count' }, `${String(s.n).padStart(2, '0')} / ${String(s.total).padStart(2, '0')}`),
     );
   }

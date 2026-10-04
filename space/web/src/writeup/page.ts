@@ -10,14 +10,14 @@ const pct = (n: number) => Math.round((n / QUESTIONS.total) * 100);
 const TONE: Record<Config, 'base' | 'mid' | 'good'> = { baseline: 'base', guidelines: 'mid', strict: 'good' };
 const VERDICT: Record<string, string> = { hallucination: 'Hallucination', unsafe: 'Unsafe', owner: 'Sent to the owner', fixed: 'Fixed reply', correct: 'Correct' };
 
-export function writeupPage(back: () => void, logo: string, mascot: string): HTMLElement {
+export function writeupPage(_back: () => void, logo: string, mascot: string): HTMLElement {
   const total = (c: Config) => HALLUCINATIONS[c].development + HALLUCINATIONS[c].heldOut;
   const section = (cls: string, ...children: (HTMLElement | SVGElement | null)[]) => h('section', { class: `wu-section reveal ${cls}` }, ...(children.filter(Boolean) as HTMLElement[]));
 
   const hero = h(
     'header',
     { class: 'wu-hero' },
-    h('div', { class: 'wu-hero-top' }, h('img', { src: logo, alt: 'Wren', class: 'wu-logo' }), h('button', { type: 'button', class: 'wu-back', onclick: back }, '← Back to the demonstration')),
+    h('div', { class: 'wu-hero-top' }, h('img', { src: logo, alt: 'Wren', class: 'wu-logo' })),
     h('p', { class: 'wu-kicker' }, 'Visitor chat evaluation'),
     h('h1', {}, `Hallucinated replies fell from ${total('baseline')} of ${QUESTIONS.total} to ${total('strict')} of ${QUESTIONS.total}`),
     h('p', { class: 'wu-lead' }, `The farm's website chat runs Qwen2.5 0.5B. ${QUESTIONS.total} visitor questions went through three setups of the same model, and every reply was graded by hand. A hallucination is a reply that states something the site's facts do not say, or contradicts them.`),
