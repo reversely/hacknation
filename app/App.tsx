@@ -1,17 +1,20 @@
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AgentScreen } from './src/agent/AgentScreen';
 import { ModelCheckScreen } from './src/inference/ModelCheckScreen';
-import { secureVault } from './src/setup/secrets';
 import { SetupScreen } from './src/setup/SetupScreen';
-import { readConfig } from './src/setup/setupStore';
 import { openExpoDatabase } from './src/store/expoDatabase';
+import { googleApi } from './src/store/google';
 import { LocalStore } from './src/store/localStore';
-import { httpTransport, startSyncLoop, type SyncResult } from './src/store/sync';
+import { startSyncLoop, type SyncResult } from './src/store/outbox';
 
 const store = new LocalStore(openExpoDatabase());
+// The Google Sign-In SDK refreshes the access token as needed (docs/google-access.md). Before
+// Noor signs in, each call fails and the outbox keeps its actions queued.
+const google = googleApi(async () => (await GoogleSignin.getTokens()).accessToken);
 type Tab = 'agent' | 'setup' | 'model';
 const TAB_LABELS: Record<Tab, string> = { agent: 'Agent', setup: 'Setup', model: 'Model' };
 
@@ -20,11 +23,7 @@ export default function App() {
   const autorun = process.env.EXPO_PUBLIC_AUTORUN;
   const [tab, setTab] = useState<Tab>(autorun === 'agent' ? 'agent' : autorun ? 'model' : 'agent');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
-  // The backend is the operator's own Vercel project; its address exists once the website deploy
-  // (#18) has saved it, and the sync loop reports "not connected" until then.
-  const [apiUrl] = useState(() => readConfig(store).apiUrl);
-  const transport = useMemo(() => httpTransport(apiUrl ?? '', () => secureVault.get('device_token')), [apiUrl]);
-  useEffect(() => startSyncLoop(store, transport, setSyncResult), [transport]);
+  useEffect(() => startSyncLoop(store, google, setSyncResult), []);
 
   return (
     <View style={styles.screen}>

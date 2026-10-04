@@ -1,11 +1,10 @@
 /// <reference types="bun" />
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import type { Action, ActionReceipt, Booking } from '@wren/contracts';
+import type { Action, Booking } from '@wren/contracts';
 
 import { LocalStore } from './localStore';
 import type { SqlDatabase } from './sql';
-import { LAST_SYNC_KEY, syncOnce, type Transport } from './sync';
 
 function bunDatabase(db = new Database(':memory:')): SqlDatabase {
   return {
@@ -28,49 +27,8 @@ function declineAction(n: number): Action {
     approved_by: 'OPERATOR',
     approved_at: now,
     booking_id: uuid(100 + n),
-    expected_version: 1,
-    reason: 'Fully booked',
+    closed_reason: 'declined',
   };
-}
-
-function receipt(action: Action): ActionReceipt {
-  return {
-    id: action.id,
-    version: 0,
-    created_at: now,
-    updated_at: now,
-    type: action.type,
-    approved_by: action.approved_by,
-    approved_at: action.approved_at,
-    status: 'COMPLETED',
-    outcome: null,
-    error: null,
-  };
-}
-
-// A backend that runs each action ID once, like /api/actions, and can drop the network
-// before or after it acts.
-function fakeBackend() {
-  const executed = new Map<string, ActionReceipt>();
-  const state = { offline: false, loseResponse: false, posts: 0, sinceSeen: [] as (string | null)[] };
-  const transport: Transport = {
-    postActions: async (actions) => {
-      state.posts++;
-      if (state.offline) throw new Error('Network request failed');
-      for (const action of actions) if (!executed.has(action.id)) executed.set(action.id, receipt(action));
-      if (state.loseResponse) {
-        state.loseResponse = false;
-        throw new Error('Network request failed');
-      }
-      return { receipts: actions.map((action) => executed.get(action.id)) };
-    },
-    getChanges: async (since) => {
-      state.sinceSeen.push(since);
-      if (state.offline) throw new Error('Network request failed');
-      return { server_time: '2026-10-03T12:05:00.000Z', messages: [], enquiries: [], bookings: [], profile: null };
-    },
-  };
-  return { executed, state, transport };
 }
 
 let store: LocalStore;
@@ -78,57 +36,12 @@ beforeEach(() => {
   store = new LocalStore(bunDatabase());
 });
 
-describe('outbox', () => {
-  test('actions approved offline stay queued, then sync once on reconnect', async () => {
-    const backend = fakeBackend();
-    store.enqueue(declineAction(1), now);
-    store.enqueue(declineAction(2), now);
-
-    backend.state.offline = true;
-    const offline = await syncOnce(store, backend.transport);
-    expect(offline.error).toBe('Network request failed');
-    expect(store.outbox().map((e) => [e.status, e.attempts])).toEqual([
-      ['QUEUED', 1],
-      ['QUEUED', 1],
-    ]);
-
-    backend.state.offline = false;
-    const online = await syncOnce(store, backend.transport);
-    expect(online).toEqual({ sent: 2, pulled: 0, error: null });
-    expect(store.outbox().every((e) => e.status === 'COMPLETED')).toBe(true);
-    expect(backend.executed.size).toBe(2);
-
-    await syncOnce(store, backend.transport);
-    expect(backend.state.posts).toBe(2);
-  });
-
-  test('a response lost after the backend acted causes no duplicate', async () => {
-    const backend = fakeBackend();
-    store.enqueue(declineAction(1), now);
-    backend.state.loseResponse = true;
-    await syncOnce(store, backend.transport);
-    expect(store.outbox()[0].status).toBe('QUEUED');
-
-    await syncOnce(store, backend.transport);
-    expect(store.outbox()[0].status).toBe('COMPLETED');
-    expect(backend.executed.size).toBe(1);
-  });
-
+describe('outbox table', () => {
   test('queueing the same action twice keeps one entry', () => {
     store.enqueue(declineAction(1), now);
     store.enqueue(declineAction(1), now);
     expect(store.outbox()).toHaveLength(1);
-  });
-
-  test('a backend answer that is not a valid receipt list leaves the action queued', async () => {
-    store.enqueue(declineAction(1), now);
-    const transport: Transport = {
-      postActions: async () => ({ ok: true }),
-      getChanges: async () => ({}),
-    };
-    const result = await syncOnce(store, transport);
-    expect(result.error).not.toBeNull();
-    expect(store.outbox()[0].status).toBe('QUEUED');
+    expect(store.outbox()[0].queuedAt).toBe(now);
   });
 });
 
@@ -157,14 +70,6 @@ describe('records', () => {
     expect(store.get<Booking>('Bookings', booking.id)?.status).toBe('HELD');
     store.upsert('Bookings', { ...booking, version: 3, status: 'CONFIRMED' as const });
     expect(store.get<Booking>('Bookings', booking.id)?.status).toBe('CONFIRMED');
-  });
-
-  test('the last sync time is saved and sent as `since` next time', async () => {
-    const backend = fakeBackend();
-    await syncOnce(store, backend.transport);
-    await syncOnce(store, backend.transport);
-    expect(backend.state.sinceSeen).toEqual([null, '2026-10-03T12:05:00.000Z']);
-    expect(store.getMeta(LAST_SYNC_KEY)).toBe('2026-10-03T12:05:00.000Z');
   });
 
   test('reopening the database does not rerun migrations', () => {

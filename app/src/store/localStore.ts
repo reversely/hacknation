@@ -1,9 +1,9 @@
-import type { Action, ActionReceipt, SheetTab } from '@wren/contracts';
+import type { Action, ActionReceipt, RecordKind } from '@wren/contracts';
 
 import type { SqlDatabase } from './sql';
 
-// Local copy of the Sheets records, the outbox of approved actions waiting to reach the
-// backend, and sync bookkeeping (docs/architecture.md sections 2 and 6).
+// Local records, the outbox of approved actions waiting to reach Google, and sync bookkeeping
+// (docs/architecture.md section 7).
 const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS records (
      tab TEXT NOT NULL,
@@ -38,6 +38,7 @@ export type OutboxEntry = {
   attempts: number;
   lastError: string | null;
   receipt: ActionReceipt | null;
+  queuedAt: string;
 };
 
 type OutboxRow = {
@@ -48,6 +49,7 @@ type OutboxRow = {
   attempts: number;
   last_error: string | null;
   receipt: string | null;
+  queued_at: string;
 };
 
 export class LocalStore {
@@ -62,7 +64,7 @@ export class LocalStore {
   }
 
   // Keeps the higher version, so an older copy from a late sync never overwrites a newer one.
-  upsert<T extends StoredRecord>(tab: SheetTab, record: T): void {
+  upsert<T extends StoredRecord>(tab: RecordKind, record: T): void {
     this.db.run(
       `INSERT INTO records (tab, id, version, updated_at, json) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT (tab, id) DO UPDATE SET
@@ -72,12 +74,12 @@ export class LocalStore {
     );
   }
 
-  get<T>(tab: SheetTab, id: string): T | null {
+  get<T>(tab: RecordKind, id: string): T | null {
     const [row] = this.db.all<{ json: string }>('SELECT json FROM records WHERE tab = ? AND id = ?', [tab, id]);
     return row ? (JSON.parse(row.json) as T) : null;
   }
 
-  list<T>(tab: SheetTab): T[] {
+  list<T>(tab: RecordKind): T[] {
     return this.db
       .all<{ json: string }>('SELECT json FROM records WHERE tab = ? ORDER BY updated_at DESC', [tab])
       .map((row) => JSON.parse(row.json) as T);
@@ -111,8 +113,8 @@ export class LocalStore {
     ]);
   }
 
-  // The request may or may not have reached the backend, so the entries stay QUEUED and are
-  // resent with the same IDs; the backend returns its stored receipt for any it already ran.
+  // The call may or may not have reached Google, so the entries stay QUEUED and run again with
+  // the same IDs; each action checks Google for its own earlier result before acting.
   recordAttemptFailed(ids: string[], error: string): void {
     this.db.transaction(() => {
       for (const id of ids) {
@@ -143,5 +145,6 @@ function toEntry(row: OutboxRow): OutboxEntry {
     attempts: row.attempts,
     lastError: row.last_error,
     receipt: row.receipt ? (JSON.parse(row.receipt) as ActionReceipt) : null,
+    queuedAt: row.queued_at,
   };
 }

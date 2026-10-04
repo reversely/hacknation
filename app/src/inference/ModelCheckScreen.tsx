@@ -10,7 +10,7 @@ import {
   type LoadedModel,
 } from './localModel';
 import type { LocalStore } from '../store/localStore';
-import { LAST_SYNC_KEY, type SyncResult } from '../store/sync';
+import { LAST_SYNC_KEY, type SyncResult } from '../store/outbox';
 
 // Smoke test for #6: load a side-loaded GGUF and stream one completion on the device.
 type ModelState =

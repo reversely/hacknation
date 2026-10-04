@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-// Google Sheets record schema (docs/contracts.md, "Sheets tabs").
-// Every row carries a stable string ID and a version; row numbers are never identifiers.
-// The phone generates IDs offline, so an ID is also the deduplication key when a queued
-// write reaches the backend twice.
+// Record schemas (docs/contracts.md). The Farm record is the one row in the business
+// spreadsheet; the phone keeps the other records in SQLite, and bookings also live as calendar
+// events (calendar.ts). Every record carries a stable string ID and a version. The phone
+// generates IDs offline, so an ID is also the deduplication key when a queued write runs twice.
 
 export const Id = z.string().uuid();
 export const Timestamp = z.string().datetime({ offset: true });
@@ -42,6 +42,9 @@ export const FarmProfile = z.object({
   whatsapp_number: z.string().regex(/^\+[1-9]\d{6,14}$/, 'E.164 phone number'),
   email: z.string().email().nullable(),
   timezone: z.string(),
+  // The Website Creator's copy and presentation choices (docs/website-creator.md). Appended last
+  // so a row written before the field existed still reads, with the missing cell as null.
+  page: z.record(z.string(), z.unknown()).nullable().default(null),
 });
 
 export const BookingStatus = z.enum([
@@ -136,17 +139,22 @@ export const ActionReceipt = z.object({
   error: z.string().nullable(),
 });
 
-// Tab names and their row schemas, in spreadsheet order.
+// The business spreadsheet's tabs and their row schemas.
 export const SHEET_TABS = {
+  Farm: FarmProfile,
+} as const;
+
+// The record kinds the phone keeps in SQLite.
+export const LOCAL_RECORDS = {
   Farm: FarmProfile,
   Enquiries: Enquiry,
   Bookings: Booking,
   Messages: Message,
   Feedback: Feedback,
-  Actions: ActionReceipt,
 } as const;
 
 export type SheetTab = keyof typeof SHEET_TABS;
+export type RecordKind = keyof typeof LOCAL_RECORDS;
 export type FarmProfile = z.infer<typeof FarmProfile>;
 export type Offering = z.infer<typeof Offering>;
 export type Enquiry = z.infer<typeof Enquiry>;

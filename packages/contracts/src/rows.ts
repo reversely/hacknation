@@ -10,9 +10,11 @@ export function columns(tab: SheetTab): string[] {
   return Object.keys(SHEET_TABS[tab].shape);
 }
 
-// A column holds JSON when its schema is an object, array or record, possibly nullable.
+// A column holds JSON when its schema is an object, array or record, possibly nullable or
+// defaulted.
 function isJsonColumn(tab: SheetTab, key: string): boolean {
   let field = (SHEET_TABS[tab].shape as Record<string, z.ZodType>)[key];
+  if (field instanceof z.ZodDefault) field = field.unwrap() as z.ZodType;
   if (field instanceof z.ZodNullable) field = field.unwrap() as z.ZodType;
   return field instanceof z.ZodObject || field instanceof z.ZodArray || field instanceof z.ZodRecord;
 }
