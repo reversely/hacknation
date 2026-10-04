@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.reversely.noor"
+      "bundleIdentifier": "com.hacknation.wren"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.reversely.noor"
+      "package": "com.hacknation.wren"
     },
     "web": {
       "favicon": "./assets/favicon.png"

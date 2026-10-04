@@ -139,7 +139,7 @@ Copy each model into the app after the app has been installed once.
 iOS Simulator (macOS):
 
 ```sh
-DATA=$(xcrun simctl get_app_container booted com.reversely.noor data)
+DATA=$(xcrun simctl get_app_container booted com.hacknation.wren data)
 mkdir -p "$DATA/Documents/models"
 cp ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf "$DATA/Documents/models/"
 ```
@@ -148,8 +148,8 @@ Android emulator (any OS; the debug build allows `run-as`):
 
 ```sh
 adb push ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf /data/local/tmp/
-adb shell run-as com.reversely.noor mkdir -p files/models
-adb shell run-as com.reversely.noor cp /data/local/tmp/qwen2.5-0.5b-instruct-q4_k_m.gguf files/models/
+adb shell run-as com.hacknation.wren mkdir -p files/models
+adb shell run-as com.hacknation.wren cp /data/local/tmp/qwen2.5-0.5b-instruct-q4_k_m.gguf files/models/
 ```
 
 Then tap "Check again" in the app.
