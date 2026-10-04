@@ -8,7 +8,9 @@ Wren is a phone app whose central conversational agent helps Noor establish a di
 
 Every account and service belongs to the operator. The agent creates or connects each one in the operator's own name, and nothing runs on a server the team operates for all users. Message threads stay where they arrive: email in Gmail, WhatsApp, Messenger and Instagram in their own apps. Bookings live in a Google Calendar. No hosted backend sits between the phone and these services.
 
-The end-to-end demonstration is: business information → connected accounts → website and listings → visitor message → reply and held slot → Noor's weekly review → confirmation.
+The MVP is agentic website creation and maintenance. Wren creates Noor's website and keeps it up to date, and the website supports bookings, answers basic visitor questions, and receives reviews; Wren analyses the sentiment of those reviews. WhatsApp is out of the MVP; #42 removes it from the sections below that still describe it.
+
+The end-to-end demonstration is: business information → connected accounts → website → visitor booking, question or review on the website → held slot and review sentiment → Noor's weekly review → confirmation.
 
 ## 2. Selected stack and working assumptions
 
@@ -64,13 +66,16 @@ flowchart LR
     C --> WCR["Website Creator"]
     WCR --> FE["Page: Qwen coding model"]
     WCR --> AS["Apps Script web app"]
+    AS --> WB["Website bookings"]
+    AS --> WQ["Answers to basic visitor questions"]
+    AS --> WR["Visitor reviews"]
     WCR --> GS["Business spreadsheet: Farm tab"]
     C --> SS["Search and Social"]
     SS --> GB["Google Business Profile"]
     SS --> MBS["Meta Business Suite"]
     C --> CM["Customer Management"]
-    CM --> WA["WhatsApp: share-in and wa.me"]
     CM --> GM["Gmail"]
+    CM --> RS["Review sentiment analysis"]
     CM --> CAL["Wren tours calendar: slot holds"]
     CM --> Q["Human in the loop: slot holds, refunds and booking changes"]
     Q -->|"weekly review"| F
@@ -218,25 +223,26 @@ State-changing tools require validated arguments and appropriate approvals. Publ
 
 ### Core demonstration
 
-- One operator, one farm, one website, one connected mailbox and one WhatsApp number.
+- One operator, one farm, one website and one connected mailbox.
 - Central conversation with persistent setup/workflow state.
 - Embedded llama.cpp on the phone with a locally stored GGUF model; no cloud model fallback.
 - Guided Google connection (Gmail, Calendar, Sheets and the Apps Script), with real connection checks.
 - Farm profile collection and approval.
-- Local-model website generation, offline preview and approved publication.
+- Local-model website generation, offline preview, approved publication, and approved updates as the farm profile changes.
+- Website features: booking requests that become Calendar slot holds, answers to basic visitor questions from the approved profile, and visitor reviews.
+- Sentiment analysis of visitor reviews, tied to each source review.
 - Google Business Profile and Facebook Page created through guided steps.
-- Gmail enquiry import and WhatsApp share-in, with profile-grounded replies.
+- Gmail enquiry import, with profile-grounded replies.
 - One booking flow: Calendar slot hold, weekly review, online recheck and confirmation.
 - Local drafts and cached records usable offline, with visible pending synchronisation.
 - Activity log linking model proposals, approvals and actual tool results.
 
 ### Extensions, in order
 
-1. Messenger and Instagram share-in, with drafts copied for Noor to paste.
-2. Rescheduling and cancellation using the existing booking workflow.
-3. Feedback analysis tied to source comments and an approved tour improvement.
-4. Agent-driven listing creation through the Google Business Profile API once Google approves access.
-5. Validated local speech input and output, and additional language support.
+1. Rescheduling and cancellation using the existing booking workflow.
+2. An approved tour improvement proposed from review sentiment.
+3. Agent-driven listing creation through the Google Business Profile API once Google approves access.
+4. Validated local speech input and output, and additional language support.
 
 Refund requests enter the human-in-the-loop queue; Noor decides each one and pays it outside the app. Payment-provider integration is not part of the core demonstration.
 
@@ -264,6 +270,7 @@ Decisions before implementation:
 5. The translation model's licence: NLLB-200 (best scores, CC BY-NC 4.0), HPLT v1 (CC BY 4.0) or MADLAD-400 (Apache 2.0, 3B parameters) (`docs/language.md`).
 6. How the translation model runs on the phone: it needs a second runtime beside llama.cpp, such as ONNX Runtime, which is a new dependency.
 7. Phone memory for the agent and translation models together, or loading them one at a time.
+8. How the website answers visitor questions and stores reviews: the Apps Script cannot run the local model, so the answer source (a profile-based FAQ on the page, or questions queued for Wren) and the review store (a spreadsheet tab or another record) are open.
 
 ## 11. Task split
 
