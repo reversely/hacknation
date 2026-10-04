@@ -397,15 +397,6 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 .fs-contact a { color: inherit; }
 
 @media (max-width: 1500px) { .show { padding-left: 120px; } .demo { background: linear-gradient(90deg, var(--navy) 0 420px, color-mix(in oklab, var(--navy) 81%, var(--paper)) 443px, color-mix(in oklab, var(--navy) 55%, var(--paper)) 466px, color-mix(in oklab, var(--navy) 30%, var(--paper)) 490px, color-mix(in oklab, var(--navy) 11%, var(--paper)) 515px, var(--paper) 540px); } .demo.visitor { background: linear-gradient(90deg, var(--sand) 0 420px, color-mix(in oklab, var(--sand) 81%, var(--night)) 443px, color-mix(in oklab, var(--sand) 55%, var(--night)) 466px, color-mix(in oklab, var(--sand) 30%, var(--night)) 490px, color-mix(in oklab, var(--sand) 11%, var(--night)) 515px, var(--night) 540px); } }
-@media (max-width: 1200px) {
-  .demo, .demo.visitor { grid-template-columns: 1fr; background: var(--paper); }
-  .demo.visitor { background: var(--night); }
-  .role { position: static; height: auto; background: var(--navy); padding: 28px 24px; }
-  .demo.visitor .role { background: var(--sand); }
-  .role-title { font-size: 38px; }
-  .role-count { margin-top: 20px; }
-  .show { padding: 28px 16px 48px; }
-}
 /* The devices keep their natural size and fit() in main.ts scales them, so the twin stays beside the
    operator's phone instead of wrapping below it. */
 .phones { flex-wrap: nowrap; }
@@ -634,23 +625,32 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 @media (max-width: 760px) { .phones { flex-wrap: wrap !important; } }
 @media (max-width: 760px) { .phones { max-width: 100%; justify-content: center; } }
 
-/* Below 1600px the role strip becomes one slim row above the devices, so the devices get the width. */
-@media (max-width: 1599px) {
+/* The role strip with its gradient stays at every desktop width, narrowing as the screen does; only a
+   phone-width screen stacks it above the devices. */
+@media (max-width: 1100px) {
+  .demo { grid-template-columns: 280px minmax(0, 1fr); background: linear-gradient(90deg, var(--navy) 0 280px, var(--paper) 340px); }
+  .demo.visitor { grid-template-columns: 280px minmax(0, 1fr); background: linear-gradient(90deg, var(--sand) 0 280px, var(--night) 340px); }
+  .role { padding: 24px 20px; }
+  .role-title { font-size: 32px; }
+  .role-text { font-size: 16px; }
+  .show { padding-left: 48px; padding-right: 16px; }
+}
+@media (max-width: 760px) {
   .demo, .demo.visitor { grid-template-columns: minmax(0, 1fr); align-content: start; }
   .demo { background: var(--paper); }
   .demo.visitor { background: var(--night); }
-  .role, .demo.visitor .role { position: static; height: auto; margin: 16px 24px 0; padding: 10px 18px; border-radius: 14px; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 18px; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 14px -6px rgb(0 0 0 / 0.2); }
+  .role, .demo.visitor .role { position: static; height: auto; padding: 20px 16px; }
   .role { background: var(--navy); }
   .demo.visitor .role { background: var(--sand); }
-  .role-kicker { margin: 0; font-size: 11px; }
-  .role-title { margin: 0; font-size: 22px; line-height: 1.1; }
-  .role-text { flex: 1 1 320px; margin: 0; font-size: 14px; line-height: 1.4; }
-  .role-switch { margin: 0; }
-  .role-switch button { padding: 6px 14px; font-size: 13px; }
-  .role-count { margin: 0 0 0 auto; font-size: 12px; }
-  .show { padding: 20px 24px 40px; }
-}
-@media (max-width: 900px) {
-  .role, .demo.visitor .role { margin: 12px 12px 0; }
+  .role-count { margin-top: 12px; }
   .show { padding: 16px 12px 32px; }
+}
+
+.more-langs { font: 600 12px system-ui, sans-serif; border: 0; box-shadow: inset 0 0 0 1px #c9c2b8; background: #fff; border-radius: 6px; padding: 4px 6px; color: #3a3530; cursor: pointer; }
+.more-langs.on { background: #1d1410; color: #fff; box-shadow: none; }
+.request .from { font-size: 12px; color: var(--ink-3); font-style: italic; }
+@media (min-width: 1501px) and (max-width: 1800px) {
+  .show { padding-left: 140px; }
+  .demo { background: linear-gradient(90deg, var(--navy) 0 420px, var(--paper) 560px); }
+  .demo.visitor { background: linear-gradient(90deg, var(--sand) 0 420px, var(--night) 560px); }
 }

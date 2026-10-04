@@ -7,7 +7,8 @@ import { buildSite, type BuildResult, type SiteContent } from '../../../app/src/
 import { DAYS, type Language } from '../../../app/src/survey/survey';
 import { wrenWordmark as wordmark } from './assets/generated';
 import { encodeBooking } from './booking-code';
-import { answerQuestion, askSite, pipelineDeps, reviewSentiment, summarise, type Reporters } from './inference';
+import { answerQuestion, askSite, forOperator, pipelineDeps, reviewSentiment, summarise, type Reporters } from './inference';
+import { OTHER_LANGUAGES, translatePage, type OtherLanguage } from './universal';
 import { DEMO_VISITOR } from './demo-inputs';
 import { activityLines } from './prompts';
 import { cachedTranslation, translate, type ModelEvent, type TranslationEvent } from './models';
@@ -43,6 +44,7 @@ const summary = { key: '', en: null as string[] | null, local: null as string[] 
 let lastCall: { step: string; text: string } | null = null;
 let view: SiteView | null = null;
 let inboxTab: 'insights' | 'bookings' = 'insights';
+let other: OtherLanguage | null = null;
 
 function mount(): void {
   const root = document.getElementById('wren-root');
@@ -237,7 +239,8 @@ function mount(): void {
 
   // The visitor's laptop, kept at its scroll position across redraws.
   function visitorLaptop(): HTMLElement {
-    const site = contents[showing] ?? contents[state.language]!;
+    // Another visitor language renders the English site and translates it in place.
+    const site = other ? contents.en ?? contents[state.language]! : contents[showing] ?? contents[state.language]!;
     const english = contents.en ?? site;
     const scroll = stage.querySelector('.farm-site')?.scrollTop ?? 0;
     view = {
@@ -252,8 +255,14 @@ function mount(): void {
         page = next;
         render(same ? undefined : 0);
       },
+      other,
       show(language) {
         showing = language;
+        other = null;
+        render();
+      },
+      showOther(code) {
+        other = OTHER_LANGUAGES.find((o) => o.code === code) ?? null;
         render();
       },
       book(booking) {
@@ -268,16 +277,18 @@ function mount(): void {
         chat.push({ from: 'visitor', text }, line);
         render();
         const reviews = items.filter((i) => i.kind === 'review' && i.status === 'approved').map((i) => (i as { text: string }).text);
-        askSite(site, english, reviews, text, reporters)
-          .then(({ text: reply, unknown }) => {
+        const asking = other;
+        askSite(site, english, reviews, text, reporters, asking)
+          .then(async ({ text: reply, unknown }) => {
             line.pending = false;
             line.text = reply;
             if (!unknown) return;
             // The facts do not answer it: the question goes to the operator, with Wren's draft.
             line.handedOver = true;
             const item: VisitorItem = { kind: 'question', id: nextId++, text, draft: null, reply: null, status: 'pending', language: site.language };
+            if (asking) item.translated = await forOperator(text, asking, state.language, reporters).catch(() => undefined);
             items.push(item);
-            answerQuestion(site, text, reporters)
+            answerQuestion(site, item.translated?.en ?? text, reporters)
               .then((draft) => (item.draft = draft))
               .catch((error) => {
                 item.draft = '';
@@ -287,7 +298,7 @@ function mount(): void {
           })
           .catch((error) => {
             line.pending = false;
-            line.text = '…';
+            line.text = site.language === 'sw' ? 'Samahani, sikuweza kujibu sasa hivi. Jaribu tena baadaye.' : 'Sorry, the chat could not answer just now. Please try again later.';
             reporters.problem(`The chat failed: ${error instanceof Error ? error.message : String(error)}`);
           })
           .finally(() => render());
@@ -296,7 +307,9 @@ function mount(): void {
         const item: VisitorItem = { kind: 'review', id: nextId++, text, stars, name, sentiment: null, status: 'pending' };
         items.push(item);
         render();
-        reviewSentiment(text, reporters)
+        const writing = other;
+        (writing ? forOperator(text, writing, state.language, reporters).then((t) => ((item.translated = t), t.en)).catch(() => text) : Promise.resolve(text))
+          .then((english) => reviewSentiment(english, reporters))
           .then((sentiment) => (item.sentiment = sentiment))
           .catch((error) => {
             item.sentiment = 'unclear';
@@ -306,6 +319,10 @@ function mount(): void {
       },
     };
     const element = laptop(view);
+    if (other) {
+      const page = element.querySelector('.farm-site') as HTMLElement;
+      translatePage(page, other, reporters.translation, reporters.problem);
+    }
     queueMicrotask(() => {
       const el = stage.querySelector('.farm-site');
       if (el) el.scrollTop = scroll;
@@ -451,10 +468,10 @@ function mount(): void {
   function fit(): void {
     const device = stage.firstElementChild as HTMLElement | null;
     if (!device) return;
-    // With the compact role box above the stage, its height comes off the visible height too.
-    const roleAbove = window.innerWidth < 1600 ? role.offsetHeight + 36 : 0;
+    // On a phone-width screen the role panel sits above the stage, so its height comes off too.
+    const roleAbove = window.innerWidth < 760 ? role.offsetHeight : 0;
     const visible = Math.min(window.innerHeight, window.screen.availHeight - 160) - roleAbove;
-    // The full-height strip only exists from 1600px up; the compact row sizes itself.
+    // The strip fills the visible height beside the stage; stacked, it sizes itself.
     if (!roleAbove) page$.style.setProperty('--visible-h', `${visible}px`);
     device.style.zoom = '1';
     const show = stage.parentElement as HTMLElement;
@@ -468,7 +485,7 @@ function mount(): void {
     const showWidth = show.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
     const below = Math.min(1, showWidth / width, (visible - 240) / height);
     const beside = Math.min(1, (showWidth - SIDE_TEXT - 40) / width, (visible - 64) / height);
-    const side = !narrow && beside > below + 0.08;
+    const side = !narrow && beside > below;
     show.classList.toggle('side', side);
     const scale = narrow ? Math.max(0.3, Math.min(1, (window.innerWidth - 32) / width)) : Math.max(0.45, side ? beside : below);
     device.style.zoom = String(scale);

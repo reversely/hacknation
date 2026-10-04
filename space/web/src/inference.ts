@@ -5,6 +5,7 @@ import type { JsonGenerator } from '../../../app/src/agent/websiteCreator';
 import type { Translate } from '../../../app/src/inference/translator';
 import type { SiteContent } from '../../../app/src/survey/pipeline';
 import type { Language } from '../../../app/src/survey/survey';
+import type { OtherLanguage } from './universal';
 import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, insightLines, SUMMARY_TOKENS, summaryMessages, UNKNOWN, unsupported, VISITOR_TOKENS, visitorFacts, visitorMessages, type ActivityLine } from './prompts';
 import { chatCall, jsonCall, visitorCall, translate as translateTexts, type ModelEvent, type TranslationEvent } from './models';
 
@@ -39,13 +40,14 @@ export async function reviewSentiment(review: string, report: Reporters): Promis
 // The visitor's chat: the question crosses into English, the 0.5B model answers from the English
 // facts, and the answer crosses back into the site's language. An answer the facts do not support,
 // by the model's own word or by the grounding check, goes to the operator instead.
-export async function askSite(site: SiteContent, english: SiteContent, reviews: string[], question: string, report: Reporters): Promise<{ text: string; unknown: boolean }> {
+export async function askSite(site: SiteContent, english: SiteContent, reviews: string[], question: string, report: Reporters, other: OtherLanguage | null = null): Promise<{ text: string; unknown: boolean; english: string }> {
   const deps = pipelineDeps(report);
-  const toEnglish = site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
+  const toEnglish = other ? (await translateTexts([question], other.code, 'en', report.translation))[0] : site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
   const facts = visitorFacts(english, reviews);
   const reply = await visitorCall(visitorMessages(facts, toEnglish), VISITOR_TOKENS, report.model);
   const unknown = reply.toLowerCase().includes(UNKNOWN.toLowerCase()) || !reply.trim() || unsupported(toEnglish, reply, facts);
-  return { text: unknown || site.language === 'en' ? reply : await deps.translate(reply, 'en', site.language), unknown };
+  if (other) return { text: unknown ? reply : (await translateTexts([reply], 'en', other.code, report.translation))[0], unknown, english: toEnglish };
+  return { text: unknown || site.language === 'en' ? reply : await deps.translate(reply, 'en', site.language), unknown, english: toEnglish };
 }
 
 // Wren's insights on the operator's phone: the on-device agent (Gemma 4 E2B) writes up to three lines
@@ -55,4 +57,12 @@ export async function summarise(business: string, lines: ActivityLine[], languag
   const translate = pipelineDeps(report).translate;
   const local = language === 'en' ? en : await Promise.all(en.map((line) => translate(line, 'en', language)));
   return { en, local };
+}
+
+// A visitor's text in another language, for the operator: into English, then into the operator's
+// language, both by NLLB.
+export async function forOperator(text: string, other: OtherLanguage, language: Language, report: Reporters): Promise<{ from: string; en: string; local: string }> {
+  const en = (await translateTexts([text], other.code, 'en', report.translation))[0];
+  const local = language === 'en' ? en : await pipelineDeps(report).translate(en, 'en', language);
+  return { from: other.label, en, local };
 }

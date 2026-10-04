@@ -11,7 +11,16 @@ const memory = new Map<string, string>();
 let client: Promise<Client> | null = null;
 // The page's own origin on the Space; a local preview names the Space with ?space=<url>.
 const server = new URLSearchParams(window.location.search).get('space') ?? window.location.origin;
-const connect = () => (client ??= Client.connect(server));
+// Test runs on this machine sign in with the owner's token from local storage, so they do not spend
+// the anonymous ZeroGPU allowance; a visitor's browser never has it.
+const testToken = (() => {
+  try {
+    return localStorage.getItem('wren-hf-token') as `hf_${string}` | null;
+  } catch {
+    return null;
+  }
+})();
+const connect = () => (client ??= Client.connect(server, testToken ? { token: testToken } : {}));
 
 async function sha256(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));

@@ -83,6 +83,16 @@ cream screen or the farm site's own colours. A walkthrough under the device offe
 does what a visitor would on that page, and Next. Back on the phone, Wren's on-device agent (Gemma
 4 E2B) summarises what visitors did above the requests waiting for approval.
 
+### Universal translation
+
+The browser bar's language menu offers French, Spanish, German, Portuguese, Simplified Chinese and
+Japanese beyond the site's own two, all through NLLB-200 600M, which beat Qwen2.5 0.5B on every
+phrase tried ("Book a visit": NLLB "Réservez une visite", Qwen "Vérifiez un séjour"). The page renders
+in English and each visible phrase is swapped for its translation, fetched in one batch and cached; a
+translation whose digits differ from the English keeps the English. A question asked in one of those
+languages crosses into English for the chat and the answer crosses back. A handed-over question or a
+review reaches the operator in the operator's language, with the original beside it.
+
 ## Twin phone
 
 When the operator chooses a language other than English, a second phone beside the first mirrors

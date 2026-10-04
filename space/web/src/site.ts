@@ -10,11 +10,14 @@ import { DAYS, type Day, type Language } from '../../../app/src/survey/survey';
 import { decodeBooking, type CodedBooking } from './booking-code';
 import type { Sentiment } from './inference';
 import { h } from './ui';
+import { OTHER_LANGUAGES, type OtherLanguage } from './universal';
 
 export type Status = 'pending' | 'approved' | 'declined';
 export type Booking = { kind: 'booking'; id: number; code: string; date: string; slot: { start: string; end: string }; people: number; name: string; service: string; status: Status };
-export type Question = { kind: 'question'; id: number; text: string; draft: string | null; reply: string | null; status: Status; language: Language };
-export type Review = { kind: 'review'; id: number; text: string; stars: number; name: string; sentiment: Sentiment | null; status: Status };
+// A visitor writing in another language: the text in English and in the operator's language.
+export type Translated = { from: string; en: string; local: string };
+export type Question = { kind: 'question'; id: number; text: string; draft: string | null; reply: string | null; status: Status; language: Language; translated?: Translated };
+export type Review = { kind: 'review'; id: number; text: string; stars: number; name: string; sentiment: Sentiment | null; status: Status; translated?: Translated };
 export type VisitorItem = Booking | Question | Review;
 export type ChatLine = { from: 'visitor' | 'site'; text: string; pending?: boolean; handedOver?: boolean };
 export type SitePage = 'home' | 'book' | 'ask' | 'reviews' | 'contact';
@@ -27,6 +30,8 @@ export type SiteView = {
   items: VisitorItem[];
   chat: ChatLine[];
   languages: Language[]; // the site versions built; more than one when the twin exists
+  other: OtherLanguage | null; // a visitor language beyond the site's own, by universal translation
+  showOther(code: string | null): void;
   go(page: SitePage): void;
   show(language: Language): void;
   book(booking: CodedBooking & { name: string }): string; // returns the reference code
@@ -334,7 +339,21 @@ export function laptop(view: SiteView): HTMLElement {
         { class: 'browser-bar' },
         h('span', { class: 'lights', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')),
         h('span', { class: 'url' }, `wren.site/${view.slug}${view.page === 'home' ? '' : `/${view.page}`}`),
-        view.languages.length > 1 ? h('span', { class: 'browser-langs' }, ...view.languages.map((lg) => h('button', { type: 'button', class: lg === lang ? 'on' : '', onclick: () => view.show(lg) }, lg === 'sw' ? 'Kiswahili' : 'English'))) : null,
+        h(
+          'span',
+          { class: 'browser-langs' },
+          ...view.languages.map((lg) => h('button', { type: 'button', class: lg === lang && !view.other ? 'on' : '', onclick: () => view.show(lg) }, lg === 'sw' ? 'Kiswahili' : 'English')),
+          (() => {
+            const select = h(
+              'select',
+              { class: `more-langs ${view.other ? 'on' : ''}`, 'aria-label': 'More languages' },
+              h('option', { value: '', selected: !view.other }, view.other ? 'Site language' : 'More languages'),
+              ...OTHER_LANGUAGES.map((o) => h('option', { value: o.code, selected: view.other?.code === o.code }, o.label)),
+            ) as HTMLSelectElement;
+            select.addEventListener('change', () => view.showOther(select.value || null));
+            return select;
+          })(),
+        ),
       ),
       h('div', { class: 'farm-site', lang }, nav, h('main', {}, ...pages[view.page]()), footer),
     ),

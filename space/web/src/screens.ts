@@ -304,7 +304,8 @@ function siteScreen(ctx: Context): Screen {
         'div',
         { class: 'card request' },
         h('span', { class: 'kind' }, t.question),
-        h('strong', {}, item.text),
+        h('strong', {}, item.translated ? (ctx.language === 'en' ? item.translated.en : item.translated.local) : item.text),
+        item.translated ? h('span', { class: 'from' }, `${t.translatedFrom} ${item.translated.from}: “${item.text}”`) : null,
         item.status === 'pending'
           ? item.draft === null
             ? h('span', { class: 'muted' }, t.drafting)
@@ -319,7 +320,8 @@ function siteScreen(ctx: Context): Screen {
       'div',
       { class: 'card request' },
       h('span', { class: 'kind' }, `${t.review}, ${'★'.repeat(item.stars)}`),
-      h('strong', {}, item.text),
+      h('strong', {}, item.translated ? (ctx.language === 'en' ? item.translated.en : item.translated.local) : item.text),
+      item.translated ? h('span', { class: 'from' }, `${t.translatedFrom} ${item.translated.from}: “${item.text}”`) : null,
       h('span', { class: `sentiment ${item.sentiment ?? ''}` }, item.sentiment ? t[item.sentiment] : '…'),
       item.status === 'pending' ? actions([t.hide, () => ctx.inbox.decline(item.id)], [t.publish, () => ctx.inbox.approve(item.id), true]) : h('span', { class: `done ${item.status}` }, item.status === 'approved' ? t.published : t.hidden),
     );
