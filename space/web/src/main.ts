@@ -4,16 +4,19 @@
 // device narrate both; the two sides invert each other's light and dark and their type.
 
 import { buildSite, type BuildResult, type SiteContent } from '../../../app/src/survey/pipeline';
-import type { Language } from '../../../app/src/survey/survey';
+import { DAYS, type Language } from '../../../app/src/survey/survey';
 import { wrenWordmark as wordmark } from './assets/generated';
 import { encodeBooking } from './booking-code';
-import { answerQuestion, askSite, pipelineDeps, reviewSentiment, type Reporters } from './inference';
+import { answerQuestion, askSite, pipelineDeps, reviewSentiment, summarise, type Reporters } from './inference';
+import { DEMO_VISITOR } from './demo-inputs';
+import { activityLines } from './prompts';
 import { cachedTranslation, translate, type ModelEvent, type TranslationEvent } from './models';
 import { details, ROLES, step, type Mode } from './narration';
 import { dots, SCREENS, stringsFor, type Context, type ScreenId } from './screens';
-import { laptop, type ChatLine, type SitePage, type VisitorItem } from './site';
+import { fillDraft, firstOpenDate, laptop, SITE_PAGES, SUGGESTED, type ChatLine, type SitePage, type SiteView, type VisitorItem } from './site';
 import { englishSurvey, initialState, siteSlug, toSurvey, type State } from './state';
 import css from './styles.css' with { type: 'text' };
+import { Trace, tracePanel } from './trace';
 import { h } from './ui';
 
 const state: State = initialState();
@@ -33,6 +36,11 @@ const chat: ChatLine[] = [];
 let nextId = 1;
 let editing: number | null = null;
 let showing: Language = 'sw';
+// Wren's summary on the operator's phone, regenerated when the visitors' activity changes.
+const summary = { key: '', en: null as string[] | null, local: null as string[] | null, busy: false };
+// The latest model call in the current step, shown live under the step.
+let lastCall: { step: string; text: string } | null = null;
+let view: SiteView | null = null;
 
 function mount(): void {
   const root = document.getElementById('wren-root');
@@ -49,14 +57,22 @@ function mount(): void {
   const page$ = h('div', { class: 'demo' }, role, h('div', { class: 'show' }, stage, caption));
   shadow.replaceChildren(h('style', {}, css), page$);
   const footers: { button: HTMLButtonElement; enabled: () => boolean }[] = [];
+  // The agent trace beside the phone during the build; it redraws only its own slot.
+  const traceSlot = h('div', { class: 'device trace-device' });
+  const trace = new Trace(() => {
+    traceSlot.replaceChildren(h('div', { class: 'device-label' }, h('span', { class: 'lang' }, 'Agent'), h('span', { class: 'kind' }, 'Local models')), tracePanel(trace));
+    if (trace.done) refreshCaption();
+  });
 
   const reporters: Reporters = {
     translation: (event) => {
       events.push(event);
+      lastCall = { step: stepKey(), text: `Translation ${event.source} to ${event.target}: NLLB-200 600M, ${event.from === 'model' ? `${event.ms} ms on the GPU` : `from the ${event.from}`}` };
       refreshCaption();
     },
     model: (event) => {
       modelEvents.push(event);
+      lastCall = { step: stepKey(), text: `${event.summary}: ${event.model.split('/').pop()}, ${event.from === 'model' ? `${event.ms} ms on the GPU` : `from the ${event.from}`}` };
       refreshCaption();
     },
     problem: (text) => {
@@ -66,6 +82,7 @@ function mount(): void {
   };
   const deps = pipelineDeps(reporters);
   const twinShown = () => state.language !== 'en';
+  const stepKey = () => `${mode}:${mode === 'operator' ? current : page}`;
   const siteLive = () => Boolean(contents[state.language]);
 
   // Text the operator typed, shown in the English twin: the cached translation at once, otherwise
@@ -104,6 +121,13 @@ function mount(): void {
       inbox: {
         items,
         url: `wren.site/${siteSlug(state.name)}`,
+        summary: phone === 'main' ? summary.local : summary.en,
+        openSite() {
+          mode = 'visitor';
+          page = 'home';
+          render(0);
+        },
+        summarising: summary.busy,
         editing,
         edit(id) {
           editing = id;
@@ -144,24 +168,28 @@ function mount(): void {
   async function build(): Promise<void> {
     result = null;
     buildError = null;
+    trace.reset();
+    const traced = trace.wrap(deps);
+    const slug = siteSlug(state.name);
     try {
       const survey = toSurvey(state);
-      result = await buildSite(survey, deps);
+      trace.push('head', `website creator: ${state.name}, in ${state.language === 'sw' ? 'Kiswahili' : 'English'}`);
+      result = await buildSite(survey, traced);
+      trace.result(result, slug);
       sites[state.language] = result.html;
       contents[state.language] = result.site;
       if (twinShown()) {
         // The twin's English site: the same survey with the operator's words in English. Its calls
         // repeat ones the main build made, so the caches answer them.
-        const english = await englishSurvey(survey, (text) => deps.translate(text, state.language, 'en'));
-        const twin = await buildSite(english, deps);
+        trace.push('head', 'website creator: the English twin site');
+        const english = await englishSurvey(survey, (text) => traced.translate(text, state.language, 'en'));
+        const twin = await buildSite(english, traced);
+        trace.result(twin, `${slug}/en`);
         sites.en = twin.html;
         contents.en = twin.site;
       }
-      // The site is live: the page switches to the visitor's view.
+      // The site is live; the walkthrough's Next opens the visitor's view.
       showing = state.language;
-      current = 'site';
-      mode = 'visitor';
-      page = 'home';
     } catch (error) {
       buildError = `The site could not be created: ${error instanceof Error ? error.message : String(error)}`;
       current = 'review';
@@ -199,7 +227,7 @@ function mount(): void {
     const site = contents[showing] ?? contents[state.language]!;
     const english = contents.en ?? site;
     const scroll = stage.querySelector('.farm-site')?.scrollTop ?? 0;
-    const view = laptop({
+    view = {
       site,
       slug: siteSlug(state.name),
       page,
@@ -263,12 +291,85 @@ function mount(): void {
           })
           .finally(() => render());
       },
-    });
+    };
+    const element = laptop(view);
     queueMicrotask(() => {
       const el = stage.querySelector('.farm-site');
       if (el) el.scrollTop = scroll;
     });
-    return view;
+    return element;
+  }
+
+  function ensureSummary(): void {
+    if (!items.length) return;
+    const lines = activityLines(items);
+    const key = JSON.stringify(lines);
+    if (key === summary.key) return;
+    summary.key = key;
+    summary.busy = true;
+    summarise(state.name, lines, state.language, reporters)
+      .then((s) => {
+        if (summary.key !== key) return;
+        summary.en = s.en;
+        summary.local = s.local;
+      })
+      .catch((error) => {
+        // No model: a plain count, so the phone never shows an empty summary.
+        const n = (kind: string) => items.filter((i) => i.kind === kind).length;
+        summary.en = [`${n('booking')} booking requests, ${n('question')} questions and ${n('review')} reviews are waiting.`, 'Wren could not write insights just now.'];
+        summary.local = state.language === 'sw' ? [`Maombi ${n('booking')} ya nafasi, maswali ${n('question')} na maoni ${n('review')} yanasubiri.`, 'Wren haikuweza kuandika maarifa sasa hivi.'] : summary.en;
+        reporters.problem(`The summary failed: ${error instanceof Error ? error.message : String(error)}`);
+      })
+      .finally(() => {
+        if (summary.key === key) summary.busy = false;
+        if (mode === 'operator') render();
+      });
+  }
+
+  // The walkthrough: "Show me" does what a visitor would on this page; "Next" moves to the next step.
+  const order: { mode: Mode; page?: SitePage }[] = [...SITE_PAGES.map((p) => ({ mode: 'visitor' as const, page: p })), { mode: 'operator' }];
+  function showMe(): (() => void) | null {
+    if (mode !== 'visitor' || !view) return null;
+    const lang = view.site.language;
+    const demo = DEMO_VISITOR[lang];
+    const v = view;
+    if (page === 'book' && !items.some((i) => i.kind === 'booking'))
+      return () => {
+        const date = firstOpenDate(v.site.availability.days);
+        fillDraft({ date, month: date.slice(0, 7), slot: 0, people: demo.people, name: demo.name });
+        fillDraft({ lastCode: v.book({ date, slot: 0, service: 0, people: demo.people, name: demo.name }) });
+        render();
+      };
+    if (page === 'ask' && chat.length < 2) return () => v.ask(SUGGESTED[lang][0]);
+    if (page === 'ask' && !items.some((i) => i.kind === 'question')) return () => v.ask(demo.unknown);
+    if (page === 'reviews' && !items.some((i) => i.kind === 'review')) return () => v.review(demo.review, 5, demo.reviewName);
+    return null;
+  }
+  function next(): { label: string; go: () => void } | null {
+    if (mode === 'operator' && current === 'building')
+      return siteLive() && trace.done
+        ? {
+            label: `Next: ${step('visitor', 'home').title}`,
+            go: () => {
+              current = 'site';
+              mode = 'visitor';
+              page = 'home';
+              render(0);
+            },
+          }
+        : null;
+    const at = order.findIndex((o) => o.mode === mode && (mode === 'operator' ? current === 'site' : o.page === page));
+    const to = order[at + 1];
+    if (at < 0 || !to) return null;
+    const s = step(to.mode, to.mode === 'operator' ? 'site' : to.page!);
+    return {
+      label: `Next: ${s.title}`,
+      go: () => {
+        mode = to.mode;
+        if (to.page) page = to.page;
+        render(0);
+      },
+    };
   }
 
   function refreshCaption(): void {
@@ -278,6 +379,12 @@ function mount(): void {
       h('h2', { class: 'step-title' }, s.title),
       h('p', { class: 'step-text' }, s.text),
       s.model ? h('p', { class: 'step-model' }, `Model: ${s.model}`) : h('p', { class: 'step-model none' }, 'No model in this step'),
+      lastCall && lastCall.step === stepKey() ? h('p', { class: 'step-live' }, h('span', { class: 'pulse', 'aria-hidden': 'true' }), lastCall.text) : h('span'),
+      (() => {
+        const act = showMe();
+        const n = next();
+        return act || n ? h('div', { class: 'step-actions' }, act ? h('button', { type: 'button', class: 'show-me', onclick: act }, 'Show me') : null, n ? h('button', { type: 'button', class: 'next', onclick: n.go }, `${n.label} →`) : null) : h('span');
+      })(),
       details(state, events, modelEvents, problems, result, buildError),
     );
     const r = ROLES[mode];
@@ -305,6 +412,7 @@ function mount(): void {
       stage.replaceChildren(visitorLaptop());
       if (scrollTo !== undefined) queueMicrotask(() => stage.querySelector('.farm-site')?.scrollTo({ top: scrollTo }));
     } else {
+      if (current === 'site') ensureSummary();
       renderPhone('main');
       const devices: HTMLElement[] = [h('div', { class: 'device' }, label(state.language === 'en' ? 'English' : 'Kiswahili', "Operator's phone"), h('div', { class: 'phone', role: 'region', 'aria-label': "Operator's phone" }, phones.main))];
       if (twinShown()) {
@@ -312,10 +420,30 @@ function mount(): void {
         // The twin mirrors the operator's phone and takes no input of its own.
         devices.push(h('div', { class: 'device twin' }, label('English', 'Twin, translated'), h('div', { class: 'phone', role: 'region', 'aria-label': 'English twin', inert: true }, phones.twin)));
       }
+      if (current === 'building') {
+        trace.redrawNow();
+        devices.push(traceSlot);
+      }
       stage.replaceChildren(h('div', { class: 'phones' }, ...devices));
     }
     refreshCaption();
+    requestAnimationFrame(fit);
   }
+
+  // Fit the devices to the window: scale the phones or the laptop down until they sit side by side
+  // and leave room for the step caption below. On a narrow screen only the width counts.
+  function fit(): void {
+    const device = stage.firstElementChild as HTMLElement | null;
+    if (!device) return;
+    device.style.zoom = '1';
+    const narrow = window.innerWidth < 760;
+    const width = device.scrollWidth;
+    const height = device.offsetHeight;
+    const room = narrow ? Infinity : window.innerHeight - 290;
+    const scale = Math.max(0.55, Math.min(1, stage.clientWidth / width, room / height));
+    device.style.zoom = String(scale);
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(fit));
 
   render();
 }

@@ -12,8 +12,8 @@ export type Mode = 'operator' | 'visitor';
 type Step = { title: string; text: string; model: string | null };
 
 export const ROLES: Record<Mode, { title: string; text: string }> = {
-  operator: { title: 'Farm-tour operator', text: 'The operator sets up the business on the phone in their own language, and approves everything Wren drafts before a visitor sees it.' },
-  visitor: { title: 'Visitor', text: "A visitor finds the farm's website, books a visit, asks questions and leaves a review, in the operator's language or in English." },
+  operator: { title: 'Operator', text: 'Noor runs coffee-farm tours, sets the business up on the phone in Kiswahili, and approves everything Wren drafts before a visitor sees it.' },
+  visitor: { title: 'Visitor', text: "A visitor finds Noor's farm online, books a visit on the calendar, asks the site's chat and leaves a review." },
 };
 
 const OPERATOR: Record<ScreenId, Step> = {
@@ -23,13 +23,13 @@ const OPERATOR: Record<ScreenId, Step> = {
   services: { title: 'List what visitors can book', text: 'Each service keeps its own duration, price and capacity. Numbers never pass through a model; only a custom name or a sentence about the service is free text.', model: 'NLLB-200 600M, for the twin only' },
   availability: { title: 'Set the days and times', text: 'The chosen days and time slots become the booking calendar. Kiswahili pages show times on the Swahili clock, which counts hours from dawn.', model: null },
   review: { title: 'Check before creating', text: 'Nothing is created until the operator presses the button, and every check must pass first.', model: null },
-  building: { title: 'Create the site', text: "The operator's free text crosses into English, the coding model writes short copy under a JSON schema, checks reject anything not in the facts, and the copy crosses back into the chosen language.", model: 'NLLB-200 600M and Qwen2.5-Coder 1.5B' },
-  site: { title: 'Approve what visitors asked for', text: "Bookings, questions the chat could not answer, and reviews wait on the operator's phone. Wren drafts a reply from the site's facts and labels each review's sentiment; nothing reaches the visitor until the operator approves it.", model: 'Gemma 4 E2B' },
+  building: { title: 'Create the site', text: "The agent trace shows each call as it runs: the operator's free text crosses into English, the coding model writes short copy as JSON from the survey's facts, a check rejects any name or number not in the survey, the copy crosses back into the chosen language, and the template writes the page.", model: 'NLLB-200 600M and Qwen2.5-Coder 1.5B' },
+  site: { title: 'Review it all on the phone', text: "The dashboard counts booking requests, guests, questions and the rating in code and charts guests by day; Wren's on-device agent adds short insights. Below them, each booking request, question the chat could not answer, and review waits for Noor, with Wren's draft reply or sentiment label, and nothing reaches a visitor until Noor approves it.", model: 'Gemma 4 E2B, the phone model, with NLLB-200 600M' },
 };
 
 const VISITOR: Record<SitePage, Step> = {
   home: { title: 'Find the farm', text: "The farm's site carries its own design. Its headline and introduction come from the coding model; prices, durations and capacities come straight from the survey.", model: null },
-  book: { title: 'Book a visit', text: 'A booking returns a reference code that encodes the experience, date, time and party size with a check character, so the visitor can look it up again with no backend. The farm confirms it from the phone.', model: null },
+  book: { title: 'Request a booking', text: 'The calendar opens only the days Noor chose and shows how many guests each day already has. A request returns a reference code that encodes the experience, date, time and party size with a check character, so the visitor can look it up again with no backend. Noor confirms it from the phone.', model: null },
   ask: { title: 'Ask a question', text: "A 0.5B-parameter chat model answers from the site's facts and published reviews. A Kiswahili question crosses into English and the answer crosses back. A question the facts cannot answer goes to the operator.", model: 'Qwen2.5 0.5B Instruct and NLLB-200 600M' },
   reviews: { title: 'Leave a review', text: 'A review waits for the operator, who sees its sentiment label and decides whether to publish it.', model: 'Gemma 4 E2B, on the phone' },
   contact: { title: 'Get in touch', text: 'The phone number, location, open days and times come straight from the survey.', model: null },

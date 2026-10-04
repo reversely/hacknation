@@ -7,9 +7,10 @@ import { Client } from '@gradio/client';
 
 import { buildSite } from '../../../app/src/survey/pipeline';
 import { englishSurvey } from '../src/state';
-import { DEMO_QUESTION, DEMO_REVIEW, DEMO_SURVEY } from '../src/demo-inputs';
-import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, UNKNOWN, VISITOR_TOKENS, visitorFacts, visitorMessages } from '../src/prompts';
-import { SUGGESTED } from '../src/site';
+import { DEMO_QUESTION, DEMO_REVIEW, DEMO_SURVEY, DEMO_VISITOR } from '../src/demo-inputs';
+import { activityLines, insightLines, parseSentiment, SUMMARY_TOKENS, summaryMessages, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, UNKNOWN, unsupported, VISITOR_TOKENS, visitorFacts, visitorMessages } from '../src/prompts';
+import { SUGGESTED, type VisitorItem } from '../src/site';
+import { encodeBooking } from '../src/booking-code';
 import type { SiteContent } from '../../../app/src/survey/pipeline';
 
 const token = process.env.HF_TOKEN as `hf_${string}` | undefined;
@@ -46,11 +47,43 @@ console.log(`review sentiment: ${parseSentiment(sentiment.text)} (raw: ${sentime
 // The chat's suggested questions on both versions of the site, as askSite (src/inference.ts) runs them.
 const english = built[1];
 for (const site of built) {
-  for (const question of SUGGESTED[site.language]) {
+  for (const question of [...SUGGESTED[site.language], DEMO_VISITOR[site.language].unknown]) {
     const asked = site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
-    const reply = await call<{ text: string }>('visitor', { messages: visitorMessages(visitorFacts(english, []), asked), max_tokens: VISITOR_TOKENS });
-    const unknown = reply.text.toLowerCase().includes(UNKNOWN.toLowerCase());
+    const facts = visitorFacts(english, []);
+    const reply = await call<{ text: string }>('visitor', { messages: visitorMessages(facts, asked), max_tokens: VISITOR_TOKENS });
+    const unknown = reply.text.toLowerCase().includes(UNKNOWN.toLowerCase()) || unsupported(asked, reply.text, facts);
     const shown = unknown || site.language === 'en' ? reply.text : await deps.translate(reply.text, 'en', site.language);
-    console.log(`chat ${site.language}: ${question} -> ${shown}`);
+    console.log(`chat ${site.language}: ${question} -> ${unknown ? '(handed to the operator) ' : ''}${shown}`);
   }
+}
+
+// The walkthrough's reviews, as reviewSentiment (src/inference.ts) labels them.
+for (const lang of ['sw', 'en'] as const) {
+  const label = await call<{ text: string }>('chat', { messages: SENTIMENT_MESSAGES(DEMO_VISITOR[lang].review), max_tokens: SENTIMENT_TOKENS });
+  console.log(`review ${lang}: ${parseSentiment(label.text)}`);
+}
+
+// The walkthrough on the operator's phone (src/main.ts): Wren's draft for the handed-over question,
+// its English for the twin, and the summary of the walkthrough's activity. The booking date is the
+// first open day from today, so run this on the day of the demonstration.
+{
+  const site = operatorSite!;
+  const demo = DEMO_VISITOR.sw;
+  const draft = await call<{ text: string }>('chat', { messages: questionMessages(site, demo.unknown), max_tokens: QUESTION_TOKENS });
+  console.log(`draft: ${draft.text}`);
+  console.log(`draft in English: ${await deps.translate(draft.text, 'sw', 'en')}`);
+  const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const today = new Date();
+  let date = '';
+  for (let i = 1; i <= 21 && !date; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    if ((site.availability.days as string[]).includes(WEEK[d.getDay()])) date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  const items: VisitorItem[] = [
+    { kind: 'booking', id: 1, code: encodeBooking({ date, slot: 0, service: 0, people: demo.people }), date, slot: site.availability.slots[0], people: demo.people, name: demo.name, service: site.services[0].name, status: 'pending' },
+    { kind: 'question', id: 2, text: demo.unknown, draft: null, reply: null, status: 'pending', language: 'sw' },
+    { kind: 'review', id: 3, text: demo.review, stars: 5, name: demo.reviewName, sentiment: 'positive', status: 'pending' },
+  ];
+  const summary = await call<{ text: string }>('chat', { messages: summaryMessages(site.business.name, activityLines(items)), max_tokens: SUMMARY_TOKENS });
+  for (const line of insightLines(summary.text)) console.log(`insight: ${line} | ${await deps.translate(line, 'en', 'sw')}`);
 }

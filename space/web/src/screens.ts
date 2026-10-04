@@ -7,7 +7,7 @@ import { DAYS, SERVICE_TYPES, type Day, type Language, type ServiceType } from '
 import { h, field } from './ui';
 import { INBOX } from './visitor';
 import { formatSlot } from '../../../app/src/survey/render';
-import { dateLabel, type VisitorItem } from './site';
+import { dateLabel, PHOTO, upcomingOpenDates, type VisitorItem } from './site';
 import { businessComplete, newService, scheduleComplete, serviceComplete, siteSlug, type State } from './state';
 
 export type ScreenId = 'language' | 'signin' | 'business' | 'services' | 'availability' | 'review' | 'building' | 'site';
@@ -18,7 +18,7 @@ export type Context = {
   s: Strings;
   live(text: string, field?: string): string; // operator-typed text in this phone's language
   siteHtml: string | null; // the generated page in this phone's language
-  inbox: { items: VisitorItem[]; url: string; editing: number | null; edit(id: number | null): void; approve(id: number, reply?: string): void; decline(id: number): void };
+  inbox: { items: VisitorItem[]; url: string; summary: string[] | null; summarising: boolean; openSite(): void; editing: number | null; edit(id: number | null): void; approve(id: number, reply?: string): void; decline(id: number): void };
   go(screen: ScreenId): void;
   redraw(): void; // rebuilds every phone after a structural change
   changed(): void; // re-checks the footer, the twin and the narration after a value change
@@ -185,7 +185,7 @@ export const SCREENS: Record<ScreenId, (ctx: Context) => Screen> = {
     };
   },
 
-  building: (ctx) => ({ bare: true, body: [h('div', { class: 'building', 'aria-live': 'polite' }, h('span', { class: 'on' }, `${ctx.s.creating}…`))] }),
+  building: (ctx) => ({ bare: true, body: [h('div', { class: 'building', 'aria-live': 'polite' }, ctx.siteHtml ? h('span', { class: 'on' }, `✓ ${ctx.s.created}`) : h('span', { class: 'on' }, `${ctx.s.creating}…`))] }),
 
   site: (ctx) => siteScreen(ctx),
 };
@@ -267,7 +267,13 @@ export const stringsFor = (language: Language): Strings => STRINGS[language];
 function siteScreen(ctx: Context): Screen {
   const t = INBOX[ctx.language];
   if (!ctx.siteHtml) return { back: 'review', body: [h('p', { class: 'subtitle' }, ctx.s.createFailed)] };
-  const live = h('div', { class: 'card live-card' }, h('div', {}, h('div', { class: 'card-title left' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live), h('div', { class: 'url' }, ctx.inbox.url)));
+  const live = h(
+    'div',
+    { class: 'card live-card' },
+    h('div', { class: 'site-thumb', 'aria-hidden': 'true' }, h('img', { src: PHOTO, alt: '' }), h('span', {}, ctx.state.name)),
+    h('div', { class: 'live-text' }, h('div', { class: 'card-title left' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live), h('div', { class: 'url' }, ctx.inbox.url)),
+    h('button', { type: 'button', class: 'open-site', onclick: () => ctx.inbox.openSite() }, t.open),
+  );
   const items = [...ctx.inbox.items].reverse();
   const actions = (...buttons: [string, () => void, boolean?][]) => h('div', { class: 'actions' }, ...buttons.map(([label, action, primary]) => h('button', { type: 'button', class: primary ? 'approve' : '', onclick: action }, label)));
   const card = (item: VisitorItem): HTMLElement => {
@@ -294,7 +300,7 @@ function siteScreen(ctx: Context): Screen {
         item.status === 'pending'
           ? item.draft === null
             ? h('span', { class: 'muted' }, t.drafting)
-            : h('div', {}, h('div', { class: 'kind' }, t.draftLabel), box ?? h('div', { class: 'draft' }, shown ?? ''))
+            : h('div', {}, h('div', { class: 'kind' }, t.draftLabel), box ?? h('div', { class: 'draft' }, shown || t.noDraft))
           : h('span', { class: `done ${item.status}` }, item.status === 'approved' ? t.sent : t.declined),
         item.status === 'pending' && item.draft !== null
           ? actions([t.decline, () => ctx.inbox.decline(item.id)], editing ? [t.send, () => ctx.inbox.approve(item.id, box!.value), true] : [t.edit, () => ctx.inbox.edit(item.id)], ...(editing ? [] : [[t.send, () => ctx.inbox.approve(item.id), true] as [string, () => void, boolean]]))
@@ -312,6 +318,40 @@ function siteScreen(ctx: Context): Screen {
   };
   return {
     back: 'review',
-    body: [live, h('div', { class: 'card-heading' }, h('span', {}, t.requests), h('span', { class: 'muted' }, String(items.filter((i) => i.status === 'pending').length))), ...(items.length ? items.map(card) : [h('p', { class: 'hint left' }, t.empty)])],
+    body: [
+      live,
+      items.length ? dashboard(ctx, items) : h('span'),
+      h('div', { class: 'card-heading' }, h('span', {}, items.length ? t.waiting : t.requests), h('span', { class: 'muted' }, String(items.filter((i) => i.status === 'pending').length))), ...(items.length ? items.map(card) : [h('p', { class: 'hint left' }, t.empty)])],
   };
+}
+
+// The figures come from code, never from a model: requests, guests, questions and the rating, one
+// chart of guests by open day, then Wren's insights in a few short lines.
+function dashboard(ctx: Context, items: VisitorItem[]): HTMLElement {
+  const t = INBOX[ctx.language];
+  const bookings = items.filter((i) => i.kind === 'booking' && i.status !== 'declined') as Extract<VisitorItem, { kind: 'booking' }>[];
+  const reviews = items.filter((i) => i.kind === 'review') as Extract<VisitorItem, { kind: 'review' }>[];
+  const rating = reviews.length ? (reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length).toFixed(1) : '–';
+  const tiles: [string, string][] = [
+    [t.kpiBookings, String(bookings.length)],
+    [t.kpiGuests, String(bookings.reduce((sum, b) => sum + b.people, 0))],
+    [t.kpiQuestions, String(items.filter((i) => i.kind === 'question').length)],
+    [t.kpiRating, reviews.length ? `${rating} ★` : rating],
+  ];
+  const days = upcomingOpenDates(ctx.state.days, 6);
+  const guests = days.map((d) => bookings.filter((b) => b.date === d).reduce((sum, b) => sum + b.people, 0));
+  const top = Math.max(1, ...guests);
+  return h(
+    'div',
+    { class: 'card dash' },
+    h('div', { class: 'kpis' }, ...tiles.map(([label, value]) => h('div', { class: 'kpi' }, h('strong', {}, value), h('span', {}, label)))),
+    h('div', { class: 'kind' }, t.chart),
+    h(
+      'div',
+      { class: 'bars', role: 'img', 'aria-label': days.map((d, i) => `${dateLabel(d, ctx.language)}: ${guests[i]}`).join(', ') },
+      ...days.map((d, i) => h('div', { class: 'bar' }, h('span', { class: 'value' }, guests[i] ? String(guests[i]) : ''), h('div', { class: 'track' }, h('div', { class: `fill ${guests[i] ? '' : 'empty'}`, style: `height: ${Math.round((guests[i] / top) * 100)}%` })), h('span', { class: 'label' }, dateLabel(d, ctx.language).split(' ')[1]))),
+    ),
+    h('div', { class: 'kind' }, t.insights),
+    ctx.inbox.summarising && !ctx.inbox.summary ? h('p', { class: 'muted insight' }, t.summarising) : h('ul', { class: 'insights' }, ...(ctx.inbox.summary ?? []).map((line) => h('li', {}, line))),
+  );
 }

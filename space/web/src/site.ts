@@ -5,6 +5,7 @@
 
 import type { SiteContent } from '../../../app/src/survey/pipeline';
 import { formatDuration, formatPrice, formatSlot } from '../../../app/src/survey/render';
+import { DAY_LETTERS } from '../../../app/src/survey/strings';
 import { DAYS, type Day, type Language } from '../../../app/src/survey/survey';
 import { decodeBooking, type CodedBooking } from './booking-code';
 import type { Sentiment } from './inference';
@@ -37,13 +38,13 @@ const L = {
   en: {
     home: 'Home', book: 'Book', ask: 'Ask us', reviews: 'Reviews', contact: 'Contact', bookNow: 'Book a visit', from: 'From', per: 'per person', upTo: 'Up to', people: 'people', about: 'About the farm', experiences: 'Experiences', pick: 'Choose a day', time: 'Time', guests: 'Guests', service: 'Experience', yourName: 'Your name', request: 'Request booking',
     received: 'Booking request received', yourCode: 'Your booking reference', keepCode: 'Keep this code. The farm confirms your visit, and you can check it here at any time.', pending: 'Waiting for the farm to confirm', approved: 'Confirmed by the farm', declined: 'The farm could not take this booking; please choose another time', check: 'Check a booking', checkPlaceholder: 'WR-XXXX-XXX', find: 'Find', notFound: 'That code is not valid. Check each character.', validCode: 'Valid reference',
-    askTitle: 'Ask us anything', askLead: 'Answers come from the information on this site. Anything else goes to the farm.', suggested: ['How long is the tour?', 'How much does it cost?', 'Which days are you open?', 'Is it suitable for children?'] as string[], send: 'Send', typing: 'Writing…', handedOver: "I don't have that information. I've passed your question to the farm, and they will reply.",
+    askTitle: 'Ask us anything', askLead: 'Answers come from the information on this site. Anything else goes to the farm.', suggested: ['How long is the tour?', 'How much does it cost?', 'Which days are you open?', 'Where are you?'] as string[], send: 'Send', typing: 'Writing…', handedOver: "I don't have that information. I've passed your question to the farm, and they will reply.",
     noReviews: 'No reviews yet', write: 'Leave a review', publish: 'Post review', reviewPending: 'Thank you. Your review appears once the farm publishes it.', where: 'Where', when: 'When', phone: 'Phone', days: 'Open', call: 'Call', madeWith: 'Site made with Wren', laptop: "Visitor's laptop",
   },
   sw: {
     home: 'Mwanzo', book: 'Weka nafasi', ask: 'Uliza', reviews: 'Maoni', contact: 'Mawasiliano', bookNow: 'Weka nafasi', from: 'Kuanzia', per: 'kwa kila mtu', upTo: 'Hadi', people: 'watu', about: 'Kuhusu shamba', experiences: 'Huduma', pick: 'Chagua siku', time: 'Saa', guests: 'Wageni', service: 'Huduma', yourName: 'Jina lako', request: 'Omba nafasi',
     received: 'Ombi la nafasi limepokelewa', yourCode: 'Namba yako ya kumbukumbu', keepCode: 'Hifadhi namba hii. Shamba litathibitisha ziara yako, na unaweza kuiangalia hapa wakati wowote.', pending: 'Inasubiri shamba kuthibitisha', approved: 'Imethibitishwa na shamba', declined: 'Shamba halikuweza kupokea nafasi hii; tafadhali chagua muda mwingine', check: 'Angalia nafasi', checkPlaceholder: 'WR-XXXX-XXX', find: 'Tafuta', notFound: 'Namba hiyo si sahihi. Kagua kila herufi.', validCode: 'Namba sahihi',
-    askTitle: 'Tuulize chochote', askLead: 'Majibu yanatoka kwenye taarifa za tovuti hii. Mengine yanatumwa kwa shamba.', suggested: ['Ziara inachukua muda gani?', 'Bei ni kiasi gani?', 'Mko wazi siku gani?', 'Je, inafaa watoto?'] as string[], send: 'Tuma', typing: 'Inaandika…', handedOver: 'Sina taarifa hiyo. Nimetuma swali lako kwa shamba, na watakujibu.',
+    askTitle: 'Tuulize chochote', askLead: 'Majibu yanatoka kwenye taarifa za tovuti hii. Mengine yanatumwa kwa shamba.', suggested: ['Ziara inachukua muda gani?', 'Bei ni kiasi gani?', 'Mko wazi siku gani?', 'Mko wapi?'] as string[], send: 'Tuma', typing: 'Inaandika…', handedOver: 'Sina taarifa hiyo. Nimetuma swali lako kwa shamba, na watakujibu.',
     noReviews: 'Bado hakuna maoni', write: 'Andika maoni', publish: 'Tuma maoni', reviewPending: 'Asante. Maoni yako yataonekana shamba likiyachapisha.', where: 'Mahali', when: 'Lini', phone: 'Simu', days: 'Wazi', call: 'Piga simu', madeWith: 'Tovuti imetengenezwa na Wren', laptop: 'Kompyuta ya mgeni',
   },
 } as const;
@@ -51,14 +52,17 @@ const L = {
 // The chat's suggested questions; scripts/warm-cache.ts warms their answers.
 export const SUGGESTED: Record<Language, string[]> = { en: L.en.suggested, sw: L.sw.suggested };
 
+// The farm's photos, served beside the bundle (scripts/manifest.ts copies them).
+export const PHOTO = new URL('./photos/farm.jpg', import.meta.url).href;
+
 const WEEKDAYS: Day[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const isoDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-// The next six open dates within three weeks, from the availability days.
-function openDates(days: Day[]): string[] {
+// The next open dates from tomorrow, from the availability days.
+function openDates(days: Day[], horizon = 21, limit = 6): string[] {
   const out: string[] = [];
   const today = new Date();
-  for (let i = 1; i <= 21 && out.length < 6; i++) {
+  for (let i = 1; i <= horizon && out.length < limit; i++) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
     if (days.includes(WEEKDAYS[d.getDay()])) out.push(isoDate(d));
   }
@@ -71,7 +75,14 @@ export const dateLabel = (iso: string, language: Language) => {
 };
 
 // Form drafts survive a redraw; the site redraws on every model reply and approval.
-const draft = { date: '', slot: 0, people: 2, name: '', service: 0, question: '', review: '', reviewName: '', stars: 5, lookup: '', lookedUp: '', lastCode: '' };
+const draft = { month: '', date: '', slot: 0, people: 2, name: '', service: 0, question: '', review: '', reviewName: '', stars: 5, lookup: '', lookedUp: '', lastCode: '' };
+
+// The walkthrough fills the forms the way a visitor would (main.ts, Show me).
+export function fillDraft(values: Partial<typeof draft>): void {
+  Object.assign(draft, values);
+}
+export const firstOpenDate = (days: Day[]) => openDates(days)[0] ?? '';
+export const upcomingOpenDates = (days: Day[], n: number) => openDates(days, 42, n);
 
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
@@ -119,7 +130,8 @@ export function laptop(view: SiteView): HTMLElement {
         h(
           'section',
           { class: 'fs-hero' },
-          h('div', { class: 'fs-hero-art', 'aria-hidden': 'true' }),
+          h('img', { class: 'fs-hero-photo', src: PHOTO, alt: '' }),
+          h('div', { class: 'fs-hero-shade', 'aria-hidden': 'true' }),
           h(
             'div',
             { class: 'fs-hero-text' },
@@ -129,14 +141,15 @@ export function laptop(view: SiteView): HTMLElement {
             h('div', { class: 'fs-hero-actions' }, cta(l.bookNow, () => view.go('book')), h('span', { class: 'fs-hero-note' }, `${l.from} ${formatPrice({ amount: cheapest, currency: site.services[0].price.currency })} ${l.per}`)),
           ),
         ),
-        site.business.description ? h('section', { class: 'fs-section fs-about' }, h('h2', {}, l.about), h('p', {}, site.business.description)) : h('span'),
+        site.business.description ? h('section', { class: 'fs-section fs-about' }, h('div', {}, h('h2', {}, l.about), h('p', {}, site.business.description)), h('img', { src: PHOTO, alt: '', class: 'fs-about-photo' })) : h('span'),
         h('section', { class: 'fs-section' }, h('h2', {}, l.experiences), serviceCards()),
         published.length ? h('section', { class: 'fs-section' }, h('h2', {}, l.reviews), reviewList(published.slice(-2))) : h('span'),
       ];
     },
     book: () => {
-      const dates = openDates(site.availability.days);
+      const dates = openDates(site.availability.days, 90, 60);
       if (!dates.includes(draft.date)) draft.date = dates[0] ?? '';
+      if (!draft.month) draft.month = draft.date.slice(0, 7);
       const mine = view.items.find((i): i is Booking => i.kind === 'booking' && i.code === draft.lastCode);
       const lookedUp = draft.lookedUp ? decodeBooking(draft.lookedUp) : null;
       const lookedUpItem = view.items.find((i): i is Booking => i.kind === 'booking' && i.code === draft.lookedUp);
@@ -154,7 +167,7 @@ export function laptop(view: SiteView): HTMLElement {
               })())
             : h('span'),
           h('span', { class: 'fs-label' }, l.pick),
-          h('div', { class: 'fs-dates' }, ...dates.map((d) => h('button', { type: 'button', class: d === draft.date ? 'on' : '', onclick: () => { draft.date = d; view.go('book'); } }, dateLabel(d, lang)))),
+          calendar(),
           h('span', { class: 'fs-label' }, l.time),
           h('div', { class: 'fs-dates' }, ...site.availability.slots.map((s, i) => h('button', { type: 'button', class: i === draft.slot ? 'on' : '', onclick: () => { draft.slot = i; view.go('book'); } }, formatSlot(s, lang)))),
           h(
@@ -238,6 +251,47 @@ export function laptop(view: SiteView): HTMLElement {
       ),
     ],
   };
+
+  // A month of days: open days can be picked, closed and past days cannot, and each day shows how
+  // many booking requests it already has.
+  function calendar(): HTMLElement {
+    const open = new Set(openDates(site.availability.days, 90, 60));
+    const [year, month] = draft.month.split('-').map(Number);
+    const first = new Date(year, month - 1, 1);
+    const lead = (first.getDay() + 6) % 7; // Monday first
+    const count = new Date(year, month, 0).getDate();
+    const requests = new Map<string, number>();
+    for (const i of view.items) if (i.kind === 'booking' && i.status !== 'declined') requests.set(i.date, (requests.get(i.date) ?? 0) + i.people);
+    const shift = (delta: number) => {
+      const d = new Date(year, month - 1 + delta, 1);
+      draft.month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      view.go('book');
+    };
+    const thisMonth = isoDate(new Date()).slice(0, 7);
+    const cells: HTMLElement[] = [];
+    for (let i = 0; i < lead; i++) cells.push(h('span'));
+    for (let day = 1; day <= count; day++) {
+      const iso = `${draft.month}-${String(day).padStart(2, '0')}`;
+      const taken = requests.get(iso);
+      cells.push(
+        open.has(iso)
+          ? h('button', { type: 'button', class: `day ${iso === draft.date ? 'on' : ''}`, 'data-date': iso, onclick: () => { draft.date = iso; view.go('book'); } }, h('span', {}, String(day)), taken ? h('small', {}, `${taken} ${l.people}`) : null)
+          : h('span', { class: 'day closed' }, String(day)),
+      );
+    }
+    return h(
+      'div',
+      { class: 'fs-calendar' },
+      h(
+        'div',
+        { class: 'fs-cal-head' },
+        h('button', { type: 'button', 'aria-label': '‹', disabled: draft.month <= thisMonth, onclick: () => shift(-1) }, '‹'),
+        h('strong', {}, first.toLocaleDateString(lang === 'sw' ? 'sw-KE' : 'en-GB', { month: 'long', year: 'numeric' })),
+        h('button', { type: 'button', 'aria-label': '›', onclick: () => shift(1) }, '›'),
+      ),
+      h('div', { class: 'fs-cal-grid' }, ...DAY_LETTERS[lang].map((d) => h('span', { class: 'dow' }, d)), ...cells),
+    );
+  }
 
   function describe(b: CodedBooking): string {
     const service = site.services[b.service]?.name ?? '';

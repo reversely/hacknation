@@ -76,9 +76,12 @@ encodes the service, date, slot and party size with a check character, so the vi
 booking up again with no backend. Each booking, question reply and review also reaches the
 operator's phone for approval; the role switch moves between the two views.
 
-The page contrasts the two sides: the creation side has a dark left panel with serif type and the
-phones on a light stage; the visitor side inverts it, with a light left panel, sans-serif type and
-the laptop on a dark stage.
+The page contrasts the two sides in light and dark, in Wren's green, with one serif throughout: the
+creation side has a dark green left panel and the phones on a pale sage stage; the visitor side
+inverts it, with a pale sage panel and the laptop on a dark green stage. Neither matches the phone's
+cream screen or the farm site's own colours. A walkthrough under the device offers Show me, which
+does what a visitor would on that page, and Next. Back on the phone, Wren's on-device agent (Gemma
+4 E2B) summarises what visitors did above the requests waiting for approval.
 
 ## Twin phone
 
