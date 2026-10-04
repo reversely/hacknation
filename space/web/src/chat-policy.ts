@@ -31,7 +31,7 @@ const BOOKING = /\b(book|reserve|reservation|make a booking|sign me up|hold (a|m
 const OWNER = /\b(complain|complaint|refund|cancel|cancellation|reschedul|injur|accident|lost|stolen|emergency|doctor|medical|allerg|disab|wheelchair|pregnan|lawyer|police|discount|negotiat|group rate|private tour|invoice|receipt)\w*/i;
 
 // Words any visitor uses to ask about a visit, which the facts answer without naming them.
-const GENERIC = new Set(['long', 'cost', 'price', 'pric', 'open', 'day', 'time', 'start', 'end', 'hour', 'minute', 'duration', 'last', 'take', 'located', 'location', 'address', 'find', 'where', 'visit', 'tour', 'book', 'booking', 'reserve', 'available', 'availability', 'today', 'tomorrow', 'weekend', 'week', 'people', 'person', 'group', 'size', 'many', 'phone', 'call', 'contact', 'number', 'reach', 'offer', 'experience', 'business', 'farm', 'place', 'come', 'review', 'visitor', 'guest', 'like', 'good', 'tell', 'more', 'know', 'about', 'there', 'anything', 'something']);
+const GENERIC = new Set(['number', 'join', 'offer', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'long', 'cost', 'price', 'pric', 'open', 'day', 'time', 'start', 'end', 'hour', 'minute', 'duration', 'last', 'take', 'located', 'location', 'address', 'find', 'where', 'visit', 'tour', 'book', 'booking', 'reserve', 'available', 'availability', 'today', 'tomorrow', 'weekend', 'week', 'people', 'person', 'group', 'size', 'many', 'phone', 'call', 'contact', 'number', 'reach', 'offer', 'experience', 'business', 'farm', 'place', 'come', 'review', 'visitor', 'guest', 'like', 'good', 'tell', 'more', 'know', 'about', 'there', 'anything', 'something']);
 
 // A question about something the facts never mention goes to the owner before the model sees it:
 // the 0.5B model otherwise answers "Do children pay less?" with an unrelated true fact.
@@ -79,15 +79,34 @@ export function replyProblems(question: string, reply: string, facts: string): s
   const problems: string[] = [];
   const known = terms(facts);
   const asked = terms(question);
-  const invented = [...terms(reply)].filter((w) => asked.has(w) && !known.has(w));
+  const invented = [...terms(reply)].filter((w) => asked.has(w) && !known.has(w) && !GENERIC.has(w));
   if (invented.length) problems.push(`the facts never mention "${invented[0]}"`);
   const factNumbers = new Set(numbers(facts));
   const newNumber = numbers(reply).find((n) => !factNumbers.has(n));
   if (newNumber) problems.push(`the number ${newNumber} is not in the facts`);
+  const wrongDay = dayContradiction(reply, facts);
+  if (wrongDay) problems.push(wrongDay);
   if (CONTACT.test(reply)) problems.push('the reply gives a link or email the site does not list');
   if (COMMITMENT.test(reply)) problems.push('the reply makes a commitment only the owner can make');
   if (reply.length > 400) problems.push('the reply is longer than a chat answer');
   return problems;
+}
+
+// A reply that calls an open day closed, or a closed day open, contradicts the facts: the 0.5B model
+// answered "Are you open on Sunday?" with "No, we're closed on Sundays" for a farm open at weekends.
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export function dayContradiction(reply: string, facts: string): string | null {
+  const openLine = facts.match(/Open days:([^\n]*)/i)?.[1]?.toLowerCase() ?? '';
+  const open = new Set(DAYS.filter((d) => openLine.includes(d)));
+  if (!open.size) return null;
+  for (const clause of reply.toLowerCase().split(/[.;!?]|\bbut\b/)) {
+    const days = DAYS.filter((d) => clause.includes(d));
+    if (!days.length) continue;
+    const saysClosed = /\b(closed|not open|no tours?)\b/.test(clause) || /^\s*no\b/.test(clause);
+    const wrong = days.find((d) => (saysClosed ? open.has(d) : !open.has(d) && /\bopen\b/.test(clause)));
+    if (wrong) return `the reply says ${wrong[0].toUpperCase() + wrong.slice(1)} is ${saysClosed ? 'closed' : 'open'}, against the open days`;
+  }
+  return null;
 }
 
 // The guidelines the model sees, before the facts.

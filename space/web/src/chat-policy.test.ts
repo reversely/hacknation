@@ -40,3 +40,11 @@ test('a question about something the facts never mention goes to the owner', () 
   expect(route('What should I bring?', '', facts)).toMatchObject({ kind: 'owner' });
   for (const q of ['How long is the tour?', 'How much does it cost?', 'Which days are you open?', 'Where are you?', 'How much does the visit cost?', 'How many people can come?', 'What is your phone number?']) expect(route(q, '', facts)).toEqual({ kind: 'answer' });
 });
+
+test('a reply that contradicts the open days goes to the owner', () => {
+  expect(replyProblems('Are you open on Sunday?', "No, we're closed on Sundays.", facts).join(' ')).toContain('Sunday is closed');
+  expect(replyProblems('Are you open on Monday?', 'Yes, we are open on Mondays.', facts).join(' ')).toContain('Monday is open');
+  expect(replyProblems('Are you open on Monday?', "No, we're closed on Mondays.", facts)).toEqual([]);
+  expect(replyProblems('Which days are you open?', 'We are open on Saturdays and Sundays. We are closed on other days.', facts)).toEqual([]);
+  expect(replyProblems('Is the farm open on Wednesday?', 'No, the farm is closed on Wednesday.', facts)).toEqual([]);
+});
