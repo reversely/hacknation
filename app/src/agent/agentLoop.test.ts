@@ -208,3 +208,27 @@ test('a repeated approval request ends the turn instead of looping', async () =>
   expect(reply).toEqual({ text: TEXT.en.awaitingApproval, fromApp: true });
   expect(second.seen).toHaveLength(1);
 });
+
+test('an operator-only tool is hidden from the model and refused when the model calls it', async () => {
+  harness.register(
+    defineTool({ name: 'publish_site', description: 'Publish.', args: z.object({}), approval: 'operator', operatorOnly: true, run: async () => ({}) }),
+    ['coordinator'],
+  );
+  expect(harness.toolsFor('coordinator').map((t) => t.name)).not.toContain('publish_site');
+  const model = scripted([{ content: '', toolCalls: [call('publish_site', {})] }, { content: 'Done.', toolCalls: [] }]);
+  const { outcomes } = await runTurn({ model, harness, agent: 'coordinator', history: user, text: TEXT.en });
+  expect(outcomes[0]).toMatchObject({ status: 'REJECTED' });
+  expect((await harness.propose('coordinator', { name: 'publish_site', arguments: {} }, true)).status).toBe('AWAITING_APPROVAL');
+});
+
+test('a save that completes the draft goes straight to the approval card', async () => {
+  harness.register(
+    defineTool({ name: 'save_all', description: 'Save.', args: z.object({}), approval: 'none', run: async () => ({ saved: ['availability'], next_tool: 'approve_profile_draft' }) }),
+    ['coordinator'],
+  );
+  const model = scripted([{ content: '', toolCalls: [call('save_all', {})] }]);
+  const { outcomes, reply } = await runTurn({ model, harness, agent: 'coordinator', history: user, text: TEXT.en });
+  expect(outcomes.map((o) => o.status)).toEqual(['COMPLETED', 'AWAITING_APPROVAL']);
+  expect(reply).toEqual({ text: TEXT.en.awaitingApproval, fromApp: true });
+  expect(model.seen).toHaveLength(1);
+});

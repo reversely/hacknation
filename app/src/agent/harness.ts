@@ -21,6 +21,9 @@ export type ToolDefinition<Args extends z.ZodType = z.ZodType, Result = unknown>
   // Returns null when the call can go ahead, or why it cannot. Runs before any approval is
   // requested, so the operator is never asked to approve a call that would fail.
   precondition?: (args: z.infer<Args>) => string | null;
+  // Only the operator starts it from the app (a button); the model never sees it, and a call from
+  // the model is rejected. Publishing the website works this way: the model called it on its own.
+  operatorOnly?: true;
   run: (args: z.infer<Args>) => Promise<Result>;
 };
 
@@ -102,16 +105,19 @@ export class Harness {
   }
 
   // The tool list an agent's prompt describes; the same list bounds what it may call.
+  // The tools the agent's model is told about; operator-only tools are left out.
   toolsFor(agent: AgentName): ToolDefinition[] {
-    return [...(this.allowed.get(agent) ?? [])].map((name) => this.tools.get(name)!);
+    return [...(this.allowed.get(agent) ?? [])].map((name) => this.tools.get(name)!).filter((tool) => !tool.operatorOnly);
   }
 
-  async propose(agent: AgentName, call: ProposedCall): Promise<CallOutcome> {
+  // `byOperator` is set only by the app's own buttons, never by the model loop.
+  async propose(agent: AgentName, call: ProposedCall, byOperator = false): Promise<CallOutcome> {
     const activityId = this.deps.newId();
     const record = (entry: Omit<ActivityEntry, 'id' | 'at' | 'agent'>) =>
       this.deps.log.append({ id: activityId, at: this.deps.now(), agent, ...entry });
 
-    const tool = this.allowed.get(agent)?.has(call.name) ? this.tools.get(call.name) : undefined;
+    const allowed = this.allowed.get(agent)?.has(call.name) ? this.tools.get(call.name) : undefined;
+    const tool = allowed?.operatorOnly && !byOperator ? undefined : allowed;
     if (!tool) {
       const reason = `${agent} has no tool named ${call.name}`;
       record({ tool: call.name, args: call.arguments, outcome: 'REJECTED', detail: reason, result: null });

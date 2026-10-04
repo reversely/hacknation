@@ -18,16 +18,22 @@ the app renders the copy and structured public profile fields with HTML escaping
 
 ## Preview and publication
 
-Publication happens in the chat, with one approval (decided by the user on 3 October 2026). When
-the profile draft is complete, the agent asks for approval; the approval card shows the page this
-draft produces, rendered offline in a WebView. Approving saves the Farm record with that page and
-queues the Farm row write; the model cannot create the approval. If the draft changes after the
-preview, approval is refused and must be asked again, so the published page is always the one the
-operator saw. The write runs when Google access and internet are available, increments the profile
-version and preserves the existing profile fields. The Website tab shows the published page.
+The website is made, checked and published in the chat, in two separate approvals (decided by the
+user on 4 October 2026, replacing the single approval of 3 October):
 
-Until Google sign-in and the Apps Script deployment are set up, the write stays queued and the
-Website tab renders the page from the phone's copy of the Farm record (the simulated path).
+1. **Content.** When the profile draft is complete, the agent asks for approval. The approval card
+   shows the page this draft produces, rendered on the phone in a WebView from the same template the
+   Apps Script serves, so Noor sees exactly what she approves; the card waits until the page has
+   drawn. She can edit the headline and introduction in both languages under the preview, and the
+   preview redraws. Approving saves the Farm record with that page on the phone only. If the draft
+   changes after the preview, approval is refused and must be asked again.
+2. **Publishing.** A "Publish to the website" button then asks for a second approval, with its own
+   card. Approving queues the Farm row write and runs it; the Apps Script site serves that row. The
+   reply says whether the page is live, waits for the public website to be built in Setup, or waits
+   for Google to sync.
+
+Google sign-in, the spreadsheet and the Apps Script deployment are set up in Setup, never in the
+chat. The model cannot create either approval. The Website tab shows the approved page.
 
 The phone writes the row with the Sheets API (`spreadsheets.values.update` on the Farm tab) using
 the `drive.file` scope (`docs/google-access.md`). The model's copy and presentation choices go in a

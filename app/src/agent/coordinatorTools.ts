@@ -6,7 +6,7 @@ import { currentStep, setupSummary } from '../setup/steps';
 import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
 import { farmRecordProblems } from './farmRecord';
-import { preparePublication, previewIsCurrent, publish, type PublicationDeps } from './publication';
+import { preparePublication, previewIsCurrent, publishedFarm, publishToWebsite, saveApproved, type PublicationDeps } from './publication';
 import type { JsonGenerator } from './websiteCreator';
 import { defineTool, type Harness } from './harness';
 import { TEXT, type Language } from './language';
@@ -164,7 +164,9 @@ export function registerCoordinatorTools(
           saved: Object.keys(kept),
           ...(dropped.length ? { not_saved_because_not_stated: dropped } : {}),
           missing,
-          ...(missing.length ? { follow_up: TEXT[language()].questions[missing[0]] } : {}),
+          // A complete draft goes straight to the approval card: left to choose, the model asked for the
+          // setup status instead.
+          ...(missing.length ? { follow_up: TEXT[language()].questions[missing[0]] } : { next_tool: 'approve_profile_draft' }),
         };
       },
     }),
@@ -173,7 +175,7 @@ export function registerCoordinatorTools(
   harness.register(
     defineTool({
       name: 'approve_profile_draft',
-      description: 'Ask the operator to approve the profile draft; approving publishes it to the website and listings.',
+      description: 'Ask the operator to approve the profile draft and its website page; approving saves them on the phone.',
       args: z.object({}),
       approval: 'operator',
       // Approval builds the Farm record the website and listings read, so everything that record
@@ -194,11 +196,27 @@ export function registerCoordinatorTools(
         // The operator approved the page in the preview; a draft changed since then is not published.
         if (!previewIsCurrent(store, draft.fields)) throw new Error(TEXT[language()].draftChanged);
         const prepared = await preparePublication(store, draft.fields, publication);
-        const result = await publish(store, prepared, publication);
+        saveApproved(store, prepared);
         writeDraft(store, { ...draft, status: 'APPROVED', updatedAt: now() });
+        return { status: 'APPROVED', farm_id: prepared.record.id, version: prepared.record.version, reply: TEXT[language()].pageSaved, can_publish: true };
+      },
+    }),
+    ['coordinator'],
+  );
+  // Publishing is its own approval: the saved page goes to the spreadsheet the Apps Script site reads.
+  harness.register(
+    defineTool({
+      name: 'publish_website',
+      description: 'Ask the operator to publish the approved page to the public website.',
+      args: z.object({}),
+      approval: 'operator',
+      operatorOnly: true,
+      precondition: () => (publishedFarm(store) ? null : TEXT[language()].nothingToPublish),
+      run: async () => {
+        const result = await publishToWebsite(store, publication);
         const text = TEXT[language()];
         const reply = result.state === 'LIVE' ? text.websiteLive : result.state === 'NO_SITE' ? text.websiteNeedsSetup : text.websiteQueued;
-        return { status: 'APPROVED', farm_id: prepared.record.id, version: prepared.record.version, reply, website: result };
+        return { status: 'PUBLISHED', reply, website: result };
       },
     }),
     ['coordinator'],
