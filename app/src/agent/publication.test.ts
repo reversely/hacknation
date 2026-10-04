@@ -45,7 +45,7 @@ test('approval publishes the page the preview showed, and queues the spreadsheet
   const approved = await preparePublication(store, fields, d);
   expect(approved).toBe(preview);
   expect(generations).toHaveLength(1);
-  publish(store, approved, d);
+  await publish(store, approved, d);
   const farm = publishedFarm(store);
   expect(farm?.page).toMatchObject({ headline: { en: 'Walk the coffee rows at Ondera', sw: 'SW Walk the coffee rows at Ondera' } });
   expect(store.outbox()).toEqual([expect.objectContaining({ type: 'save_profile', status: 'QUEUED' })]);
@@ -65,4 +65,20 @@ test('without a website model the default copy is published', async () => {
   const store = memoryStore();
   const publication = await preparePublication(store, { ...fields, capacity: 9 }, { ...deps([]), generateCopy: null });
   expect(publication.page).toEqual(DEFAULT_WEBSITE_PAGE);
+});
+
+test('approval reports where the page ended up: no site, live after a sync, or still queued', async () => {
+  const noSite = memoryStore();
+  const d = deps([]);
+  expect(await publish(noSite, await preparePublication(noSite, fields, d), d)).toEqual({ state: 'NO_SITE' });
+
+  const live = memoryStore();
+  live.setMeta('website_url', 'https://script.google.com/macros/s/abc/exec');
+  const syncs = { ...d, sync: async () => live.outbox().forEach((entry) => (entry.status = 'COMPLETED')) };
+  expect(await publish(live, await preparePublication(live, fields, syncs), syncs)).toEqual({ state: 'LIVE', url: 'https://script.google.com/macros/s/abc/exec' });
+
+  const offline = memoryStore();
+  offline.setMeta('website_url', 'https://script.google.com/macros/s/abc/exec');
+  const fails = { ...d, sync: async () => { throw new Error('offline'); } };
+  expect(await publish(offline, await preparePublication(offline, fields, fails), fails)).toEqual({ state: 'QUEUED', url: 'https://script.google.com/macros/s/abc/exec' });
 });

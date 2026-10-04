@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { chat, findModelFile, loadModel, type LoadedModel } from '../inference/localModel';
@@ -9,7 +9,9 @@ import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
 import { runTurn, type ChatMessage, type ModelTurn, type ToolSpec } from './agentLoop';
 import { readDraft, registerCoordinatorTools } from './coordinatorTools';
-import { preparePublication, type PublicationDeps } from './publication';
+import { preparePublication, type PublicationDeps, type PublishResult } from './publication';
+import type { GoogleApi } from '../store/google';
+import { syncOnce } from '../store/outbox';
 import { Harness, memoryActivityStore, type PendingApproval } from './harness';
 import { LANGUAGE_NAMES, readLanguage, saveLanguage, TEXT, type Language } from './language';
 import { coordinatorPrompt } from './prompts';
@@ -24,7 +26,7 @@ const SCRIPTED_MESSAGE: Record<Language, string> = {
 };
 
 type Line =
-  | { kind: 'operator' | 'agent'; text: string }
+  | { kind: 'operator' | 'agent'; text: string; website?: PublishResult }
   | { kind: 'tool'; text: string }
   | { kind: 'approval'; approval: PendingApproval; answer: 'approved' | 'declined' | null };
 
@@ -49,14 +51,17 @@ const SCRIPTED_APPROVAL = __DEV__ && process.env.EXPO_PUBLIC_AUTORUN === 'chat-t
 
 type ModelState = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; model: AgentModel } | { status: 'error'; message: string };
 
-export function AgentScreen({ store, onOpenWebsite }: { store: LocalStore; onOpenWebsite?: () => void }) {
+export function AgentScreen({ store, google, onOpenWebsite }: { store: LocalStore; google?: GoogleApi; onOpenWebsite?: () => void }) {
   const [language, setLanguage] = useState<Language>(() => readLanguage(store));
   const languageRef = useRef(language);
   languageRef.current = language;
   const harness = useRef<Harness | null>(null);
   if (!harness.current) {
     harness.current = new Harness({ log: memoryActivityStore(), newId, now: () => new Date().toISOString() });
-    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current, SHARED_TRANSLATOR, WEBSITE_COPY);
+    const now = () => new Date().toISOString();
+    // Publishing syncs at once, so an approved page reaches the Apps Script site straight away.
+    const sync = google ? () => syncOnce(store, google, now) : undefined;
+    registerCoordinatorTools(harness.current, store, now, () => languageRef.current, SHARED_TRANSLATOR, WEBSITE_COPY, sync);
   }
   // With a translator, the agent works in English and only the operator reads Kiswahili
   // (docs/language.md). Without one, the agent is told to reply in the operator's language.
@@ -164,12 +169,14 @@ export function AgentScreen({ store, onOpenWebsite }: { store: LocalStore; onOpe
     const h = harness.current!;
     let note: string;
     let reply: string | null = null;
+    let website: PublishResult | undefined;
     if (approved) {
       const outcome = await h.approve(approval.activityId);
       note = outcome.status === 'COMPLETED' ? `${approval.tool} done` : `${approval.tool} ${outcome.status.toLowerCase()}: ${'error' in outcome ? outcome.error : ''}`;
       // A tool's own operator-facing line, such as "the profile is approved", is shown as the reply.
       const said = outcome.status === 'COMPLETED' ? (outcome.result as { reply?: unknown } | null)?.reply : null;
       if (typeof said === 'string') reply = said;
+      website = outcome.status === 'COMPLETED' ? ((outcome.result as { website?: PublishResult } | null)?.website ?? undefined) : undefined;
     } else {
       h.decline(approval.activityId, 'The operator declined');
       note = `${approval.tool} declined`;
@@ -182,7 +189,7 @@ export function AgentScreen({ store, onOpenWebsite }: { store: LocalStore; onOpe
         line.kind === 'approval' && line.approval.activityId === approval.activityId ? { ...line, answer: answered } : line,
       ),
       { kind: 'tool', text: note },
-      ...(reply ? [{ kind: 'agent' as const, text: reply }] : []),
+      ...(reply ? [{ kind: 'agent' as const, text: reply, website }] : []),
     ]);
   }
 
@@ -259,11 +266,15 @@ function LineView({ line, onAnswer, text, store, onOpenWebsite }: LineProps) {
   if (line.kind === 'tool') return <Text style={styles.tool}>{line.text}</Text>;
   if (line.kind !== 'approval') {
     const bubble = <Text style={[styles.bubble, line.kind === 'operator' ? styles.operator : styles.agent]}>{line.text}</Text>;
-    if (line.kind !== 'agent' || line.text !== text.profilePublished || !onOpenWebsite) return bubble;
+    if (line.kind !== 'agent' || !line.website) return bubble;
+    // A live page opens the public Apps Script address; otherwise the Website tab shows the phone's copy.
+    const website = line.website;
+    const open = website.state === 'LIVE' ? () => void Linking.openURL(website.url) : onOpenWebsite;
     return (
       <View style={styles.published}>
         {bubble}
-        <OpenWebsite label={text.openWebsite} onPress={onOpenWebsite} />
+        {website.state === 'LIVE' && <Text style={styles.status}>{website.url}</Text>}
+        {open && <OpenWebsite label={text.openWebsite} onPress={open} />}
       </View>
     );
   }

@@ -41,7 +41,7 @@ export default function App() {
           </Pressable>
         ))}
       </View>
-      {tab === 'agent' && <AgentScreen store={store} onOpenWebsite={() => setTab('website')} />}
+      {tab === 'agent' && <AgentScreen store={store} google={google} onOpenWebsite={() => setTab('website')} />}
       {tab === 'website' && <WebsiteCreatorScreen store={store} google={google} />}
       {tab === 'setup' && <SetupScreen store={store} />}
       {tab === 'model' && <ModelCheckScreen store={store} syncResult={syncResult} />}

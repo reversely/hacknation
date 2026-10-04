@@ -3,6 +3,7 @@ import type { FarmProfile } from '@wren/contracts';
 import type { Translate } from '../inference/translator';
 import { readConfig } from '../setup/setupStore';
 import type { LocalStore } from '../store/localStore';
+import { WEBSITE_URL_KEY } from '../website/appsScriptWebsite';
 import { buildFarmRecord, type DraftFields } from './farmRecord';
 import { DEFAULT_WEBSITE_PAGE, generateWebsitePage, renderWebsitePreviewHtml, type JsonGenerator, type WebsitePage } from './websiteCreator';
 
@@ -16,7 +17,16 @@ export type PublicationDeps = {
   generateCopy: JsonGenerator | null;
   newId: () => string;
   now: () => string;
+  // Runs the outbox now, so an approved page reaches the spreadsheet (and the Apps Script site)
+  // without waiting for the next sync cycle. Absent when Google is not wired in.
+  sync?: () => Promise<unknown>;
 };
+
+// Where the approved page ended up, for the reply in the chat.
+export type PublishResult =
+  | { state: 'LIVE'; url: string }
+  | { state: 'NO_SITE' }
+  | { state: 'QUEUED'; url: string | null };
 
 export type Publication = { record: FarmProfile; page: WebsitePage; html: string };
 
@@ -55,12 +65,18 @@ export function preparePublication(store: LocalStore, fields: DraftFields, deps:
   return publication;
 }
 
-// Saves the approved record locally and queues the Farm row write; the outbox runs it against the
-// operator's spreadsheet when Google is connected.
-export function publish(store: LocalStore, publication: Publication, deps: PublicationDeps): void {
+// Saves the approved record locally, queues the Farm row write and runs it: the Apps Script site
+// reads that row, so a completed write puts the page online.
+export async function publish(store: LocalStore, publication: Publication, deps: PublicationDeps): Promise<PublishResult> {
   const now = deps.now();
+  const actionId = deps.newId();
   store.upsert('Farm', publication.record);
-  store.enqueue({ id: deps.newId(), type: 'save_profile', approved_by: 'OPERATOR', approved_at: now, profile: publication.record }, now);
+  store.enqueue({ id: actionId, type: 'save_profile', approved_by: 'OPERATOR', approved_at: now, profile: publication.record }, now);
+  const url = store.getMeta(WEBSITE_URL_KEY);
+  if (!url) return { state: 'NO_SITE' };
+  await deps.sync?.().catch(() => undefined);
+  const receipt = store.outbox().find((entry) => entry.id === actionId);
+  return receipt?.status === 'COMPLETED' ? { state: 'LIVE', url } : { state: 'QUEUED', url };
 }
 
 export function publishedFarm(store: LocalStore): FarmProfile | null {
