@@ -5,11 +5,11 @@ Management agents build against one record format (`docs/architecture.md` sectio
 zod schemas in `packages/contracts/src` are the source of truth; this file explains them. The phone
 validates every record with `@wren/contracts` before writing it to Google.
 
-Records live in Noor's Google account: the farm profile in the Farm tab of the business
-spreadsheet, bookings in the "Wren tours" calendar, and email in Gmail. No API server sits between
-the phone and Google. `packages/contracts/src/calendar.ts` maps bookings to calendar events, and
-`app/src/store/outbox.ts` runs the actions below. `HealthResponse` and `PublicProfileResponse`
-remain in `api.ts` for the setup wizard and the Website Creator until #19 replaces the Vercel site.
+Records live in Noor's Google account: the farm profile and published page in the Farm tab of the
+business spreadsheet, bookings in the "Wren tours" calendar, and email in Gmail. No API server
+sits between the phone and Google. `packages/contracts/src/calendar.ts` maps bookings to calendar
+events, and `app/src/store/outbox.ts` runs the actions below. `PublicProfileResponse` defines the
+approved, visitor-safe fields the Website Creator may use.
 
 ## Conventions
 

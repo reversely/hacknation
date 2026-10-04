@@ -3,11 +3,13 @@
 .env.*
 !.env.example
 
-# Node / Next.js / Vercel
+# Node, Expo and generated Apps Script files
 node_modules/
 .next/
 out/
 .vercel/
+.expo/
+website/apps-script/.clasp.json
 
 # Local model files: large, downloaded or side-loaded, never committed
 *.gguf

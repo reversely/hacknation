@@ -2,11 +2,8 @@ import { z } from 'zod';
 
 import { FarmProfile, Timestamp } from './records';
 
-// The two shapes still read by the setup wizard's connection checks (app/src/setup/steps.ts) and
-// the Website Creator (app/src/agent/websiteCreator.ts, website/). The Vercel routes that served
-// them leave with #19.
-
-// GET /api/health: the setup wizard's connection check for each hosted service.
+// Public shapes shared with the Website Creator and Apps Script renderer. The earlier Vercel
+// routes have been removed; Google and Apps Script now own website data and serving.
 export const HealthResponse = z.object({
   server_time: Timestamp,
   services: z.object({

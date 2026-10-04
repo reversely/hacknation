@@ -1,16 +1,10 @@
-import { HealthResponse } from '@wren/contracts';
-
-import type { SecretVault } from './secrets';
-
-// Setup wizard steps (docs/architecture.md section 4), in the order the operator meets them.
-// The backend is the operator's own Vercel project, so every check that goes through it comes
-// after the website step that deploys it.
+// Setup order follows docs/architecture.md section 4. Apps Script setup is waiting on the
+// operator's choice in docs/architecture.md section 10, question 3.
 export const STEP_IDS = [
   'business',
   'gmail',
-  'vercel',
-  'website',
   'sheets',
+  'website',
   'whatsapp',
   'calendar',
   'listings',
@@ -21,7 +15,7 @@ export type StepState = { status: 'NOT_STARTED' | 'DONE' | 'FAILED'; checkedAt: 
 export type SetupProgress = Record<StepId, StepState>;
 
 export type BusinessBasics = { name: string; whatsappNumber: string; timezone: string };
-export type SetupConfig = { apiUrl: string | null; business: BusinessBasics | null };
+export type SetupConfig = { business: BusinessBasics | null };
 
 export function emptyProgress(): SetupProgress {
   return Object.fromEntries(
@@ -55,46 +49,9 @@ export function setupSummary(progress: SetupProgress): { step: StepId; status: S
 
 export type CheckResult = { ok: true } | { ok: false; error: string };
 
-export type CheckDeps = {
-  vault: SecretVault;
-  config: SetupConfig;
-  fetch: typeof fetch;
-};
+export type CheckDeps = { config: SetupConfig };
 
 const E164 = /^\+[1-9]\d{6,14}$/;
-
-// Error strings are written here, never copied from a response body, so a server or token
-// value cannot reach the screen, the log or the model through an error.
-// The website deploy (#18) writes the backend address and the device token; the operator never
-// types either.
-async function health(deps: CheckDeps): Promise<HealthResponse | string> {
-  const token = await deps.vault.get('device_token');
-  if (!deps.config.apiUrl || !token) return 'Please publish the website first';
-  try {
-    const response = await deps.fetch(`${deps.config.apiUrl}/api/health`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (response.status === 401) return 'The backend rejected the device token';
-    if (!response.ok) return `The backend answered with error ${response.status}`;
-    const parsed = HealthResponse.safeParse(await response.json());
-    return parsed.success ? parsed.data : 'The backend answer was not understood';
-  } catch {
-    return 'The backend could not be reached';
-  }
-}
-
-function serviceCheck(service: keyof HealthResponse['services'], label: string) {
-  return async (deps: CheckDeps): Promise<CheckResult> => {
-    const result = await health(deps);
-    if (typeof result === 'string') return { ok: false, error: result };
-    const status = result.services[service];
-    if (status === 'OK') return { ok: true };
-    return {
-      ok: false,
-      error: status === 'NOT_CONFIGURED' ? `${label} is not set up on the backend yet` : `${label} did not respond`,
-    };
-  };
-}
 
 export const CHECKS: Record<StepId, ((deps: CheckDeps) => Promise<CheckResult>) | null> = {
   business: async ({ config }) => {
@@ -103,36 +60,31 @@ export const CHECKS: Record<StepId, ((deps: CheckDeps) => Promise<CheckResult>) 
     if (!E164.test(b.whatsappNumber)) return { ok: false, error: 'Please enter the WhatsApp number with its country code' };
     return { ok: true };
   },
-  // Gmail sign-in arrives with #3; until then this step cannot pass.
+  // These checks are implemented when their setup connectors are added.
   gmail: null,
-  vercel: async ({ vault, fetch }) => {
-    const token = await vault.get('vercel_token');
-    if (!token) return { ok: false, error: 'Please enter the Vercel token' };
-    try {
-      const response = await fetch('https://api.vercel.com/v2/user', { headers: { Authorization: `Bearer ${token}` } });
-      if (response.status === 401 || response.status === 403) return { ok: false, error: 'Vercel rejected the token' };
-      if (!response.ok) return { ok: false, error: `Vercel answered with error ${response.status}` };
-      const projectId = await vault.get('vercel_project_id');
-      return projectId ? { ok: true } : { ok: false, error: 'Please enter the Vercel project ID' };
-    } catch {
-      return { ok: false, error: 'Vercel could not be reached' };
+  sheets: null,
+  website: null,
+  whatsapp: async ({ config }) => {
+    if (!config.business || !E164.test(config.business.whatsappNumber)) {
+      return { ok: false, error: 'Add the WhatsApp number in Business details first' };
     }
+    return { ok: true };
   },
-  // Passes once the deployed project answers its health check.
-  website: async (deps) => {
-    const result = await health(deps);
-    return typeof result === 'string' ? { ok: false, error: result } : { ok: true };
-  },
-  sheets: serviceCheck('sheets', 'Google Sheets'),
-  whatsapp: serviceCheck('whatsapp', 'WhatsApp'),
-  calendar: serviceCheck('calendar', 'Google Calendar'),
+  calendar: null,
   // The operator creates both listings by hand and confirms here (architecture section 4, step 8).
   listings: null,
 };
 
 export async function runCheck(step: StepId, deps: CheckDeps, now: string): Promise<StepState> {
   const check = CHECKS[step];
-  if (!check) return { status: 'FAILED', checkedAt: now, error: 'This step is not available yet' };
+  if (!check) {
+    const error = step === 'sheets'
+      ? 'Spreadsheet creation and Apps Script API provisioning are not implemented yet'
+      : step === 'website'
+        ? 'Create a preview in the Website tab; publishing the web app is not set up yet'
+        : `${step} setup is not available in this build`;
+    return { status: 'FAILED', checkedAt: now, error };
+  }
   const result = await check(deps);
   return result.ok
     ? { status: 'DONE', checkedAt: now, error: null }

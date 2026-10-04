@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { LocalStore } from '../store/localStore';
-import { secureVault, type SecretName } from './secrets';
 import { readConfig, readProgress, saveBusiness, saveProgress } from './setupStore';
 import { currentStep, runCheck, STEP_IDS, type SetupProgress, type StepId } from './steps';
 
@@ -10,7 +9,6 @@ const TITLES: Record<StepId, string> = {
   business: 'Business details',
   gmail: 'Gmail',
   sheets: 'Google Sheets',
-  vercel: 'Vercel',
   website: 'Website',
   whatsapp: 'WhatsApp',
   calendar: 'Google Calendar',
@@ -19,12 +17,11 @@ const TITLES: Record<StepId, string> = {
 
 const HINTS: Record<StepId, string> = {
   business: 'Please enter your farm name and WhatsApp number',
-  gmail: 'Gmail sign-in is not available in this build',
-  sheets: 'Check that your booking service can reach your spreadsheet',
-  vercel: 'Add a Vercel access token and project ID for preview and approved production deploys',
-  website: 'Publishing creates your website and its booking service in your own Vercel account',
-  whatsapp: 'Check that your booking service can reach your WhatsApp number',
-  calendar: 'Check that your booking service can reach your tour calendar',
+  gmail: 'Connect Noor’s Gmail account when the Google sign-in step is available',
+  sheets: 'Set up the Farm spreadsheet and bound Apps Script after choosing a setup method',
+  website: 'Create an offline preview in the Website tab; script deployment setup is still pending',
+  whatsapp: 'Confirm the business WhatsApp number saved in Business details',
+  calendar: 'Create the Wren tours calendar when calendar setup is available',
   listings: 'Please create your Google and Facebook listings and then mark this step done',
 };
 
@@ -47,7 +44,7 @@ export function SetupScreen({ store }: Props) {
   async function check(step: StepId) {
     setChecking(true);
     try {
-      const state = await runCheck(step, { vault: secureVault, config: readConfig(store), fetch }, new Date().toISOString());
+      const state = await runCheck(step, { config: readConfig(store) }, new Date().toISOString());
       update(step, state);
     } finally {
       setChecking(false);
@@ -105,7 +102,6 @@ function StepFields({ step, store }: { step: StepId } & Props) {
   if (step === 'business') {
     return <BusinessFields store={store} initial={config.business} />;
   }
-  if (step === 'vercel') return <><SecretField name="vercel_token" label="Vercel token" /><SecretField name="vercel_project_id" label="Vercel project ID" /></>;
   return null;
 }
 
@@ -128,33 +124,6 @@ function BusinessFields({ store, initial }: { store: LocalStore; initial: Return
         keyboardType="phone-pad"
       />
     </>
-  );
-}
-
-// The field never shows a stored value; it only says whether one is saved.
-function SecretField({ name, label }: { name: SecretName; label: string }) {
-  const [saved, setSaved] = useState(false);
-  const [value, setValue] = useState('');
-  useEffect(() => {
-    secureVault.get(name).then((stored) => setSaved(stored !== null));
-  }, [name]);
-
-  async function save() {
-    if (!value.trim()) return;
-    await secureVault.set(name, value.trim());
-    setValue('');
-    setSaved(true);
-  }
-
-  return (
-    <LabeledInput
-      label={label}
-      value={value}
-      onChangeText={setValue}
-      onEndEditing={save}
-      placeholder={saved ? 'Saved' : 'Paste here'}
-      secureTextEntry
-    />
   );
 }
 

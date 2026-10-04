@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@wren/contracts": "file:../packages/contracts",
     "@react-native-google-signin/google-signin": "^16.1.1",
+    "@wren/contracts": "file:../packages/contracts",
     "expo": "~57.0.26",
     "expo-file-system": "~57.0.7",
     "expo-secure-store": "~57.0.4",
@@ -13,6 +13,7 @@
     "llama.rn": "0.12.9",
     "react": "19.2.3",
     "react-native": "0.86.3",
+    "react-native-webview": "13.16.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {

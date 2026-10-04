@@ -28,6 +28,17 @@ export type CompletionMetrics = {
 
 // The chosen general model (docs/architecture.md section 2); any other GGUF is a fallback.
 export const GENERAL_MODEL_FILE = 'Qwen3-1.7B-Q4_K_M.gguf';
+export const WEBSITE_MODEL_FILE = 'qwen2.5-coder-1.5b-instruct-q4_k_m.gguf';
+
+export function findWebsiteModelFile(): File | null {
+  if (!modelsDirectory.exists) return null;
+  return modelsDirectory
+    .list()
+    .find((entry): entry is File => entry instanceof File && entry.name.toLowerCase() === WEBSITE_MODEL_FILE) ??
+    modelsDirectory
+      .list()
+      .find((entry): entry is File => entry instanceof File && entry.name.toLowerCase().includes('coder')) ?? null;
+}
 
 export function findModelFile(): File | null {
   if (!modelsDirectory.exists) return null;

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title><?= farm.name ?></title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #eef4e9; color: #1d2c20; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      body.theme-coffee { background: #f5efe6; color: #2c211a; }
+      body.theme-sunrise { background: #fff2e8; color: #35241e; }
+      main { width: min(100% - 32px, 780px); margin: 0 auto; padding: 32px 0 48px; }
+      .hero { padding: 32px 24px; border-radius: 24px; background: rgba(255,255,255,.82); text-align: center; }
+      .eyebrow { margin: 0 0 8px; color: #315c3a; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+      .theme-coffee .eyebrow, .theme-coffee .price { color: #754c24; }
+      .theme-sunrise .eyebrow, .theme-sunrise .price { color: #8b482e; }
+      h1 { margin: 0; font-size: clamp(2rem, 8vw, 3.5rem); line-height: 1.08; overflow-wrap: anywhere; }
+      h2 { margin: 0 0 14px; font-size: 1.35rem; line-height: 1.2; }
+      h3 { margin: 0 0 8px; font-size: 1.1rem; line-height: 1.25; }
+      .intro { max-width: 38rem; margin: 16px auto 22px; }
+      .button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #315c3a; color: #fff; text-decoration: none; font-weight: 700; }
+      .theme-coffee .button { background: #754c24; }
+      .theme-sunrise .button { background: #8b482e; }
+      section { padding: 28px 4px 0; }
+      .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .card { padding: 18px; border-radius: 16px; background: rgba(255,255,255,.82); overflow-wrap: anywhere; }
+      .card p { margin: 8px 0; }
+      .price { color: #315c3a; font-weight: 650; }
+      .footer { padding-top: 32px; color: #526056; font-size: 14px; text-align: center; }
+      @media (min-width: 620px) { main { padding-top: 52px; } .hero { padding: 56px 48px; } .cards { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } section { padding: 36px 0 0; } }
+    </style>
+  </head>
+  <body class="theme-<?= page.theme ?>">
+    <main>
+      <header class="hero">
+        <p class="eyebrow"><?= farm.name ?></p>
+        <h1><?= page.headline.en ?></h1>
+        <p lang="sw"><strong><?= page.headline.sw ?></strong></p>
+        <p class="intro"><?= page.introduction.en ?></p>
+        <p class="intro" lang="sw"><?= page.introduction.sw ?></p>
+        <a class="button" href="<?= whatsappUrl ?>">Book on WhatsApp / Weka nafasi</a>
+      </header>
+      <? for (var i = 0; i < page.sectionOrder.length; i++) { var section = page.sectionOrder[i]; ?>
+        <? if (section === 'offerings') { ?>
+          <section><h2>Experiences / Ziara</h2><div class="cards">
+            <? (farm.offerings || []).forEach(function (offering) { ?>
+              <article class="card">
+                <h3><?= offering.name.en ?></h3>
+                <p><?= offering.description.en ?></p>
+                <p lang="sw"><strong><?= offering.name.sw ?></strong> — <?= offering.description.sw ?></p>
+                <p class="price"><?= offering.price.currency ?> <?= Number(offering.price.amount).toLocaleString('en') ?> · <?= offering.duration_minutes ?> min · <?= offering.capacity ?> guests</p>
+              </article>
+            <? }); ?>
+          </div></section>
+        <? } else if (section === 'visit') { ?>
+          <section><h2>Plan your visit / Panga ziara yako</h2><p><?= farm.meeting_instructions.en ?></p><p lang="sw"><?= farm.meeting_instructions.sw ?></p></section>
+        <? } else if (section === 'policies') { ?>
+          <section><h2>Good to know / Muhimu kujua</h2><p><?= farm.policies.en ?></p><p lang="sw"><?= farm.policies.sw ?></p></section>
+        <? } ?>
+      <? } ?>
+      <footer class="footer"><?= farm.name ?></footer>
+    </main>
+  </body>
+</html>

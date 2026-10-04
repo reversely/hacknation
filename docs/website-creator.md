@@ -7,17 +7,18 @@ approves it, and an Apps Script in Noor's Google account serves it. This file sp
 
 ## Generation
 
-The Website Creator loads Qwen2.5-Coder-1.5B-Instruct with a 4,096-token context to fill one HTML
-template stored in the app. Input is the approved Farm record's public fields and the current
-template. The model returns a JSON object with the page's copy and presentation choices. The app
-rejects secret-like values, profile fields outside the approved record, and any script, iframe or
-external resource in the result.
+The Website Creator loads Qwen2.5-Coder-1.5B-Instruct with a 4,096-token context to write short
+page copy and choose a theme and section order. Input is the approved Farm record's public fields,
+passed as untrusted data. The model returns a small JSON object; it cannot write HTML. The app
+validates the exact schema and rejects markup, URLs and secret-like text. A fixed HTML template in
+the app renders the copy and structured public profile fields with HTML escaping.
 
 ## Preview and publication
 
-The app renders the filled page in a WebView for an offline preview. Publication requires an
-explicit approval that the app records; the model cannot create that approval. Publishing writes
-the page to the Farm row of the business spreadsheet.
+The app renders the page in a WebView for an offline preview. Publication requires a second,
+explicit operator confirmation; the model cannot create that approval. Publishing queues the
+updated Farm record locally and writes it to the Farm row when Google access and internet are
+available. It increments the profile version and preserves the existing profile fields.
 
 The phone writes the row with the Sheets API (`spreadsheets.values.update` on the Farm tab) using
 the `drive.file` scope (`docs/google-access.md`). The model's copy and presentation choices go in a
@@ -42,27 +43,16 @@ the page.
 
 ## Spreadsheet and script setup
 
-Onboarding step 3 creates the spreadsheet with `POST https://sheets.googleapis.com/v4/spreadsheets`
-and a Farm tab. The script then reaches the spreadsheet in one of two ways. The choice waits on the
-user (`docs/architecture.md` section 10, #19).
+The selected method is automatic provisioning through the Apps Script API (architecture section
+10, decision 3 resolved). After Google sign-in and consent, Wren creates the spreadsheet and Farm
+tab, then creates the bound script with `POST https://script.googleapis.com/v1/projects` and the
+spreadsheet ID as `parentId`. The app uploads the checked-in `Code.gs`, `page.html` and
+`appsscript.json` through `PUT /v1/projects/{scriptId}/content`, creates a version, and deploys a
+web app. It saves the deployment's `entryPoints[].webApp.url` in local setup state and the Farm
+record.
 
-Apps Script API, from the phone:
-
-1. Noor switches on "Google Apps Script API" at script.google.com/home/usersettings. The app opens
-   that page; no API call can switch it on.
-2. `POST https://script.googleapis.com/v1/projects` with `{ "title": "Wren site", "parentId":
-   "<spreadsheet ID>" }` creates a script bound to the spreadsheet.
-3. `PUT /v1/projects/{scriptId}/content` uploads the three files.
-4. `POST /v1/projects/{scriptId}/versions`, then `POST /v1/projects/{scriptId}/deployments` with
-   that version, deploys the web app. The deployment's `entryPoints[].webApp.url` gives the site
-   address, which the app saves.
-5. Noor opens the address once and grants the script its spreadsheet access. Until Noor does,
-   visitors see an authorization error.
-
-Template copy:
-
-1. The team shares a template spreadsheet that already carries the bound script.
-2. The app copies it into Noor's Drive; the bound script travels with the copy.
-3. Noor opens the copy's script editor, deploys it as a web app, grants access, and pastes the
-   address into Wren. The Apps Script editor runs in a desktop browser, so this step suits the
-   weekend session on the daughter's phone poorly and a computer well.
+Before provisioning, Noor must enable "Google Apps Script API" at
+`script.google.com/home/usersettings`; Wren can open this page but Google requires the account owner
+to enable it. Noor also approves OAuth scopes, and may need to authorize the deployed script once
+to read its bound spreadsheet. Setup should report each pause clearly and resume after she returns.
+There is no manual template-copy/editor workflow in the selected design.

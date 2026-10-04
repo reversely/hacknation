@@ -115,7 +115,7 @@ Use a deterministic setup wizard with conversational explanations from the agent
 
 1. **Business information:** collect Noor's tour description, duration, price, capacity, meeting instructions, availability and policies. Review uncertain or missing facts.
 2. **Business mailbox:** the daughter helps create a Gmail account if needed. Noor connects it through Google authorization.
-3. **Spreadsheet and script:** create the business spreadsheet with its Farm tab and bound Apps Script, and deploy the script as a web app. The setup method is open (section 10). No service account is used.
+3. **Spreadsheet and script:** after Noor connects her Google account and grants the requested scopes, create the business spreadsheet with its Farm tab, create a bound Apps Script project through the Apps Script API, upload the checked-in template, and deploy it as a web app. Google requires Noor to enable the Apps Script API once in her account settings; the app opens that setting and resumes setup afterward. No service account is used.
 4. **Website:** generate the page, show the offline preview and request publication approval. Publishing writes the approved page to the Farm tab, and the web app's `script.google.com` URL becomes the farm's website address. Google shows visitors of a personal account's web app a banner saying another user made the page.
 5. **WhatsApp:** confirm the business WhatsApp number that the website button and `wa.me` links open.
 6. **Calendar:** create the "Wren tours" calendar and record tour slots from the availability Noor gave in step 1.
@@ -125,11 +125,33 @@ The model receives only connection status and actionable error summaries, never 
 
 ## 5. Website creation
 
-- The local Qwen coding model fills one HTML template: it edits page copy and visual presentation, and the app validates the result. The contract is in `docs/website-creator.md`.
-- The app renders the page in a WebView for an offline preview. Publication needs a distinct operator approval recorded by the app, then writes the page to the Farm tab that the Apps Script serves.
-- Descriptions, prices and availability stay structured data in the Farm tab, so the script renders routine changes without regenerating the page.
-- The web app serves only approved public fields, escaped with HtmlService's `<?= ?>` tags. It never serves other tabs, customer records or OAuth tokens.
-- Model performance must still be verified on the selected phone.
+- **Source data:** Noor provides the farm name, tour description, duration, price and currency,
+  capacity, meeting instructions, availability, policies, phone number and (optional) email in the
+  app conversation. The small local model extracts only facts she stated into a structured draft;
+  it asks about missing details rather than inventing them. Noor reviews and approves this profile.
+  The approved public fields and structured offerings are the site's source of truth. Private
+  visitor records, Google tokens and spreadsheet IDs never enter the website prompt or public page.
+- **Page copy:** after approval, the local Qwen coding model proposes a short English/Kiswahili
+  headline, introduction, theme and section order from those public fields. It returns data matching
+  a fixed schema, not executable HTML. The app validates the result and renders it through a fixed,
+  escaped template (`docs/website-creator.md`).
+- **Preview and publication:** the app shows the rendered page in a WebView, including the WhatsApp
+  booking link. Noor confirms publication. The app writes the page data and approved profile to the
+  Farm tab; routine price or policy edits update the structured row and are reflected by the site.
+- **Automatic setup after consent:** once Noor signs into Google, the app creates the spreadsheet,
+  creates a bound Apps Script project with the spreadsheet as `parentId`, uploads the checked-in
+  `Code.gs`, `page.html` and `appsscript.json`, creates a version and a web-app deployment, then
+  saves the returned URL. On a normal install these are app-driven API calls rather than terminal or
+  script-editor work. Noor must first enable the Apps Script API in Google account settings and
+  approve Google's OAuth consent; the app can open that settings page but cannot enable it for her.
+  Google may also require a one-time authorization of the deployed script before it can read the
+  spreadsheet. The workflow pauses at these Google-owned consent steps and resumes when she returns.
+- The deployed web app runs as Noor and is publicly readable. It reads only the approved Farm row
+  from its bound spreadsheet and uses HtmlService's escaping `<?= ?>` tags. It does not read other
+  tabs, visitor records or OAuth tokens. Apps Script serves live page data, so routine profile data
+  changes do not require redeploying the script.
+- Model performance and the end-to-end provisioning flow must still be verified on the selected
+  phone and Google account.
 
 ## 6. Enquiry and booking workflow
 
@@ -235,7 +257,7 @@ Decisions before implementation:
 
 1. A Kiswahili speaker who can assess translations.
 2. The hackathon parameter-size limit. The models and quantisation are chosen (section 2).
-3. Apps Script setup: the app creates and deploys the script through the Apps Script API, which each Google account owner switches on by hand at script.google.com/home/usersettings, or the app copies a template spreadsheet whose bound script travels with the copy and Noor deploys it once.
+3. ~~Apps Script setup method.~~ **Resolved:** create and deploy the bound script through the Apps Script API. Noor must enable the API once in Google account settings; see sections 4 and 5.
 4. Whether Wren also reads free/busy times from Noor's main calendar, which needs a further scope, so that holds avoid Noor's other commitments.
 
 ## 11. Task split

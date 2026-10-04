@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AgentScreen } from './src/agent/AgentScreen';
+import { WebsiteCreatorScreen } from './src/agent/WebsiteCreatorScreen';
 import { ModelCheckScreen } from './src/inference/ModelCheckScreen';
 import { SetupScreen } from './src/setup/SetupScreen';
 import { openExpoDatabase } from './src/store/expoDatabase';
@@ -15,8 +16,8 @@ const store = new LocalStore(openExpoDatabase());
 // The Google Sign-In SDK refreshes the access token as needed (docs/google-access.md). Before
 // Noor signs in, each call fails and the outbox keeps its actions queued.
 const google = googleApi(async () => (await GoogleSignin.getTokens()).accessToken);
-type Tab = 'agent' | 'setup' | 'model';
-const TAB_LABELS: Record<Tab, string> = { agent: 'Agent', setup: 'Setup', model: 'Model' };
+type Tab = 'agent' | 'website' | 'setup' | 'model';
+const TAB_LABELS: Record<Tab, string> = { agent: 'Agent', website: 'Website', setup: 'Setup', model: 'Model' };
 
 export default function App() {
   // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the tab where its run starts by itself.
@@ -28,7 +29,7 @@ export default function App() {
   return (
     <View style={styles.screen}>
       <View style={styles.tabs} accessibilityRole="tablist">
-        {(['agent', 'setup', 'model'] as const).map((id) => (
+        {(['agent', 'website', 'setup', 'model'] as const).map((id) => (
           <Pressable
             key={id}
             accessibilityRole="tab"
@@ -41,6 +42,7 @@ export default function App() {
         ))}
       </View>
       {tab === 'agent' && <AgentScreen store={store} />}
+      {tab === 'website' && <WebsiteCreatorScreen store={store} google={google} />}
       {tab === 'setup' && <SetupScreen store={store} />}
       {tab === 'model' && <ModelCheckScreen store={store} syncResult={syncResult} />}
       <StatusBar style="auto" />

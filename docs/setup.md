@@ -154,6 +154,16 @@ adb shell run-as com.hacknation.wren cp /data/local/tmp/qwen2.5-0.5b-instruct-q4
 
 Then tap "Check again" in the app.
 
+## Trying the Website Creator
+
+The Website tab needs an approved Farm profile and the separate
+`qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` model in `Documents/models`. Open the tab while online
+once to load the app, then generation and preview run locally and work without internet. Review
+the English and Kiswahili copy and tap **Publish this page**, then **Confirm and publish**, to queue
+the page in the Farm spreadsheet. Google sign-in and internet are needed to sync it. The app's
+Apps Script API provisioning flow is still to be implemented, so saving the page does not yet make
+a public website URL. Noor will also need to enable the Apps Script API once in her Google account.
+
 ## Testing the agent on a model server
 
 A development machine that cannot hold the model in memory (an 8 GB Mac with the Simulator ran Qwen3 1.7B at under one token per second) can run the agent's model on a llama.cpp server instead. The agent's tools, harness and approvals still run in the app; only the model call moves.
