@@ -1,0 +1,2581 @@
+{
+ "about": "Build the prompt set for a synthetic Kiswahili training set (docs/interview.md).",
+ "voices": {
+  "f07nEXP6Cp3SGtqJtJfh": "Rashidi",
+  "85I9qUNaRIEQGWJ91dHe": "Juma (blunt)",
+  "77qZTQGw9X7YWOVS6AQQ": "Achieng",
+  "yu6Cy4KnJhEbUubM2XJl": "Wanjiru",
+  "fcJJxRPg9WEEhH0Uqnwn": "Kelvin",
+  "1F0knNkQeIgyHeW4heKC": "Neema",
+  "8bTJQunXqF1x0VZwSUMs": "Faiza",
+  "90GgjYd3t15Qldd8eZuQ": "Baraka",
+  "h65Hy3wCmpuo1Fce3en3": "Juma (narrator)"
+ },
+ "prompts": [
+  {
+   "category": "price",
+   "text": "Bei ni shilingi mia tatu kwa mtu mmoja.",
+   "value": {
+    "kes": 300
+   },
+   "id": "s0000",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni mia tatu kwa kila mtu.",
+   "value": {
+    "kes": 300
+   },
+   "id": "s0001",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi mia tatu.",
+   "value": {
+    "kes": 300
+   },
+   "id": "s0002",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi mia tatu, chakula kimejumuishwa.",
+   "value": {
+    "kes": 300
+   },
+   "id": "s0003",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 500
+   },
+   "id": "s0004",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni mia tano kwa kila mtu.",
+   "value": {
+    "kes": 500
+   },
+   "id": "s0005",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi mia tano.",
+   "value": {
+    "kes": 500
+   },
+   "id": "s0006",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 500
+   },
+   "id": "s0007",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Five hundred shillings per person.",
+   "value": {
+    "kes": 500
+   },
+   "id": "s0008",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi mia saba na hamsini kwa mtu mmoja.",
+   "value": {
+    "kes": 750
+   },
+   "id": "s0009",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni mia saba na hamsini kwa kila mtu.",
+   "value": {
+    "kes": 750
+   },
+   "id": "s0010",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi mia saba na hamsini.",
+   "value": {
+    "kes": 750
+   },
+   "id": "s0011",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi mia saba na hamsini, chakula kimejumuishwa.",
+   "value": {
+    "kes": 750
+   },
+   "id": "s0012",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi mia nane kwa mtu mmoja.",
+   "value": {
+    "kes": 800
+   },
+   "id": "s0013",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni mia nane kwa kila mtu.",
+   "value": {
+    "kes": 800
+   },
+   "id": "s0014",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi mia nane.",
+   "value": {
+    "kes": 800
+   },
+   "id": "s0015",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi mia nane, chakula kimejumuishwa.",
+   "value": {
+    "kes": 800
+   },
+   "id": "s0016",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Eight hundred shillings per person.",
+   "value": {
+    "kes": 800
+   },
+   "id": "s0017",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu moja kwa mtu mmoja.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0018",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu moja kwa kila mtu.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0019",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu moja.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0020",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu moja, chakula kimejumuishwa.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0021",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "One thousand shillings per person.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0022",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu moja na mia mbili kwa mtu mmoja.",
+   "value": {
+    "kes": 1200
+   },
+   "id": "s0023",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu moja na mia mbili kwa kila mtu.",
+   "value": {
+    "kes": 1200
+   },
+   "id": "s0024",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu moja na mia mbili.",
+   "value": {
+    "kes": 1200
+   },
+   "id": "s0025",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu moja na mia mbili, chakula kimejumuishwa.",
+   "value": {
+    "kes": 1200
+   },
+   "id": "s0026",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu moja na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 1500
+   },
+   "id": "s0027",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu moja na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 1500
+   },
+   "id": "s0028",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu moja na mia tano.",
+   "value": {
+    "kes": 1500
+   },
+   "id": "s0029",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu moja na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 1500
+   },
+   "id": "s0030",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "One thousand five hundred shillings per person.",
+   "value": {
+    "kes": 1500
+   },
+   "id": "s0031",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu moja na mia nane kwa mtu mmoja.",
+   "value": {
+    "kes": 1800
+   },
+   "id": "s0032",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu moja na mia nane kwa kila mtu.",
+   "value": {
+    "kes": 1800
+   },
+   "id": "s0033",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu moja na mia nane.",
+   "value": {
+    "kes": 1800
+   },
+   "id": "s0034",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu moja na mia nane, chakula kimejumuishwa.",
+   "value": {
+    "kes": 1800
+   },
+   "id": "s0035",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu mbili kwa mtu mmoja.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0036",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu mbili kwa kila mtu.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0037",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu mbili.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0038",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu mbili, chakula kimejumuishwa.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0039",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Two thousand shillings per person.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0040",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu mbili na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 2500
+   },
+   "id": "s0041",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu mbili na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 2500
+   },
+   "id": "s0042",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu mbili na mia tano.",
+   "value": {
+    "kes": 2500
+   },
+   "id": "s0043",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu mbili na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 2500
+   },
+   "id": "s0044",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Two thousand five hundred shillings per person.",
+   "value": {
+    "kes": 2500
+   },
+   "id": "s0045",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu tatu kwa mtu mmoja.",
+   "value": {
+    "kes": 3000
+   },
+   "id": "s0046",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu tatu kwa kila mtu.",
+   "value": {
+    "kes": 3000
+   },
+   "id": "s0047",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu tatu.",
+   "value": {
+    "kes": 3000
+   },
+   "id": "s0048",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu tatu, chakula kimejumuishwa.",
+   "value": {
+    "kes": 3000
+   },
+   "id": "s0049",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Three thousand shillings per person.",
+   "value": {
+    "kes": 3000
+   },
+   "id": "s0050",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu tatu na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 3500
+   },
+   "id": "s0051",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu tatu na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 3500
+   },
+   "id": "s0052",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu tatu na mia tano.",
+   "value": {
+    "kes": 3500
+   },
+   "id": "s0053",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu tatu na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 3500
+   },
+   "id": "s0054",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu nne na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 4500
+   },
+   "id": "s0055",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu nne na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 4500
+   },
+   "id": "s0056",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu nne na mia tano.",
+   "value": {
+    "kes": 4500
+   },
+   "id": "s0057",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu nne na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 4500
+   },
+   "id": "s0058",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu tano kwa mtu mmoja.",
+   "value": {
+    "kes": 5000
+   },
+   "id": "s0059",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu tano kwa kila mtu.",
+   "value": {
+    "kes": 5000
+   },
+   "id": "s0060",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu tano.",
+   "value": {
+    "kes": 5000
+   },
+   "id": "s0061",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 5000
+   },
+   "id": "s0062",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu saba na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 7500
+   },
+   "id": "s0063",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu saba na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 7500
+   },
+   "id": "s0064",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu saba na mia tano.",
+   "value": {
+    "kes": 7500
+   },
+   "id": "s0065",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu saba na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 7500
+   },
+   "id": "s0066",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu kumi kwa mtu mmoja.",
+   "value": {
+    "kes": 10000
+   },
+   "id": "s0067",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu kumi kwa kila mtu.",
+   "value": {
+    "kes": 10000
+   },
+   "id": "s0068",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu kumi.",
+   "value": {
+    "kes": 10000
+   },
+   "id": "s0069",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu kumi, chakula kimejumuishwa.",
+   "value": {
+    "kes": 10000
+   },
+   "id": "s0070",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu kumi na mbili na mia tano kwa mtu mmoja.",
+   "value": {
+    "kes": 12500
+   },
+   "id": "s0071",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu kumi na mbili na mia tano kwa kila mtu.",
+   "value": {
+    "kes": 12500
+   },
+   "id": "s0072",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu kumi na mbili na mia tano.",
+   "value": {
+    "kes": 12500
+   },
+   "id": "s0073",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu kumi na mbili na mia tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 12500
+   },
+   "id": "s0074",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Bei ni shilingi elfu kumi na tano kwa mtu mmoja.",
+   "value": {
+    "kes": 15000
+   },
+   "id": "s0075",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Ni elfu kumi na tano kwa kila mtu.",
+   "value": {
+    "kes": 15000
+   },
+   "id": "s0076",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Tunachukua shilingi elfu kumi na tano.",
+   "value": {
+    "kes": 15000
+   },
+   "id": "s0077",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "price",
+   "text": "Shilingi elfu kumi na tano, chakula kimejumuishwa.",
+   "value": {
+    "kes": 15000
+   },
+   "id": "s0078",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua nusu saa.",
+   "value": {
+    "minutes": 30
+   },
+   "id": "s0079",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama nusu saa hivi.",
+   "value": {
+    "minutes": 30
+   },
+   "id": "s0080",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni nusu saa kwa kawaida.",
+   "value": {
+    "minutes": 30
+   },
+   "id": "s0081",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua dakika arobaini na tano.",
+   "value": {
+    "minutes": 45
+   },
+   "id": "s0082",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama dakika arobaini na tano hivi.",
+   "value": {
+    "minutes": 45
+   },
+   "id": "s0083",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni dakika arobaini na tano kwa kawaida.",
+   "value": {
+    "minutes": 45
+   },
+   "id": "s0084",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa moja.",
+   "value": {
+    "minutes": 60
+   },
+   "id": "s0085",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa moja hivi.",
+   "value": {
+    "minutes": 60
+   },
+   "id": "s0086",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa moja kwa kawaida.",
+   "value": {
+    "minutes": 60
+   },
+   "id": "s0087",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa moja na nusu.",
+   "value": {
+    "minutes": 90
+   },
+   "id": "s0088",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa moja na nusu hivi.",
+   "value": {
+    "minutes": 90
+   },
+   "id": "s0089",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa moja na nusu kwa kawaida.",
+   "value": {
+    "minutes": 90
+   },
+   "id": "s0090",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa mbili.",
+   "value": {
+    "minutes": 120
+   },
+   "id": "s0091",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa mbili hivi.",
+   "value": {
+    "minutes": 120
+   },
+   "id": "s0092",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa mbili kwa kawaida.",
+   "value": {
+    "minutes": 120
+   },
+   "id": "s0093",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa mbili na nusu.",
+   "value": {
+    "minutes": 150
+   },
+   "id": "s0094",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa mbili na nusu hivi.",
+   "value": {
+    "minutes": 150
+   },
+   "id": "s0095",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa mbili na nusu kwa kawaida.",
+   "value": {
+    "minutes": 150
+   },
+   "id": "s0096",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa tatu.",
+   "value": {
+    "minutes": 180
+   },
+   "id": "s0097",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa tatu hivi.",
+   "value": {
+    "minutes": 180
+   },
+   "id": "s0098",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa tatu kwa kawaida.",
+   "value": {
+    "minutes": 180
+   },
+   "id": "s0099",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa nne.",
+   "value": {
+    "minutes": 240
+   },
+   "id": "s0100",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa nne hivi.",
+   "value": {
+    "minutes": 240
+   },
+   "id": "s0101",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa nne kwa kawaida.",
+   "value": {
+    "minutes": 240
+   },
+   "id": "s0102",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Inachukua saa tano.",
+   "value": {
+    "minutes": 300
+   },
+   "id": "s0103",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Kama saa tano hivi.",
+   "value": {
+    "minutes": 300
+   },
+   "id": "s0104",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "duration",
+   "text": "Ni saa tano kwa kawaida.",
+   "value": {
+    "minutes": 300
+   },
+   "id": "s0105",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu wawili.",
+   "value": {
+    "count": 2
+   },
+   "id": "s0106",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni wawili kwa ziara moja.",
+   "value": {
+    "count": 2
+   },
+   "id": "s0107",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu wawili.",
+   "value": {
+    "count": 2
+   },
+   "id": "s0108",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Two people.",
+   "value": {
+    "count": 2
+   },
+   "id": "s0109",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu watatu.",
+   "value": {
+    "count": 3
+   },
+   "id": "s0110",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni watatu kwa ziara moja.",
+   "value": {
+    "count": 3
+   },
+   "id": "s0111",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu watatu.",
+   "value": {
+    "count": 3
+   },
+   "id": "s0112",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Three people.",
+   "value": {
+    "count": 3
+   },
+   "id": "s0113",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu wanne.",
+   "value": {
+    "count": 4
+   },
+   "id": "s0114",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni wanne kwa ziara moja.",
+   "value": {
+    "count": 4
+   },
+   "id": "s0115",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu wanne.",
+   "value": {
+    "count": 4
+   },
+   "id": "s0116",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Four people.",
+   "value": {
+    "count": 4
+   },
+   "id": "s0117",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu watano.",
+   "value": {
+    "count": 5
+   },
+   "id": "s0118",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni watano kwa ziara moja.",
+   "value": {
+    "count": 5
+   },
+   "id": "s0119",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu watano.",
+   "value": {
+    "count": 5
+   },
+   "id": "s0120",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Five people.",
+   "value": {
+    "count": 5
+   },
+   "id": "s0121",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu sita.",
+   "value": {
+    "count": 6
+   },
+   "id": "s0122",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni sita kwa ziara moja.",
+   "value": {
+    "count": 6
+   },
+   "id": "s0123",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu sita.",
+   "value": {
+    "count": 6
+   },
+   "id": "s0124",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Six people.",
+   "value": {
+    "count": 6
+   },
+   "id": "s0125",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu wanane.",
+   "value": {
+    "count": 8
+   },
+   "id": "s0126",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni wanane kwa ziara moja.",
+   "value": {
+    "count": 8
+   },
+   "id": "s0127",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu wanane.",
+   "value": {
+    "count": 8
+   },
+   "id": "s0128",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Eight people.",
+   "value": {
+    "count": 8
+   },
+   "id": "s0129",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu kumi.",
+   "value": {
+    "count": 10
+   },
+   "id": "s0130",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni kumi kwa ziara moja.",
+   "value": {
+    "count": 10
+   },
+   "id": "s0131",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu kumi.",
+   "value": {
+    "count": 10
+   },
+   "id": "s0132",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Ten people.",
+   "value": {
+    "count": 10
+   },
+   "id": "s0133",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu kumi na wawili.",
+   "value": {
+    "count": 12
+   },
+   "id": "s0134",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni kumi na wawili kwa ziara moja.",
+   "value": {
+    "count": 12
+   },
+   "id": "s0135",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu kumi na wawili.",
+   "value": {
+    "count": 12
+   },
+   "id": "s0136",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Twelve people.",
+   "value": {
+    "count": 12
+   },
+   "id": "s0137",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu kumi na watano.",
+   "value": {
+    "count": 15
+   },
+   "id": "s0138",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni kumi na watano kwa ziara moja.",
+   "value": {
+    "count": 15
+   },
+   "id": "s0139",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu kumi na watano.",
+   "value": {
+    "count": 15
+   },
+   "id": "s0140",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Fifteen people.",
+   "value": {
+    "count": 15
+   },
+   "id": "s0141",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu ishirini.",
+   "value": {
+    "count": 20
+   },
+   "id": "s0142",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni ishirini kwa ziara moja.",
+   "value": {
+    "count": 20
+   },
+   "id": "s0143",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu ishirini.",
+   "value": {
+    "count": 20
+   },
+   "id": "s0144",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Twenty people.",
+   "value": {
+    "count": 20
+   },
+   "id": "s0145",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu ishirini na watano.",
+   "value": {
+    "count": 25
+   },
+   "id": "s0146",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni ishirini na watano kwa ziara moja.",
+   "value": {
+    "count": 25
+   },
+   "id": "s0147",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu ishirini na watano.",
+   "value": {
+    "count": 25
+   },
+   "id": "s0148",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Watu thelathini.",
+   "value": {
+    "count": 30
+   },
+   "id": "s0149",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Wageni thelathini kwa ziara moja.",
+   "value": {
+    "count": 30
+   },
+   "id": "s0150",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "count",
+   "text": "Tunaweza kuchukua hadi watu thelathini.",
+   "value": {
+    "count": 30
+   },
+   "id": "s0151",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatano, saa moja asubuhi.",
+   "value": [
+    {
+     "day": "wednesday",
+     "time": "07:00"
+    }
+   ],
+   "id": "s0152",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatano na Jumanne, saa moja asubuhi.",
+   "value": [
+    {
+     "day": "wednesday",
+     "time": "07:00"
+    },
+    {
+     "day": "tuesday",
+     "time": "07:00"
+    }
+   ],
+   "id": "s0153",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa moja asubuhi siku ya Jumatano.",
+   "value": [
+    {
+     "day": "wednesday",
+     "time": "07:00"
+    }
+   ],
+   "id": "s0154",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Alhamisi, saa mbili asubuhi.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "08:00"
+    }
+   ],
+   "id": "s0155",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Alhamisi na Jumapili, saa mbili asubuhi.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "08:00"
+    },
+    {
+     "day": "sunday",
+     "time": "08:00"
+    }
+   ],
+   "id": "s0156",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa mbili asubuhi siku ya Alhamisi.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "08:00"
+    }
+   ],
+   "id": "s0157",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatatu, saa mbili na nusu asubuhi.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "08:30"
+    }
+   ],
+   "id": "s0158",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatatu na Jumanne, saa mbili na nusu asubuhi.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "08:30"
+    },
+    {
+     "day": "tuesday",
+     "time": "08:30"
+    }
+   ],
+   "id": "s0159",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa mbili na nusu asubuhi siku ya Jumatatu.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "08:30"
+    }
+   ],
+   "id": "s0160",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumapili, saa tatu asubuhi.",
+   "value": [
+    {
+     "day": "sunday",
+     "time": "09:00"
+    }
+   ],
+   "id": "s0161",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumapili na Ijumaa, saa tatu asubuhi.",
+   "value": [
+    {
+     "day": "sunday",
+     "time": "09:00"
+    },
+    {
+     "day": "friday",
+     "time": "09:00"
+    }
+   ],
+   "id": "s0162",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa tatu asubuhi siku ya Jumapili.",
+   "value": [
+    {
+     "day": "sunday",
+     "time": "09:00"
+    }
+   ],
+   "id": "s0163",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatatu, saa nne asubuhi.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "10:00"
+    }
+   ],
+   "id": "s0164",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatatu na Alhamisi, saa nne asubuhi.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "10:00"
+    },
+    {
+     "day": "thursday",
+     "time": "10:00"
+    }
+   ],
+   "id": "s0165",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa nne asubuhi siku ya Jumatatu.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "10:00"
+    }
+   ],
+   "id": "s0166",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Ijumaa, saa nne na nusu asubuhi.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "10:30"
+    }
+   ],
+   "id": "s0167",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Ijumaa na Jumatatu, saa nne na nusu asubuhi.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "10:30"
+    },
+    {
+     "day": "monday",
+     "time": "10:30"
+    }
+   ],
+   "id": "s0168",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa nne na nusu asubuhi siku ya Ijumaa.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "10:30"
+    }
+   ],
+   "id": "s0169",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Ijumaa, saa tano asubuhi.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "11:00"
+    }
+   ],
+   "id": "s0170",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Ijumaa na Jumanne, saa tano asubuhi.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "11:00"
+    },
+    {
+     "day": "tuesday",
+     "time": "11:00"
+    }
+   ],
+   "id": "s0171",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa tano asubuhi siku ya Ijumaa.",
+   "value": [
+    {
+     "day": "friday",
+     "time": "11:00"
+    }
+   ],
+   "id": "s0172",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatatu, saa sita mchana.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "12:00"
+    }
+   ],
+   "id": "s0173",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatatu na Jumanne, saa sita mchana.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "12:00"
+    },
+    {
+     "day": "tuesday",
+     "time": "12:00"
+    }
+   ],
+   "id": "s0174",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa sita mchana siku ya Jumatatu.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "12:00"
+    }
+   ],
+   "id": "s0175",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Alhamisi, saa nane mchana.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "14:00"
+    }
+   ],
+   "id": "s0176",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Alhamisi na Ijumaa, saa nane mchana.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "14:00"
+    },
+    {
+     "day": "friday",
+     "time": "14:00"
+    }
+   ],
+   "id": "s0177",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa nane mchana siku ya Alhamisi.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "14:00"
+    }
+   ],
+   "id": "s0178",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatatu, saa tisa na nusu mchana.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "15:30"
+    }
+   ],
+   "id": "s0179",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatatu na Jumatano, saa tisa na nusu mchana.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "15:30"
+    },
+    {
+     "day": "wednesday",
+     "time": "15:30"
+    }
+   ],
+   "id": "s0180",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa tisa na nusu mchana siku ya Jumatatu.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "15:30"
+    }
+   ],
+   "id": "s0181",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Jumatatu, saa kumi jioni.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "16:00"
+    }
+   ],
+   "id": "s0182",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Jumatatu na Jumamosi, saa kumi jioni.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "16:00"
+    },
+    {
+     "day": "saturday",
+     "time": "16:00"
+    }
+   ],
+   "id": "s0183",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa kumi jioni siku ya Jumatatu.",
+   "value": [
+    {
+     "day": "monday",
+     "time": "16:00"
+    }
+   ],
+   "id": "s0184",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Kila Alhamisi, saa kumi na moja jioni.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "17:00"
+    }
+   ],
+   "id": "s0185",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Alhamisi na Jumatatu, saa kumi na moja jioni.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "17:00"
+    },
+    {
+     "day": "monday",
+     "time": "17:00"
+    }
+   ],
+   "id": "s0186",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "schedule",
+   "text": "Tunaanza saa kumi na moja jioni siku ya Alhamisi.",
+   "value": [
+    {
+     "day": "thursday",
+     "time": "17:00"
+    }
+   ],
+   "id": "s0187",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri saba tatu tisa, sifuri tisa tisa, sita sifuri tatu.",
+   "value": {
+    "phone": "+254739099603"
+   },
+   "id": "s0188",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "dev",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri saba nane mbili, nne sita mbili, nane moja tisa.",
+   "value": {
+    "phone": "+254782462819"
+   },
+   "id": "s0189",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja nane mbili, moja tisa tisa, tatu tano moja.",
+   "value": {
+    "phone": "+254182199351"
+   },
+   "id": "s0190",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri saba tisa sifuri, tisa tatu saba, nane sita tano.",
+   "value": {
+    "phone": "+254790937865"
+   },
+   "id": "s0191",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja tisa saba, tano nne tatu, mbili tatu moja.",
+   "value": {
+    "phone": "+254197543231"
+   },
+   "id": "s0192",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja nane saba, tano saba nne, tisa moja moja.",
+   "value": {
+    "phone": "+254187574911"
+   },
+   "id": "s0193",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja mbili tano, mbili saba sita, sifuri moja nane.",
+   "value": {
+    "phone": "+254125276018"
+   },
+   "id": "s0194",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja tano tano, tisa saba tisa, saba moja moja.",
+   "value": {
+    "phone": "+254155979711"
+   },
+   "id": "s0195",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja saba moja, sifuri nne tisa, saba nne sita.",
+   "value": {
+    "phone": "+254171049746"
+   },
+   "id": "s0196",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja sifuri saba, tano mbili tisa, moja saba sifuri.",
+   "value": {
+    "phone": "+254107529170"
+   },
+   "id": "s0197",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri saba nne mbili, tatu sita sita, saba moja mbili.",
+   "value": {
+    "phone": "+254742366712"
+   },
+   "id": "s0198",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "phone",
+   "text": "Namba yangu ni sifuri moja sita nane, nne mbili sita, nane nne sita.",
+   "value": {
+    "phone": "+254168426846"
+   },
+   "id": "s0199",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Ndiyo.",
+   "value": {
+    "answer": true
+   },
+   "id": "s0200",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Ndiyo, sawa.",
+   "value": {
+    "answer": true
+   },
+   "id": "s0201",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Ehe, ni hivyo.",
+   "value": {
+    "answer": true
+   },
+   "id": "s0202",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Yes.",
+   "value": {
+    "answer": true
+   },
+   "id": "s0203",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Hapana.",
+   "value": {
+    "answer": false
+   },
+   "id": "s0204",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Hapana, ni hiyo tu.",
+   "value": {
+    "answer": false
+   },
+   "id": "s0205",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "Sina.",
+   "value": {
+    "answer": false
+   },
+   "id": "s0206",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "yes_no",
+   "text": "No, hiyo tu.",
+   "value": {
+    "answer": false
+   },
+   "id": "s0207",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Ni ziara ya shamba.",
+   "value": {
+    "type": "tour"
+   },
+   "id": "s0208",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Matembezi ya shamba.",
+   "value": {
+    "type": "tour"
+   },
+   "id": "s0209",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Ni warsha.",
+   "value": {
+    "type": "workshop"
+   },
+   "id": "s0210",
+   "voice_id": "yu6Cy4KnJhEbUubM2XJl",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Warsha ya kupika.",
+   "value": {
+    "type": "workshop"
+   },
+   "id": "s0211",
+   "voice_id": "fcJJxRPg9WEEhH0Uqnwn",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Huduma binafsi.",
+   "value": {
+    "type": "personal_service"
+   },
+   "id": "s0212",
+   "voice_id": "1F0knNkQeIgyHeW4heKC",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Ni personal service.",
+   "value": {
+    "type": "personal_service"
+   },
+   "id": "s0213",
+   "voice_id": "8bTJQunXqF1x0VZwSUMs",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "service_type",
+   "text": "Kitu kingine.",
+   "value": {
+    "type": "other"
+   },
+   "id": "s0214",
+   "voice_id": "90GgjYd3t15Qldd8eZuQ",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "correction",
+   "text": "Shilingi elfu moja na mia tano... hapana, samahani, ni elfu mbili.",
+   "value": {
+    "kes": 2000
+   },
+   "id": "s0215",
+   "voice_id": "h65Hy3wCmpuo1Fce3en3",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "correction",
+   "text": "Watu sita, hapana, ni watano.",
+   "value": {
+    "count": 5
+   },
+   "id": "s0216",
+   "voice_id": "f07nEXP6Cp3SGtqJtJfh",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "correction",
+   "text": "Shilingi mia nane... hapana, samahani, ni elfu moja.",
+   "value": {
+    "kes": 1000
+   },
+   "id": "s0217",
+   "voice_id": "85I9qUNaRIEQGWJ91dHe",
+   "split": "train",
+   "synthetic": true
+  },
+  {
+   "category": "correction",
+   "text": "Watu kumi, hapana, ni kumi na wawili.",
+   "value": {
+    "count": 12
+   },
+   "id": "s0218",
+   "voice_id": "77qZTQGw9X7YWOVS6AQQ",
+   "split": "train",
+   "synthetic": true
+  }
+ ]
+}

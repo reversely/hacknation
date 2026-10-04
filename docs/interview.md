@@ -52,13 +52,12 @@ memory peaks at the largest single model.
 | --- | --- | --- |
 | Agent | Gemma 4 E4B Q4_K_M, 5.0 GB | Gemma 4 E2B Q4_K_M, 3.1 GB |
 | Translation | NLLB-200 distilled 1.3B | NLLB-200 distilled 600M, ≈0.6 GB at 8-bit |
-| Speech to text | Whisper large-v3, ≈3.1 GB at f16; MMS-1B-all, ≈4 GB | Whisper large-v3-turbo, ≈0.55 GB quantised; Whisper small, ≈0.47 GB |
+| Speech to text | Whisper large-v3, ≈3.1 GB at f16; MMS-1B-all, ≈4 GB; community Kiswahili fine-tune of Whisper large-v3 | w2v-BERT 2.0 Kiswahili fine-tune, 581M parameters, ≈0.55 GB at 8-bit; wav2vec2 XLSR Kiswahili fine-tune, 315M; Whisper small and its Kiswahili fine-tunes, ≈0.47 GB |
 | Text to speech | MMS-TTS `swh`, ≈0.15 GB | MMS-TTS `swh`; a Piper Kiswahili voice, ≈0.06 GB |
 
-A phone stack of Gemma 4 E2B, NLLB 600M at 8-bit, quantised Whisper large-v3-turbo and MMS-TTS
-downloads about 4.4 GB, against about 1 to 2 GB of models wired today. Whisper needs `whisper.rn`
-on the phone; MMS-TTS, Piper and NLLB need an ONNX runtime. Both runtimes are new dependencies and
-open decisions.
+The selected phone stack (next section) downloads about 4.4 GB, against about 1 to 2 GB of models
+wired today, and peaks at about 3 GB of memory while the agent model is loaded. w2v-BERT, NLLB and
+MMS-TTS all need an ONNX runtime on the phone, which is a new dependency and an open decision.
 
 ## Benchmark
 
@@ -67,7 +66,7 @@ phone option are scored on the same audio.
 
 | Stage | Candidates |
 | --- | --- |
-| Speech to text | Whisper large-v3, large-v3-turbo and small (whisper.cpp); MMS-1B-all |
+| Speech to text | Whisper large-v3, large-v3-turbo and small (whisper.cpp); MMS-1B-all; community Kiswahili fine-tunes from Hugging Face: Whisper small (pplantinga, PaschalK, ElizabethMwangi), Whisper large-v3 (ElizabethMwangi), Whisper large-v3-turbo (Zelyanoth), wav2vec2 XLSR (eddiegulay), w2v-BERT 2.0 (badrex) |
 | Translation | NLLB-200 distilled 1.3B and 600M |
 | Agent | Gemma 4 E4B and E2B |
 | Text to speech | MMS-TTS `swh`; a Piper Kiswahili voice |
@@ -84,8 +83,42 @@ and is scored apart.
 | Peak memory and model file size | Every stage |
 | Intelligibility: word error rate when the ceiling speech-to-text model transcribes Wren's audio | Text to speech |
 
-The report lists every combination, with the ceiling stack first and the smallest stack within
-the accuracy target highlighted.
+Speech-to-text models are first screened on every clip, then the leaders run full interviews. Two
+fixes run on every transcript before translation (`app/src/interview/normalize.ts`): day names a
+speech model splits ("juma mosi") are rejoined, and a run of seven or more spoken digits becomes a
+phone number. A text value counts as correct in English or in the operator's Kiswahili.
+
+## Selected stack
+
+The user selected the phone stack on 4 October 2026 from the offline benchmark on the Veriton. In
+the deciding run no benchmark process made a connection outside the machine.
+
+| Stage | Phone stack | Licence |
+| --- | --- | --- |
+| Speech to text | `badrex/w2v-bert-2.0-swahili-asr` (w2v-BERT 2.0 fine-tune) | CC BY 4.0 |
+| Translation | `facebook/nllb-200-distilled-600M` | CC BY-NC 4.0 |
+| Agent | Gemma 4 E2B Instruct, Q4_K_M | Apache 2.0 |
+| Text to speech | `facebook/mms-tts-swh` | CC BY-NC 4.0 |
+
+| Pipeline | Fields correct | Records confirmed | Seconds per turn |
+| --- | --- | --- | --- |
+| Ceiling: Whisper large-v3 Kiswahili fine-tune, NLLB 600M, Gemma 4 E2B | 71% | 6 of 8 | about 2.3 |
+| Phone stack | 70% | 7 of 8 | about 2.6 |
+| Whisper small Kiswahili fine-tune, NLLB 600M, Gemma 4 E4B | 62% | 8 of 8 | about 2.3 |
+
+| Speech to text, word error rate on 341 clips | Persona clips | Synthetic domain clips |
+| --- | --- | --- |
+| w2v-BERT 2.0 Kiswahili fine-tune | 24% | 18% |
+| Whisper large-v3 Kiswahili fine-tune | 26% | 16% |
+| MMS-1B-all | 29% | 23% |
+| Whisper large-v3 | 49% | 50% |
+| Whisper small | 73% | 80% |
+
+Stock Whisper models garbled Kiswahili numbers ("shilingi elfu moja na mia tano" heard as
+"Shilingelf mudia na miatano"), and no translation model recovered them. The phone stack misses
+English names said inside Kiswahili and answers given in English; the read-back is where the
+operator corrects them. MMS-TTS was more intelligible than the Piper voice when transcribed back
+(29% against 40% word error rate).
 
 ## Test interviewees
 
@@ -100,8 +133,8 @@ The benchmark build is tracked in #39.
 
 ## Open decisions
 
-1. The accuracy target that the phone stack must meet relative to the ceiling.
-2. The phone runtimes: `whisper.rn` and an ONNX runtime.
-3. Photos: the picker library, or photos added later on the website.
-4. The Farm schema change for address, several services and per-service availability.
-5. Licences: MMS models and NLLB carry CC BY-NC 4.0; the Piper voice's licence needs checking.
+1. The ONNX runtime that runs w2v-BERT, NLLB and MMS-TTS on the phone.
+2. Photos: the picker library, or photos added later on the website.
+3. The Farm schema change for address, several services and per-service availability.
+4. Licences: NLLB and MMS-TTS carry CC BY-NC 4.0, which rules out commercial use; a commercial
+   release needs other translation and voice models.

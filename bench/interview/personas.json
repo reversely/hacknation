@@ -1,0 +1,226 @@
+{
+  "about": "Synthetic interviewees for the voice interview benchmark (docs/interview.md). Every name, number and address is invented. Answers are Kiswahili written for this benchmark and need review by a native speaker. Keys follow the interview's question order; a key ending in #clarify is the answer to Wren's follow-up when the first answer could not be read.",
+  "voice": { "provider": "elevenlabs", "model": "eleven_v3", "voice_id": "i5oE89JoUCpIgvSOemWx", "name": "Halima" },
+  "personas": [
+    {
+      "id": "p1-single-tour",
+      "covers": "One tour, every answer clear",
+      "truth": {
+        "name": "Ondera Highlands Farm",
+        "address": "Ondera, Nyeri",
+        "services": [
+          { "type": "tour", "description": "Two-hour coffee walk from picking to a cup", "duration_minutes": 120, "price_kes": 1500, "capacity": 6, "availability": [{ "day": "saturday", "time": "09:00" }], "instructions": "Meet at the Ondera market gate" }
+        ],
+        "phone": "+254712345678",
+        "email": null
+      },
+      "answers": {
+        "name": "Shamba langu linaitwa Ondera Highlands Farm.",
+        "address": "Tuko Ondera, kaunti ya Nyeri.",
+        "service_1.type": "Ni ziara ya shamba.",
+        "service_1.description": "Matembezi ya kahawa, kuanzia kuchuma hadi kunywa kikombe.",
+        "service_1.duration": "Saa mbili.",
+        "service_1.price": "Shilingi elfu moja na mia tano kwa kila mtu.",
+        "service_1.capacity": "Wageni sita kwa ziara moja.",
+        "service_1.availability": "Kila Jumamosi, saa tatu asubuhi.",
+        "service_1.instructions": "Wageni wanakutana nami kwenye lango la soko la Ondera.",
+        "more_services": "Hapana, ni hiyo tu.",
+        "contact.phone": "Namba yangu ni sifuri saba moja mbili, tatu nne tano, sita saba nane.",
+        "contact.email": "Sina barua pepe.",
+        "photos": "Nitaongeza picha baadaye.",
+        "confirm": "Ndiyo, ni sahihi."
+      }
+    },
+    {
+      "id": "p2-two-services",
+      "covers": "A tour and a workshop, each with its own schedule",
+      "truth": {
+        "name": "Mama Wambui Coffee",
+        "address": "Karatina, Nyeri",
+        "services": [
+          { "type": "tour", "description": "Coffee farm tour", "duration_minutes": 90, "price_kes": 1000, "capacity": 8, "availability": [{ "day": "saturday", "time": "10:00" }, { "day": "sunday", "time": "10:00" }], "instructions": "Meet at the farm gate near the church" },
+          { "type": "workshop", "description": "Coffee roasting workshop", "duration_minutes": 180, "price_kes": 2500, "capacity": 4, "availability": [{ "day": "friday", "time": "14:00" }], "instructions": "Come to the farmhouse" }
+        ],
+        "phone": "+254722000111",
+        "email": "wambui.coffee@example.com"
+      },
+      "answers": {
+        "name": "Inaitwa Mama Wambui Coffee.",
+        "address": "Karatina, Nyeri.",
+        "service_1.type": "Ya kwanza ni ziara ya shamba la kahawa.",
+        "service_1.description": "Wageni wanatembea shambani na kuona jinsi kahawa inavyokuzwa.",
+        "service_1.duration": "Saa moja na nusu.",
+        "service_1.price": "Elfu moja kwa mtu.",
+        "service_1.capacity": "Watu wanane.",
+        "service_1.availability": "Jumamosi na Jumapili, saa nne asubuhi.",
+        "service_1.instructions": "Wakutane nami kwenye lango la shamba karibu na kanisa.",
+        "more_services": "Ndiyo, pia nina warsha ya kukaanga kahawa.",
+        "service_2.type": "Ni warsha.",
+        "service_2.description": "Warsha ya kukaanga kahawa, wageni wanakaanga kahawa yao wenyewe.",
+        "service_2.duration": "Saa tatu.",
+        "service_2.price": "Elfu mbili na mia tano.",
+        "service_2.capacity": "Watu wanne tu.",
+        "service_2.availability": "Ijumaa, saa nane mchana.",
+        "service_2.instructions": "Waje moja kwa moja nyumbani shambani.",
+        "more_services#again": "Hapana, hizo mbili tu.",
+        "contact.phone": "Sifuri saba mbili mbili, sifuri sifuri sifuri, moja moja moja.",
+        "contact.email": "wambui nukta coffee, at, example nukta com.",
+        "photos": "Ndiyo, nina picha kwenye simu.",
+        "confirm": "Ndiyo."
+      }
+    },
+    {
+      "id": "p3-vague-times",
+      "covers": "Times without a clock hour; the interview must ask again",
+      "truth": {
+        "name": "Kilele Tea Walks",
+        "address": "Kericho",
+        "services": [
+          { "type": "tour", "description": "Tea plantation walk", "duration_minutes": 120, "price_kes": 800, "capacity": 10, "availability": [{ "day": "wednesday", "time": "08:00" }, { "day": "saturday", "time": "08:00" }], "instructions": "Meet at Kilele shopping centre" }
+        ],
+        "phone": "+254733222333",
+        "email": null
+      },
+      "answers": {
+        "name": "Kilele Tea Walks.",
+        "address": "Kericho.",
+        "service_1.type": "Matembezi ya shamba la chai.",
+        "service_1.description": "Tunatembea kwenye mashamba ya chai na kuchuma majani.",
+        "service_1.duration": "Kama saa mbili hivi.",
+        "service_1.price": "Mia nane.",
+        "service_1.capacity": "Hadi watu kumi.",
+        "service_1.availability": "Jumatano na Jumamosi, asubuhi.",
+        "service_1.availability#clarify": "Saa mbili asubuhi.",
+        "service_1.instructions": "Kituo cha biashara cha Kilele.",
+        "more_services": "Hapana.",
+        "contact.phone": "Sifuri saba tatu tatu, mbili mbili mbili, tatu tatu tatu.",
+        "contact.email": "Hapana.",
+        "photos": "Bado.",
+        "confirm": "Sawa, ndiyo."
+      }
+    },
+    {
+      "id": "p4-correction",
+      "covers": "Corrects the price in the same answer and the capacity at the read-back",
+      "truth": {
+        "name": "Shamba la Baraka",
+        "address": "Murang'a",
+        "services": [
+          { "type": "tour", "description": "Avocado and coffee farm tour", "duration_minutes": 120, "price_kes": 2000, "capacity": 5, "availability": [{ "day": "sunday", "time": "14:00" }], "instructions": "Meet at Kenol stage" }
+        ],
+        "phone": "+254744333444",
+        "email": null
+      },
+      "answers": {
+        "name": "Shamba la Baraka.",
+        "address": "Murang'a.",
+        "service_1.type": "Ziara.",
+        "service_1.description": "Ziara ya shamba la parachichi na kahawa.",
+        "service_1.duration": "Saa mbili.",
+        "service_1.price": "Elfu moja na mia tano... hapana, samahani, ni elfu mbili.",
+        "service_1.capacity": "Watu sita.",
+        "service_1.availability": "Jumapili, saa nane mchana.",
+        "service_1.instructions": "Kwenye stendi ya Kenol.",
+        "more_services": "Hapana.",
+        "contact.phone": "Sifuri saba nne nne, tatu tatu tatu, nne nne nne.",
+        "contact.email": "Sina.",
+        "photos": "Hapana kwa sasa.",
+        "confirm": "Hapana, idadi ya wageni ni watano, si sita.",
+        "confirm#again": "Ndiyo, sasa ni sahihi."
+      }
+    },
+    {
+      "id": "p5-english-numbers",
+      "covers": "Says numbers and some words in English",
+      "truth": {
+        "name": "Green Valley Farm Stay",
+        "address": "Limuru, Kiambu",
+        "services": [
+          { "type": "personal_service", "description": "Farm lunch with a cooking demonstration", "duration_minutes": 150, "price_kes": 3000, "capacity": 12, "availability": [{ "day": "saturday", "time": "12:00" }], "instructions": "Park at the Limuru Country Club gate" }
+        ],
+        "phone": "+254755444555",
+        "email": "greenvalley@example.com"
+      },
+      "answers": {
+        "name": "Green Valley Farm Stay.",
+        "address": "Tuko Limuru, Kiambu.",
+        "service_1.type": "Ni personal service, chakula cha mchana shambani.",
+        "service_1.description": "Lunch ya shambani, na tunaonyesha jinsi ya kupika.",
+        "service_1.duration": "Two and a half hours.",
+        "service_1.price": "Three thousand shillings per person.",
+        "service_1.capacity": "Twelve people.",
+        "service_1.availability": "Saturday, saa sita mchana.",
+        "service_1.instructions": "Wapaki kwenye geti ya Limuru Country Club.",
+        "more_services": "No, hiyo tu.",
+        "contact.phone": "Zero seven five five, four four four, five five five.",
+        "contact.email": "greenvalley at example dot com.",
+        "photos": "Later.",
+        "confirm": "Yes."
+      }
+    },
+    {
+      "id": "p6-refusals",
+      "covers": "Declines optional questions and skips the email",
+      "truth": {
+        "name": "Nyumbani Bee Farm",
+        "address": "Kitui",
+        "services": [
+          { "type": "tour", "description": "Beekeeping visit with honey tasting", "duration_minutes": 60, "price_kes": 500, "capacity": 15, "availability": [{ "day": "thursday", "time": "16:00" }], "instructions": "Meet at Kitui bus stage" }
+        ],
+        "phone": "+254766555666",
+        "email": null
+      },
+      "answers": {
+        "name": "Nyumbani Bee Farm.",
+        "address": "Kitui.",
+        "service_1.type": "Ziara ya kuona nyuki.",
+        "service_1.description": "Tunawaonyesha mizinga ya nyuki na kuonja asali.",
+        "service_1.duration": "Saa moja.",
+        "service_1.price": "Mia tano.",
+        "service_1.capacity": "Kumi na tano.",
+        "service_1.availability": "Alhamisi, saa kumi jioni.",
+        "service_1.instructions": "Stendi ya basi ya Kitui.",
+        "more_services": "Hapana.",
+        "contact.phone": "Sifuri saba sita sita, tano tano tano, sita sita sita.",
+        "contact.email": "Sitaki kuweka barua pepe.",
+        "photos": "Sina picha, na sitaki kuweka sasa.",
+        "confirm": "Ndiyo."
+      }
+    },
+    {
+      "id": "p7-rambling",
+      "covers": "Long answers with extra detail around the value",
+      "truth": {
+        "name": "Mto Mbili Fish Farm",
+        "address": "Sagana, Kirinyaga",
+        "services": [
+          { "type": "tour", "description": "Fish farm visit with feeding and a fish lunch", "duration_minutes": 180, "price_kes": 1800, "capacity": 20, "availability": [{ "day": "sunday", "time": "11:00" }], "instructions": "Meet at Sagana bridge" }
+        ],
+        "phone": "+254777666777",
+        "email": null
+      },
+      "answers": {
+        "name": "Aah, shamba letu, sisi tunaliita Mto Mbili Fish Farm, kwa sababu kuna mito miwili karibu.",
+        "address": "Tuko Sagana, upande wa Kirinyaga, si mbali na barabara kuu.",
+        "service_1.type": "Tunafanya ziara, watu wanakuja kuona samaki.",
+        "service_1.description": "Wageni wanaona mabwawa, wanalisha samaki, halafu wanakula samaki wa kukaanga mchana.",
+        "service_1.duration": "Inategemea, lakini kwa kawaida ni saa tatu, mara nyingine zaidi kidogo.",
+        "service_1.price": "Tunachukua elfu moja na mia nane kwa mtu, chakula kimejumuishwa.",
+        "service_1.capacity": "Tunaweza kuchukua watu ishirini, zaidi ya hapo inakuwa ngumu.",
+        "service_1.availability": "Jumapili, tunaanza saa tano asubuhi baada ya kanisa.",
+        "service_1.instructions": "Wakifika daraja la Sagana, wanipigie nitawachukua.",
+        "more_services": "Kwa sasa hapana.",
+        "contact.phone": "Sifuri saba saba saba, sita sita sita, saba saba saba.",
+        "contact.email": "Hapana, simu inatosha.",
+        "photos": "Nitaongeza baadaye mwanangu akirudi.",
+        "confirm": "Ndiyo, umepata vizuri."
+      }
+    },
+    {
+      "id": "p8-noisy",
+      "covers": "Same answers as p1, generated with background noise mixed in afterwards",
+      "same_as": "p1-single-tour",
+      "noise_db": -18
+    }
+  ]
+}
