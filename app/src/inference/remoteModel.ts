@@ -11,6 +11,26 @@ type ChatCompletion = {
   timings?: { prompt_n: number; prompt_per_second: number; predicted_n: number; predicted_per_second: number };
 };
 
+// Development only: the website model on a llama.cpp server (EXPO_PUBLIC_WEBSITE_MODEL_URL).
+export const REMOTE_WEBSITE_MODEL_URL = process.env.EXPO_PUBLIC_WEBSITE_MODEL_URL ?? null;
+
+export function remoteJsonCompletion(baseUrl: string) {
+  return async (prompt: string, schema: object, maxTokens: number): Promise<string> => {
+    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: maxTokens,
+        temperature: 0.7,
+        response_format: { type: 'json_schema', json_schema: { schema } },
+      }),
+    });
+    if (!response.ok) throw new Error(`The model server answered with error ${response.status}`);
+    return ((await response.json()) as { choices: { message: { content: string } }[] }).choices[0].message.content;
+  };
+}
+
 export function remoteChatModel(baseUrl: string): ChatModel {
   return async (messages, tools) => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {

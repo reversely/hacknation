@@ -22,7 +22,7 @@ const TAB_LABELS: Record<Tab, string> = { agent: 'Agent', website: 'Website', se
 export default function App() {
   // A scripted check (EXPO_PUBLIC_AUTORUN) opens on the tab where its run starts by itself.
   const autorun = process.env.EXPO_PUBLIC_AUTORUN;
-  const [tab, setTab] = useState<Tab>(autorun === 'agent' ? 'agent' : autorun ? 'model' : 'agent');
+  const [tab, setTab] = useState<Tab>(autorun === 'agent' || autorun === 'website' ? autorun : autorun ? 'model' : 'agent');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   useEffect(() => startSyncLoop(store, google, setSyncResult), []);
 

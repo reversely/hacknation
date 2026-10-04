@@ -69,6 +69,18 @@ export async function loadModel(file: File, options: { contextTokens?: number } 
   };
 }
 
+// One completion constrained to a JSON schema; llama.cpp only lets the model emit matching JSON.
+export async function completeJson(model: LoadedModel, prompt: string, schema: object, maxTokens: number): Promise<string> {
+  const result = await model.context.completion({
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_schema', json_schema: { strict: true, schema } },
+    n_predict: maxTokens,
+    temperature: 0.7,
+    stop: STOP_WORDS,
+  });
+  return result.text;
+}
+
 export async function complete(
   model: LoadedModel,
   prompt: string,
