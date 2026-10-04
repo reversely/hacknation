@@ -270,9 +270,14 @@ function siteScreen(ctx: Context): Screen {
   const live = h(
     'div',
     { class: 'card live-card' },
-    h('div', { class: 'site-thumb', 'aria-hidden': 'true' }, h('img', { src: PHOTO, alt: '' }), h('span', {}, ctx.state.name)),
-    h('div', { class: 'live-text' }, h('div', { class: 'card-title left' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live), h('div', { class: 'url' }, ctx.inbox.url)),
-    h('button', { type: 'button', class: 'open-site', onclick: () => ctx.inbox.openSite() }, t.open),
+    h('div', { class: 'site-thumb', 'aria-hidden': 'true' }, h('span', { class: 'thumb-bar' }), h('img', { src: PHOTO, alt: '' })),
+    h(
+      'div',
+      { class: 'live-text' },
+      h('div', { class: 'live-title' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live),
+      h('div', { class: 'url' }, ctx.inbox.url),
+      h('button', { type: 'button', class: 'open-site', onclick: () => ctx.inbox.openSite() }, `${t.open} ↗`),
+    ),
   );
   const items = [...ctx.inbox.items].reverse();
   const actions = (...buttons: [string, () => void, boolean?][]) => h('div', { class: 'actions' }, ...buttons.map(([label, action, primary]) => h('button', { type: 'button', class: primary ? 'approve' : '', onclick: action }, label)));
@@ -331,25 +336,33 @@ function dashboard(ctx: Context, items: VisitorItem[]): HTMLElement {
   const t = INBOX[ctx.language];
   const bookings = items.filter((i) => i.kind === 'booking' && i.status !== 'declined') as Extract<VisitorItem, { kind: 'booking' }>[];
   const reviews = items.filter((i) => i.kind === 'review') as Extract<VisitorItem, { kind: 'review' }>[];
-  const rating = reviews.length ? (reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length).toFixed(1) : '–';
+  const average = reviews.length ? reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length : 0;
   const tiles: [string, string][] = [
     [t.kpiBookings, String(bookings.length)],
     [t.kpiGuests, String(bookings.reduce((sum, b) => sum + b.people, 0))],
     [t.kpiQuestions, String(items.filter((i) => i.kind === 'question').length)],
-    [t.kpiRating, reviews.length ? `${rating} ★` : rating],
+    [t.kpiReviews, String(reviews.length)],
   ];
   const days = upcomingOpenDates(ctx.state.days, 6);
   const guests = days.map((d) => bookings.filter((b) => b.date === d).reduce((sum, b) => sum + b.people, 0));
   const top = Math.max(1, ...guests);
+  const rounded = Math.round(average);
   return h(
     'div',
     { class: 'card dash' },
     h('div', { class: 'kpis' }, ...tiles.map(([label, value]) => h('div', { class: 'kpi' }, h('strong', {}, value), h('span', {}, label)))),
+    h(
+      'div',
+      { class: 'kpi rating' },
+      h('div', {}, h('strong', {}, reviews.length ? average.toFixed(1) : '–'), h('span', {}, t.kpiRating)),
+      h('div', { class: 'rating-side' }, h('span', { class: 'stars', 'aria-label': `${average.toFixed(1)} / 5` }, '★'.repeat(rounded) + '☆'.repeat(5 - rounded)), h('span', {}, reviews.length === 1 ? t.fromOne : t.fromMany.replace('{n}', String(reviews.length)))),
+    ),
     h('div', { class: 'kind' }, t.chart),
     h(
       'div',
-      { class: 'bars', role: 'img', 'aria-label': days.map((d, i) => `${dateLabel(d, ctx.language)}: ${guests[i]}`).join(', ') },
-      ...days.map((d, i) => h('div', { class: 'bar' }, h('span', { class: 'value' }, guests[i] ? String(guests[i]) : ''), h('div', { class: 'track' }, h('div', { class: `fill ${guests[i] ? '' : 'empty'}`, style: `height: ${Math.round((guests[i] / top) * 100)}%` })), h('span', { class: 'label' }, dateLabel(d, ctx.language).split(' ')[1]))),
+      { class: 'chart', role: 'img', 'aria-label': days.map((d, i) => `${dateLabel(d, ctx.language)}: ${guests[i]}`).join(', ') },
+      h('div', { class: 'plot' }, ...days.map((_, i) => h('div', { class: 'col' }, h('span', { class: 'value' }, guests[i] ? String(guests[i]) : ''), guests[i] ? h('div', { class: 'fill', style: `height: ${Math.round((guests[i] / top) * 100)}%` }) : null))),
+      h('div', { class: 'axis' }, ...days.map((d) => h('span', {}, dateLabel(d, ctx.language).split(' ')[1]))),
     ),
     h('div', { class: 'kind' }, t.insights),
     ctx.inbox.summarising && !ctx.inbox.summary ? h('p', { class: 'muted insight' }, t.summarising) : h('ul', { class: 'insights' }, ...(ctx.inbox.summary ?? []).map((line) => h('li', {}, line))),
