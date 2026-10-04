@@ -1,5 +1,6 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { StatusBar } from 'expo-status-bar';
+import { WebView } from 'react-native-webview';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -41,6 +42,8 @@ export default function App() {
           </Pressable>
         ))}
       </View>
+      {/* Starts the web view engine at launch, so the first page preview does not wait for it. */}
+      <WebView source={{ html: '<p></p>' }} containerStyle={styles.warmup} style={styles.warmup} />
       {tab === 'agent' && <AgentScreen store={store} google={google} onOpenWebsite={() => setTab('website')} />}
       {tab === 'website' && <WebsiteCreatorScreen store={store} google={google} />}
       {tab === 'setup' && <SetupScreen store={store} />}
@@ -51,6 +54,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  warmup: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   // Clears the status bar and notch without a safe-area dependency.
   screen: { flex: 1, backgroundColor: '#fff', paddingTop: 60 },
   tabs: { flexDirection: 'row', marginHorizontal: 16, borderRadius: 8, backgroundColor: '#eef1f4', padding: 4 },

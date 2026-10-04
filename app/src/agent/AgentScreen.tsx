@@ -9,7 +9,7 @@ import type { LocalStore } from '../store/localStore';
 import { newId } from '../store/ids';
 import { runTurn, type ChatMessage, type ModelTurn, type ToolSpec } from './agentLoop';
 import { readDraft, registerCoordinatorTools } from './coordinatorTools';
-import { preparePublication, type PublicationDeps, type PublishResult } from './publication';
+import { editPublication, preparePublication, type Publication, type PublicationDeps, type PublishResult } from './publication';
 import type { GoogleApi } from '../store/google';
 import { syncOnce } from '../store/outbox';
 import { Harness, memoryActivityStore, type PendingApproval } from './harness';
@@ -26,7 +26,7 @@ const SCRIPTED_MESSAGE: Record<Language, string> = {
 };
 
 type Line =
-  | { kind: 'operator' | 'agent'; text: string; website?: PublishResult }
+  | { kind: 'operator' | 'agent'; text: string; website?: PublishResult; canPublish?: boolean }
   | { kind: 'tool'; text: string }
   | { kind: 'approval'; approval: PendingApproval; answer: 'approved' | 'declined' | null };
 
@@ -170,6 +170,7 @@ export function AgentScreen({ store, google, onOpenWebsite }: { store: LocalStor
     let note: string;
     let reply: string | null = null;
     let website: PublishResult | undefined;
+    let canPublish = false;
     if (approved) {
       const outcome = await h.approve(approval.activityId);
       note = outcome.status === 'COMPLETED' ? `${approval.tool} done` : `${approval.tool} ${outcome.status.toLowerCase()}: ${'error' in outcome ? outcome.error : ''}`;
@@ -177,6 +178,7 @@ export function AgentScreen({ store, google, onOpenWebsite }: { store: LocalStor
       const said = outcome.status === 'COMPLETED' ? (outcome.result as { reply?: unknown } | null)?.reply : null;
       if (typeof said === 'string') reply = said;
       website = outcome.status === 'COMPLETED' ? ((outcome.result as { website?: PublishResult } | null)?.website ?? undefined) : undefined;
+      canPublish = outcome.status === 'COMPLETED' && Boolean((outcome.result as { can_publish?: boolean } | null)?.can_publish);
     } else {
       h.decline(approval.activityId, 'The operator declined');
       note = `${approval.tool} declined`;
@@ -189,7 +191,18 @@ export function AgentScreen({ store, google, onOpenWebsite }: { store: LocalStor
         line.kind === 'approval' && line.approval.activityId === approval.activityId ? { ...line, answer: answered } : line,
       ),
       { kind: 'tool', text: note },
-      ...(reply ? [{ kind: 'agent' as const, text: reply, website }] : []),
+      ...(reply ? [{ kind: 'agent' as const, text: reply, website, canPublish }] : []),
+    ]);
+  }
+
+  // Publishing is a separate step with its own approval card (docs/website-creator.md).
+  async function requestPublish() {
+    const outcome = await harness.current!.propose('coordinator', { name: 'publish_website', arguments: {} }, true);
+    setLines((current): Line[] => [
+      ...current,
+      outcome.status === 'AWAITING_APPROVAL'
+        ? { kind: 'approval', approval: outcome.approval, answer: null }
+        : { kind: 'agent', text: outcome.status === 'REJECTED' ? outcome.reason : TEXT[languageRef.current].nothingToPublish },
     ]);
   }
 
@@ -211,7 +224,7 @@ export function AgentScreen({ store, google, onOpenWebsite }: { store: LocalStor
         </View>
         <ModelLine state={modelState} />
         {lines.map((line, index) => (
-          <LineView key={index} line={line} onAnswer={answer} text={text} store={store} onOpenWebsite={onOpenWebsite} />
+          <LineView key={index} line={line} onAnswer={answer} text={text} store={store} onOpenWebsite={onOpenWebsite} onPublish={requestPublish} />
         ))}
         {streaming !== null && <Text style={[styles.bubble, styles.agent]}>{streaming || '…'}</Text>}
       </ScrollView>
@@ -260,12 +273,21 @@ type LineProps = {
   text: (typeof TEXT)[Language];
   store: LocalStore;
   onOpenWebsite?: () => void;
+  onPublish: () => void;
 };
 
-function LineView({ line, onAnswer, text, store, onOpenWebsite }: LineProps) {
+function LineView({ line, onAnswer, text, store, onOpenWebsite, onPublish }: LineProps) {
   if (line.kind === 'tool') return <Text style={styles.tool}>{line.text}</Text>;
   if (line.kind !== 'approval') {
     const bubble = <Text style={[styles.bubble, line.kind === 'operator' ? styles.operator : styles.agent]}>{line.text}</Text>;
+    if (line.kind === 'agent' && line.canPublish) {
+      return (
+        <View style={styles.published}>
+          {bubble}
+          <ScriptedButton label={text.publishWebsite} onPress={onPublish} />
+        </View>
+      );
+    }
     if (line.kind !== 'agent' || !line.website) return bubble;
     // A live page opens the public Apps Script address; otherwise the Website tab shows the phone's copy.
     const website = line.website;
@@ -279,12 +301,15 @@ function LineView({ line, onAnswer, text, store, onOpenWebsite }: LineProps) {
     );
   }
   const { approval, answer } = line;
-  const publishing = approval.tool === 'approve_profile_draft';
+  const previewing = approval.tool === 'approve_profile_draft';
+  // Development only: the scripted run approves once the preview (or a publish card) is showing.
+  const scriptedApprove = () => SCRIPTED_APPROVAL && setTimeout(() => onAnswer(approval, true), 6000);
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{text.approvalNeeded}: {approval.tool}</Text>
       <Text style={styles.status}>{approval.reason}</Text>
-      {publishing && !answer && <PublicationPreview store={store} text={text} onReady={() => SCRIPTED_APPROVAL && setTimeout(() => onAnswer(approval, true), 6000)} />}
+      {previewing && !answer && <PublicationPreview store={store} text={text} onReady={scriptedApprove} />}
+      {approval.tool === 'publish_website' && !answer && <ScriptedTrigger run={scriptedApprove} />}
       {answer ? (
         <Text style={styles.status}>{answer === 'approved' ? text.youApproved : text.youDeclined}</Text>
       ) : (
@@ -301,31 +326,107 @@ function LineView({ line, onAnswer, text, store, onOpenWebsite }: LineProps) {
   );
 }
 
-// The page approving will publish, shown in the approval card (docs/website-creator.md).
+// The page this draft produces, rendered on the phone in the approval card: Noor sees and can edit
+// exactly what approving saves (docs/website-creator.md). Publishing it is a separate step.
 function PublicationPreview({ store, text, onReady }: { store: LocalStore; text: (typeof TEXT)[Language]; onReady: () => void }) {
-  const [html, setHtml] = useState<string | null>(null);
+  const [publication, setPublication] = useState<Publication | null>(null);
+  const [drawn, setDrawn] = useState(false);
   const [failed, setFailed] = useState(false);
+  // The edit fields stay folded so the page and the approve buttons fit on screen together.
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     preparePublication(store, readDraft(store).fields, PUBLICATION)
-      .then((publication) => {
-        setHtml(publication.html);
-        onReady();
-      })
+      .then(setPublication)
       .catch(() => setFailed(true));
   }, []);
+  const apply = async (edits: Parameters<typeof editPublication>[3]) => {
+    setDrawn(false);
+    setPublication(await editPublication(store, readDraft(store).fields, PUBLICATION, edits));
+  };
   if (failed) return <Text style={styles.error}>{text.previewFailed}</Text>;
-  if (!html) {
-    return (
-      <View style={styles.previewLoading}>
-        <ActivityIndicator />
-        <Text style={styles.status}>{text.previewLoading}</Text>
-      </View>
-    );
-  }
+  if (!publication) return <Loading label={text.previewLoading} />;
+  const { headline, introduction } = publication.page;
   return (
-    <View style={styles.previewFrame}>
-      <WebView source={{ html }} originWhitelist={['*']} javaScriptEnabled={false} domStorageEnabled={false} accessibilityLabel="Website preview" />
+    <View style={styles.previewBlock}>
+      <View style={styles.previewFrame}>
+        <WebView
+          source={{ html: publication.html }}
+          originWhitelist={['*']}
+          javaScriptEnabled={false}
+          domStorageEnabled={false}
+          onLoadEnd={() => {
+            setDrawn(true);
+            onReady();
+          }}
+          accessibilityLabel="Website preview"
+        />
+        {!drawn && (
+          <View style={styles.previewCover}>
+            <Loading label={text.previewLoading} />
+          </View>
+        )}
+      </View>
+      <Pressable style={styles.editToggle} onPress={() => setEditing((open) => !open)} accessibilityRole="button" accessibilityState={{ expanded: editing }}>
+        <Text style={styles.editToggleText}>{editing ? text.doneEditing : text.editText}</Text>
+      </Pressable>
+      {editing && (
+        <>
+          <EditField label={`${text.editHeadline} (English)`} value={headline.en} onDone={(en) => apply({ headline: { ...headline, en } })} />
+          <EditField label={`${text.editHeadline} (Kiswahili)`} value={headline.sw} onDone={(sw) => apply({ headline: { ...headline, sw } })} />
+          <EditField label={`${text.editIntroduction} (English)`} value={introduction.en} multiline onDone={(en) => apply({ introduction: { ...introduction, en } })} />
+          <EditField label={`${text.editIntroduction} (Kiswahili)`} value={introduction.sw} multiline onDone={(sw) => apply({ introduction: { ...introduction, sw } })} />
+        </>
+      )}
     </View>
+  );
+}
+
+function EditField({ label, value, multiline, onDone }: { label: string; value: string; multiline?: boolean; onDone: (value: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <View style={styles.editField}>
+      <Text style={styles.status}>{label}</Text>
+      <TextInput
+        style={[styles.editInput, multiline && styles.editInputTall]}
+        value={draft}
+        onChangeText={setDraft}
+        onEndEditing={() => draft.trim() && draft !== value && onDone(draft.trim())}
+        multiline={multiline}
+        accessibilityLabel={label}
+      />
+    </View>
+  );
+}
+
+function Loading({ label }: { label: string }) {
+  return (
+    <View style={styles.previewLoading}>
+      <ActivityIndicator />
+      <Text style={styles.status}>{label}</Text>
+    </View>
+  );
+}
+
+// Development only: lets the scripted run press a button or approve a card without a tap.
+function ScriptedTrigger({ run }: { run: () => void }) {
+  useEffect(() => {
+    run();
+  }, []);
+  return null;
+}
+
+function ScriptedButton({ label, onPress }: { label: string; onPress: () => void }) {
+  useEffect(() => {
+    if (SCRIPTED_APPROVAL) {
+      const timer = setTimeout(onPress, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  return (
+    <Pressable style={[styles.button, styles.openWebsite]} onPress={onPress} accessibilityRole="button">
+      <Text style={styles.sendText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -348,7 +449,14 @@ const styles = StyleSheet.create({
   published: { gap: 8, alignItems: 'flex-start' },
   openWebsite: { flex: 0, paddingHorizontal: 16, alignSelf: 'flex-start' },
   previewLoading: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12 },
+  previewBlock: { gap: 8 },
   previewFrame: { height: 420, overflow: 'hidden', borderWidth: 1, borderColor: '#d6dbe0', borderRadius: 10 },
+  previewCover: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  editField: { gap: 4 },
+  editToggle: { alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 18, borderWidth: 1, borderColor: '#1f4e79' },
+  editToggleText: { color: '#1f4e79', fontSize: 14, fontWeight: '600' },
+  editInput: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 15 },
+  editInputTall: { minHeight: 64, textAlignVertical: 'top' },
   content: { padding: 16, gap: 10 },
   status: { fontSize: 13, color: '#555' },
   error: { fontSize: 14, color: '#b00020' },

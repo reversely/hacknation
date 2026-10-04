@@ -51,7 +51,7 @@ export function outcomeForModel(outcome: CallOutcome): string {
 
 // A completed tool can hand the turn its closing line: `reply` from the reply tool, or a
 // `follow_up` question from a save that left fields missing.
-function resultField(outcomes: CallOutcome[], field: 'reply' | 'follow_up'): string | null {
+function resultField(outcomes: CallOutcome[], field: 'reply' | 'follow_up' | 'next_tool'): string | null {
   for (const outcome of [...outcomes].reverse()) {
     if (outcome.status !== 'COMPLETED') continue;
     const value = (outcome.result as Record<string, unknown> | null)?.[field];
@@ -123,6 +123,13 @@ export async function runTurn(params: {
       const outcome = await harness.propose(agent, fromModelToolCall(call));
       roundOutcomes.push(outcome);
       added.push({ role: 'tool', name: call.function.name, tool_call_id: call.id, content: outcomeForModel(outcome) });
+    }
+    // A completed tool can name the tool that must come next; the loop proposes it itself.
+    const next = resultField(roundOutcomes, 'next_tool');
+    if (next && !roundOutcomes.some((o) => o.status === 'AWAITING_APPROVAL')) {
+      const outcome = await harness.propose(agent, { name: next, arguments: {} });
+      roundOutcomes.push(outcome);
+      added.push({ role: 'tool', name: next, content: outcomeForModel(outcome) });
     }
     outcomes.push(...roundOutcomes);
     // The turn ends after an action instead of asking the model to describe it: a small model asked
