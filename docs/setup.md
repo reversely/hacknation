@@ -125,14 +125,16 @@ shasum -a 256 ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf
 # 74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db
 ```
 
-The chosen models (`docs/architecture.md` section 2) download the same way:
+The chosen agent and coding models (`docs/architecture.md` section 2) download the same way:
 
 ```sh
-curl -fL -o ~/models/Qwen3-1.7B-Q4_K_M.gguf \
-  https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf
+curl -fL -o ~/models/gemma-4-E2B-it-Q4_K_M.gguf \
+  https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf
 curl -fL -o ~/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf \
   https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
 ```
+
+An 8 GB Mac cannot run these in the Simulator at usable speed; use the model server below.
 
 Copy each model into the app after the app has been installed once.
 
@@ -166,7 +168,14 @@ a public website URL. Noor will also need to enable the Apps Script API once in 
 
 ## Testing the agent on a model server
 
-A development machine that cannot hold the model in memory (an 8 GB Mac with the Simulator ran Qwen3 1.7B at under one token per second) can run the agent's model on a llama.cpp server instead. The agent's tools, harness and approvals still run in the app; only the model call moves.
+During development all inference runs on the team's GN100 server, not on the development Mac. The 8 GB Mac ran Qwen3 1.7B in the Simulator at under one token per second, because the model paged from disk. The agent's tools, harness and approvals still run in the app; only the model calls move to the server.
+
+The server runs two services:
+
+| Service | Port | What it does |
+| --- | --- | --- |
+| `llama-server` with Gemma 4 E2B | 8094 | The agent model, through llama.cpp's OpenAI-compatible `/v1/chat/completions` |
+| Translation service with NLLB-200 600M | 8097 | `POST /translate` with `{"text", "source", "target"}` (`"sw"` or `"en"`) returns `{"text", "ms"}`; beam search, no sampling |
 
 Build `llama-server` from the llama.cpp commit that `llama.rn` bundles, so prompt formatting and tool-call parsing match the phone. The commit is `LLAMA_COMMIT` in `app/node_modules/llama.rn/cpp/common/build-info.cpp`.
 
@@ -174,14 +183,16 @@ Build `llama-server` from the llama.cpp commit that `llama.rn` bundles, so promp
 git clone https://github.com/ggml-org/llama.cpp && cd llama.cpp && git checkout 6c8dcaa
 cmake -B build -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release   # drop -DGGML_CUDA=ON without an NVIDIA GPU
 cmake --build build --target llama-server -j
-build/bin/llama-server -m Qwen3-1.7B-Q4_K_M.gguf --jinja -ngl 99 -c 8192 --host <server address> --port 8090
+build/bin/llama-server -m gemma-4-E2B-it-Q4_K_M.gguf --jinja -ngl 99 -c 8192 --host <server address> --port 8094
 ```
 
-iOS refuses plain `http://` to any host but localhost, so forward the port and point the app at localhost:
+The translation service is a small Python HTTP server around Hugging Face `transformers` (`facebook/nllb-200-distilled-600M`). Its licence is non-commercial and the production translation model is an open decision (`docs/language.md`).
+
+iOS refuses plain `http://` to any host but localhost, so forward each port and point the app at localhost:
 
 ```sh
-ssh -fN -L 8090:<server address>:8090 <user>@<server address>
-cd app && EXPO_PUBLIC_MODEL_URL=http://localhost:8090 bunx expo start --dev-client
+ssh -fN -L 8094:<server address>:8094 -L 8097:<server address>:8097 <user>@<server address>
+cd app && EXPO_PUBLIC_MODEL_URL=http://localhost:8094 bunx expo start --dev-client
 ```
 
 `EXPO_PUBLIC_AUTORUN=agent` sends a scripted message to the agent when the app opens. Leave `EXPO_PUBLIC_MODEL_URL` unset to run the model on the phone.

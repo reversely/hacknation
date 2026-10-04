@@ -22,12 +22,13 @@ Selected decisions:
 - **Online records: the Farm tab** of the business spreadsheet holds the approved profile and page. Gmail holds email threads, the booking calendar holds bookings, and SQLite on the phone holds everything else.
 - **Customer mailbox: Gmail**, created during onboarding if needed. Wren reads enquiries and sends approved replies through the Gmail API.
 - **Appointments: a "Wren tours" Google Calendar** that Wren creates with the `calendar.app.created` scope, which grants access to that calendar only. A visitor requests a slot, Customer Management creates a tentative event, and Noor confirms it in the weekly review. No Google booking page.
-- **Local models: two.** A general instruction model runs conversation, extraction and replies; a separate Qwen coding model generates the website.
-  - General: **Qwen3 1.7B, Q4_K_M** (1.1 GB, Apache 2.0; `unsloth/Qwen3-1.7B-GGUF`, because Qwen's own repository publishes only Q8_0 at 1.8 GB). The Qwen3 model card lists Swahili among 119 languages; Llama 3.2's eight supported languages do not include it.
+- **Local models: an English agent model, a translation model and a coding model.** The agent model reads English and calls tools; a dedicated translation model translates Noor's Kiswahili in and the agent's free-text replies out (`docs/language.md`).
+  - Agent: **Gemma 4 E2B Instruct, Q4_K_M** (3.1 GB, Apache 2.0; `unsloth/gemma-4-E2B-it-GGUF`). Every turn must call a tool. Qwen3 1.7B, the earlier choice, understood about 1 of 20 typed Kiswahili requests on llama.cpp.
+  - Translation: open; NLLB-200 600M scored highest among small models but is non-commercial (section 10).
   - Coding: **Qwen2.5-Coder 1.5B Instruct, Q4_K_M** (1.1 GB, Apache 2.0; `Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF`).
-  - Chosen at the user's request without the planned iPhone benchmark. Memory, load time and speed on a phone are unmeasured.
+  - Memory, load time and speed on a phone are unmeasured for every model.
 - **Visitor messaging: WhatsApp for the demonstration; Messenger and Instagram later.** Threads stay in each platform's app on Noor's phone. Noor shares an incoming message into Wren, the agent drafts a reply, and Wren opens a `wa.me` link with the approved draft filled in for Noor to send. `m.me` and `ig.me` links cannot carry text, so for Messenger and Instagram Wren copies the draft for Noor to paste. The website's "Book on WhatsApp" button opens a chat with the business number. No Cloud API, Meta app or webhook.
-- **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
+- **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English. App code converts Kiswahili clock times to digits before translation, and the app writes most Kiswahili Noor reads as fixed lines (`docs/language.md`).
 - **Setup: a central agent-guided wizard** with account authorization, secure key entry and connection checks.
 - **Toolchain: bun** installs packages and **Node 24 LTS** runs the Expo CLI and Metro (`docs/setup.md`).
 - **Validation: zod.** One schema package, `@wren/contracts`, validates tool arguments and the records the phone writes to Google (`docs/contracts.md`).
@@ -105,7 +106,7 @@ A developer supplies the application's Google OAuth configuration once; Noor aut
 4. Unload one model before loading the other rather than keeping both resident. Model swapping trades memory savings for loading latency.
 5. Keep context bounded and retrieve relevant local records instead of passing the entire message history. Store workflow memory in SQLite, not only in the model context.
 6. Validate structured tool requests in application code. Valid JSON or constrained decoding does not establish that the proposed action is correct.
-7. Measure memory, loading time, generation speed and thermal behaviour on the target phone. The models in section 2 were chosen before any phone measurement.
+7. Measure memory, loading time, generation speed and thermal behaviour on the target phone. The models in section 2 were chosen from server measurements; no phone measurement exists yet.
 
 llama.cpp is the inference engine, not the agent harness. The application owns credentials, tools, approvals, memory and synchronisation. Android and iOS require their respective native integrations; an Android build does not establish iOS support for the app.
 
@@ -256,9 +257,12 @@ Acceptance tests:
 Decisions before implementation:
 
 1. A Kiswahili speaker who can assess translations.
-2. The hackathon parameter-size limit. The models and quantisation are chosen (section 2).
+2. The hackathon parameter-size limit.
 3. ~~Apps Script setup method.~~ **Resolved:** create and deploy the bound script through the Apps Script API. Noor must enable the API once in Google account settings; see sections 4 and 5.
 4. Whether Wren also reads free/busy times from Noor's main calendar, which needs a further scope, so that holds avoid Noor's other commitments.
+5. The translation model's licence: NLLB-200 (best scores, CC BY-NC 4.0), HPLT v1 (CC BY 4.0) or MADLAD-400 (Apache 2.0, 3B parameters) (`docs/language.md`).
+6. How the translation model runs on the phone: it needs a second runtime beside llama.cpp, such as ONNX Runtime, which is a new dependency.
+7. Phone memory for the agent and translation models together, or loading them one at a time.
 
 ## 11. Task split
 
