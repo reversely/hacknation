@@ -125,8 +125,16 @@ export const CONTEXT: { figure: string; label: string; source: string; url: stri
 export const SPEECH_GAP = { fieldsCorrect: 70, werBefore: 24.5, werAfter: 15.7 };
 export const NEXT_STEPS: { step: string; detail: string }[] = [
   { step: 'Record real speech, with consent', detail: 'Operators reading and answering the interview on their own phones, outdoors, in more than one accent, so training and testing use voices like the ones Wren will hear.' },
-  { step: 'Fine-tune on real and synthetic speech together', detail: 'The 196 synthetic clips cut word errors on unseen voices from 24.5% to 15.7%; real recordings test whether that holds beyond synthetic speech.' },
-  { step: 'Run the fine-tuned model through the full interview', detail: 'The 15.7% figure is word errors on single clips. Fields correct across a whole interview, the measure that decides shipping, has not been measured for it yet.' },
+  { step: 'Fine-tune on real and synthetic speech together', detail: 'Real recordings test whether the synthetic fine-tune\'s gain holds beyond synthetic voices.' },
+  { step: 'Run the fine-tuned model through the full interview', detail: 'Its gain was measured on single clips. Fields correct across a whole interview, the measure that decides shipping, has not been measured for it yet.' },
   { step: 'Confirm what speech gets wrong', detail: 'Numbers and English names said inside Kiswahili are where transcripts fail; reading them back for a tap to confirm keeps a misheard price off the site.' },
   { step: 'Measure on the phone', detail: 'Quantise the fine-tuned model and time it on a phone, since every benchmark so far ran on a desktop GPU.' },
+];
+
+// Who Wren is for: the operator's constraints, and what Wren does about each.
+export const FOR_NOOR: { problem: string; wren: string }[] = [
+  { problem: 'A phone, patchy internet and no computer', wren: 'Wren runs on the phone and prepares replies and updates offline, ready to send once a connection returns.' },
+  { problem: 'No background in websites or search listings', wren: 'Wren builds the site from a short form and writes the copy.' },
+  { problem: 'No technical knowledge to set up a chat bot', wren: 'The site\'s chat answers from the farm\'s own facts and hands everything else to Noor.' },
+  { problem: 'Days spent on the farm, not on bookings and messages', wren: 'Bookings, questions and reviews wait for Noor\'s approval, with a summary of what visitors said, to check once a week.' },
 ];

@@ -4,7 +4,7 @@
 
 import { h } from '../ui';
 import { barChart, countUp, growBars, runLines, stackedColumns } from './charts';
-import { BY_KIND, CONFIGS, CONTEXT, EXAMPLES, NEXT_STEPS, SPEECH_GAP, FINE_TUNE, FORM_FIELDS, HALLUCINATIONS, INTERVIEW_PIPELINES, LAYERS, MODELS_USED, QUESTIONS, RUNS, STT_WER, type Config } from './data';
+import { BY_KIND, CONFIGS, CONTEXT, FOR_NOOR, EXAMPLES, NEXT_STEPS, SPEECH_GAP, FINE_TUNE, FORM_FIELDS, HALLUCINATIONS, INTERVIEW_PIPELINES, LAYERS, MODELS_USED, QUESTIONS, RUNS, STT_WER, type Config } from './data';
 
 const pct = (n: number) => Math.round((n / QUESTIONS.total) * 100);
 // Accuracy: replies that say nothing false (a correct answer, "I don't know", or a hand-over).
@@ -37,16 +37,31 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
   const context = section(
     'wu-context',
     h('h2', {}, 'Why it matters'),
-    key('Coffee prices fell. Visitors kept coming.'),
-    detail('A farm-tour booking is income that does not move with the auction price. Wren helps a farm sell one.'),
-    h('div', { class: 'wu-context-grid' }, ...CONTEXT.map((c) => h('div', { class: 'wu-fact reveal' }, h('strong', {}, c.figure), h('p', {}, c.label), h('a', { href: c.url, target: '_blank', rel: 'noopener' }, c.source)))),
+    key('With Wren, a small tour operator answers enquiries quickly, sees what reviews say, and runs the farm\'s website from a phone.'),
+    detail('A farm-tour booking is income that does not move with the auction price.'),
+    h(
+      'div',
+      { class: 'wu-why' },
+      h(
+        'div',
+        { class: 'wu-why-col' },
+        h('h3', {}, 'The challenge'),
+        ...FOR_NOOR.map((f) => h('div', { class: 'wu-for-row reveal' }, h('strong', {}, f.problem), h('p', {}, f.wren))),
+      ),
+      h(
+        'div',
+        { class: 'wu-why-col' },
+        h('h3', {}, 'The evidence'),
+        ...CONTEXT.map((c) => h('div', { class: 'wu-fact reveal' }, h('strong', {}, c.figure), h('p', {}, c.label), h('a', { href: c.url, target: '_blank', rel: 'noopener' }, c.source))),
+      ),
+    ),
   );
 
   const harness = section(
     'wu-harness',
     h('h2', {}, 'From a conversation to a form'),
     key('Facts come from the form. No model touches prices, times or the phone number.'),
-    detail('Wren first set a business up through a spoken interview, and a model pulled each field from the transcript: the phone stack got 70% of fields right. The form now takes the facts from its fields instead.'),
+    detail('Wren first set a business up through a spoken interview, and a model pulled each field from the transcript. The form now takes the facts from its fields instead.'),
     h(
       'div',
       { class: 'wu-split' },
@@ -73,7 +88,7 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
   const hallucinations = section(
     'wu-chart',
     h('h2', {}, 'Replies with nothing false'),
-    key(`${accurate('strict')} of ${QUESTIONS.total} with guidelines and checks. ${accurate('baseline')} of ${QUESTIONS.total} with the first prompt.`),
+    key('The checks held on questions written after they were tuned.'),
     detail(`The checks were tuned on ${QUESTIONS.development} development questions. ${QUESTIONS.heldOut} held-out questions were written afterwards and never used for tuning.`),
     stackedColumns(
       CONFIGS.map((c) => ({ label: c.label, parts: [{ value: QUESTIONS.development - HALLUCINATIONS[c.id].development, key: 'dev' }, { value: QUESTIONS.heldOut - HALLUCINATIONS[c.id].heldOut, key: 'held' }] })),
@@ -154,7 +169,7 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
         barChart([{ label: 'Before', value: FINE_TUNE.before, tone: 'base' }, { label: 'After', value: FINE_TUNE.after, tone: 'good' }], 100, '%'),
       ),
     ),
-    detail('Stock Whisper heard "shilingi elfu moja na mia tano" (1,500 shillings) as "Shilingelf mudia na miatano". The phone stack got 70% of interview fields right, against 71% for the largest models. For translation, NLLB-200 600M beat Qwen2.5 0.5B on every phrase tried.'),
+    detail('Stock Whisper heard "shilingi elfu moja na mia tano" (1,500 shillings) as "Shilingelf mudia na miatano". For translation, NLLB-200 600M beat Qwen2.5 0.5B on every phrase tried.'),
   );
 
   const privacy = section(
@@ -191,7 +206,7 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
     'wu-next',
     h('h2', {}, 'Next steps'),
     key('Voice is built but not shipped. It still gets too many facts wrong.'),
-    detail(`Wren was meant to set a farm up from a spoken Kiswahili interview. Offline, the phone stack got ${SPEECH_GAP.fieldsCorrect}% of fields right, and a fine-tune cut speech-to-text errors from ${SPEECH_GAP.werBefore}% to ${SPEECH_GAP.werAfter}%. That still leaves misheard prices and phone numbers, so the form takes the facts for now.`),
+    detail(`Wren was meant to set a farm up from a spoken Kiswahili interview. Offline, the phone stack got ${SPEECH_GAP.fieldsCorrect}% of fields right, against 71% for the largest models. Even after the fine-tune above, misheard prices and phone numbers remain, so the form takes the facts for now.`),
     key('The gap comes from the data.'),
     detail('The Kiswahili fine-tunes tested here learned from public sets such as Common Voice and FLEURS, which people read aloud, not farmers talking outdoors. Every test voice here was synthetic, and one person wrote all the sentences. Numbers and English names said inside Kiswahili are where transcripts break.'),
     h('ol', { class: 'wu-steps' }, ...NEXT_STEPS.map((n, i) => h('li', { style: `--delay:${i * 160}ms` }, h('span', { class: 'wu-step' }, String(i + 1)), h('div', {}, h('strong', {}, n.step), h('p', {}, n.detail))))),

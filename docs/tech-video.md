@@ -2,18 +2,28 @@
 
 The brief asks: "Please explain in 60 sec what was challenging to build, how you overcame the
 challenges and what are remaining limitations." The script records the demonstration Space
-(`https://reversely-wren.hf.space/`), takes the challenges in the order the demonstration reaches
-them, and cuts to the chat evaluation page (`?view=evaluation`) for the figures. The voice-over runs
-156 words, which fits 60 seconds at a brisk 160 words a minute. Every figure comes from
-`docs/chat-evaluation.md` and `docs/interview.md`.
+(`https://reversely-wren.hf.space/`) and its chat evaluation page (`?view=evaluation`). It opens
+with the problem and its figures, takes the build challenges in the order the demonstration reaches
+them, and ends on what remains. The voice-over runs 148 words, about 60 seconds at 150 words a
+minute. Each figure is said once, beside the challenge it is evidence for.
 
-| Time | Part | Screen | On-screen figure | Voice-over |
-| --- | --- | --- | --- | --- |
-| 0:00–0:07 | Setting | Demo, steps 01 to 03: the Kiswahili phone and its English twin | | Wren sets up a farm-tour business on a phone, in the owner's own language. Noor works in Kiswahili; the twin shows English. |
-| 0:07–0:20 | Challenge, then fix | Demo, step 07: the agent trace streaming the coder's JSON and the copy check | No model touches prices, times or the phone number | First challenge: models small enough for a phone invent facts. So prices, times and the phone number come from the form, never from a model. The coding model writes only short copy, and code rejects any name or number the form doesn't hold. |
-| 0:20–0:38 | Challenge, then fix | Demo, step 10: the chat answers a suggested question, then hands the parking question to the owner; cut to "Replies with nothing false" | 53% → 98% accurate, 58 questions | Second: the visitor chat. Our first setup gave a false reply to 27 of 58 questions, like a discount nobody offered. Checks in code now send anything the facts don't support to the owner. Accuracy rose from 53% to 98%, every reply checked by hand. |
-| 0:38–0:48 | Fix | Demo, step 13: the phone dashboard and an approval card | | And nothing reaches a visitor unapproved: bookings, questions and reviews wait on Noor's phone. |
-| 0:48–1:00 | Remaining limitation | Evaluation page, Next steps | 70% of interview fields; 24.5% → 15.7% speech errors | What remains is voice. Our spoken Kiswahili interview got 70% of fields right, and fine-tuning cut speech errors to 15.7%. Until real recorded speech closes that gap, the form takes the facts. |
+| Time | Challenge | Evidence on screen | Voice-over |
+| --- | --- | --- | --- |
+| 0:00–0:16 | The operator's: falling prices, and no time or computer to sell tours | Evaluation page, Why it matters: the challenges beside the 27.5% and 2.55 million cards | Kenya's coffee auction price fell 27.5% in early 2026, yet 2.5 million international visitors arrived in 2025. Noor could sell them farm tours, but has a phone, patchy internet, no computer, and no time for bookings or messages. |
+| 0:16–0:24 | What Wren does about it | Demo, steps 01 to 03: the Kiswahili phone and its English twin | With Wren, Noor answers enquiries quickly, sees what reviews say, and runs the farm's website from the phone, in Kiswahili. |
+| 0:24–0:35 | Building: small models invent facts | Demo, step 07: the agent trace, with the coder's JSON and the copy check | The hard part: models small enough for a phone invent facts. So prices, times and the phone number come from a form, never a model, and code checks the short copy it writes. |
+| 0:35–0:46 | Building: the visitor chat makes things up | Demo, step 10: the chat hands the parking question to Noor; cut to the 53% → 98% chart | The visitor chat used to make things up. Now anything the facts don't support goes to Noor, and accuracy rose from 53% to 98%. |
+| 0:46–0:52 | Building: nothing reaches a visitor unapproved | Demo, step 13: the phone dashboard and an approval card | Noor checks in once a week: review insights, bookings and questions, each waiting for approval. |
+| 0:52–1:00 | Remaining: voice | Evaluation page, Next steps: the 70% figure | Voice isn't reliable yet: our spoken Kiswahili interview gets 70% of fields right. Real recorded speech comes next. |
+
+## Sources for the figures
+
+- Coffee auction price, US$7.82/kg in January to US$5.67/kg in March 2026, a 27.5% fall calculated
+  from the table; the figures are provisional: KNBS, *Leading Economic Indicators, June 2026*,
+  Table 6, p. 13.
+- International visitor arrivals, 2,550,600 in 2025, including 1,219,300 for holidays: KNBS,
+  *Economic Survey 2026: Popular Version*, tourism section, p. 12.
+- Chat accuracy: `docs/chat-evaluation.md`. Interview fields: `docs/interview.md`.
 
 ## Recording notes
 
@@ -21,5 +31,5 @@ them, and cuts to the chat evaluation page (`?view=evaluation`) for the figures.
   Hugging Face, so every step answers from the cache or the account's GPU allowance.
 - Use the walkthrough's Show me and Next buttons from step 08 onward; they enter the inputs the
   warm-up cached.
-- The figures shown on screen are the page's own; no figure in the voice-over appears without its
-  source chart on screen or in the demonstration.
+- The pitch draft's claims that Wren is free and works in Kikuyu stay out: the app supports Kiswahili
+  and English, and the repository records no pricing decision.

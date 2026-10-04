@@ -142,3 +142,19 @@
 .wu-layers .wu-step { width: 36px; height: 36px; font-size: 15px; }
 .wu-layers strong { margin-top: 4px; font-size: 22px; }
 .wu-layers p { margin-top: 6px; font-size: 16px; line-height: 1.5; }
+.wu-context .wu-key:not(:first-of-type) { margin-top: 36px; }
+.wu-for { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.wu-for-row { padding: 18px 20px; border-radius: 14px; background: #f4f7f3; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06); border-left: 4px solid var(--g2); opacity: 0; transform: translateY(14px); transition: opacity 600ms ease-out, transform 600ms ease-out; }
+.wu-for-row.in { opacity: 1; transform: none; }
+.wu-for-row strong { display: block; font-size: 19px; font-weight: 600; }
+.wu-for-row p { margin: 6px 0 0; font: 15px/1.5 var(--sans); color: var(--ink2); }
+@media (prefers-reduced-motion: reduce) { .wu-for-row { opacity: 1 !important; transform: none !important; transition: none !important; } }
+@media (max-width: 900px) { .wu-for { grid-template-columns: minmax(0, 1fr); } }
+
+/* Why it matters: the challenges beside the evidence. */
+.wu-why { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; margin-top: 26px; align-items: start; }
+.wu-why-col { display: grid; gap: 12px; }
+.wu-why-col h3 { margin: 0 0 2px; font: 600 12px var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink2); }
+.wu-why .wu-fact strong { font-size: 34px; }
+.wu-why .wu-for { display: none; }
+@media (max-width: 900px) { .wu-why { grid-template-columns: minmax(0, 1fr); } }
