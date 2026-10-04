@@ -5,7 +5,7 @@
 
 import { buildSite, type BuildResult, type SiteContent } from '../../../app/src/survey/pipeline';
 import { DAYS, type Language } from '../../../app/src/survey/survey';
-import { wrenWordmark as wordmark } from './assets/generated';
+import { wrenWordmark as wordmark, wrenWordmarkWhite as wordmarkWhite } from './assets/generated';
 import { encodeBooking } from './booking-code';
 import { answerQuestion, askSite, forOperator, pipelineDeps, reviewSentiment, summarise, type Reporters } from './inference';
 import { OTHER_LANGUAGES, translatePage, type OtherLanguage } from './universal';
@@ -441,9 +441,12 @@ function mount(): void {
         return act || n ? h('div', { class: 'step-actions' }, act ? h('button', { type: 'button', class: 'show-me', onclick: act }, 'Show me') : null, n ? h('button', { type: 'button', class: 'next', onclick: n.go }, `${n.label} →`) : null) : h('span');
       })(),
       details(state, events, modelEvents, problems, result, buildError),
+      // The operator side's strip is dark, so the mascot hops under the step text on the light stage.
+      ...(mode === 'operator' ? [mascot.element] : []),
     );
     const r = ROLES[mode];
     role.replaceChildren(
+      h('img', { class: 'role-logo', src: mode === 'operator' ? wordmarkWhite : wordmark, alt: 'Wren' }),
       h('p', { class: 'role-kicker' }, 'Role'),
       h('h1', { class: 'role-title' }, r.title),
       h('p', { class: 'role-text' }, r.text),
@@ -454,7 +457,8 @@ function mount(): void {
             ...(['operator', 'visitor'] as const).map((m) => h('button', { type: 'button', role: 'tab', 'aria-selected': m === mode ? 'true' : 'false', class: m === mode ? 'on' : '', onclick: () => { mode = m; render(0); } }, m === 'operator' ? 'Operator' : 'Visitor')),
           )
         : h('span'),
-      mascot.element,
+      // The visitor side's strip is light, so the mascot hops there.
+      ...(mode === 'visitor' ? [mascot.element] : [h('div', { class: 'role-spacer' })]),
       h('p', { class: 'role-count' }, `${String(s.n).padStart(2, '0')} / ${String(s.total).padStart(2, '0')}`),
     );
   }

@@ -9,6 +9,7 @@ import { DAY_LETTERS } from '../../../app/src/survey/strings';
 import { DAYS, type Day, type Language } from '../../../app/src/survey/survey';
 import { decodeBooking, type CodedBooking } from './booking-code';
 import type { Sentiment } from './inference';
+import { wrenWordmarkWhite } from './assets/generated';
 import { h } from './ui';
 import { OTHER_LANGUAGES, type OtherLanguage } from './universal';
 
@@ -325,7 +326,7 @@ export function laptop(view: SiteView): HTMLElement {
     { class: 'fs-footer' },
     h('div', {}, h('span', { class: 'fs-logo' }, site.business.name), site.business.description ? h('p', {}, site.business.description) : null),
     h('dl', {}, h('div', {}, h('dt', {}, l.phone), h('dd', {}, site.business.phone)), site.business.location ? h('div', {}, h('dt', {}, l.where), h('dd', {}, site.business.location)) : null),
-    h('p', { class: 'fs-made' }, l.madeWith),
+    h('p', { class: 'fs-made' }, h('span', {}, l.madeWith.replace(/Wren$/, '')), h('img', { src: wrenWordmarkWhite, alt: 'Wren', class: 'fs-made-logo' })),
   );
 
   return h(

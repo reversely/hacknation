@@ -1,4 +1,4 @@
-// Wren's mascot, a companion in the role panel's empty space. Its pose follows what the page is doing: pecking while a
+// Wren's mascot, a companion that hops along the empty space on whichever side of the page is light. Its pose follows what the page is doing: pecking while a
 // model works, wings up when something succeeds, leaning in when the chat answers, eyes closed after
 // a while with nothing happening. Six small PNGs, served beside the bundle.
 
@@ -21,10 +21,14 @@ export class Mascot {
     this.img.alt = ALT.idle;
     this.img.width = 72;
     this.img.height = 72;
+    // A track across the empty space; the walker hops along it and turns at each end.
+    const walker = document.createElement('div');
+    walker.className = 'walker';
+    walker.append(this.img);
     this.element = document.createElement('div');
     this.element.className = 'mascot idle';
     this.element.setAttribute('role', 'img');
-    this.element.append(this.img);
+    this.element.append(walker);
   }
 
   show(pose: Pose): void {

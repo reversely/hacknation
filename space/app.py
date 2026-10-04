@@ -27,7 +27,7 @@ def ping_gpu(text: str) -> dict:
     return {"echo": text, "device": device, "sum": total, "ms": int((time.time() - started) * 1000)}
 
 
-with gr.Blocks(head=f'<script type="module" src="/gradio_api/file={WEB / BUNDLE}"></script>', css=PAGE_CSS, fill_width=True) as demo:
+with gr.Blocks(head=f'<script type="module" src="/gradio_api/file={WEB / BUNDLE}"></script>', css=PAGE_CSS, fill_width=True, title="Wren") as demo:
     gr.HTML('<div id="wren-root"></div>', elem_id="wren-host", padding=False)
     gr.api(ping_gpu, api_name="ping_gpu")
     gr.api(translate, api_name="translate")

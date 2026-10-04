@@ -697,3 +697,45 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 }
 .role .mascot { background: radial-gradient(circle at 50% 55%, rgb(229 235 227 / 0.92) 0 50%, rgb(229 235 227 / 0) 69%); }
 .demo.visitor .role .mascot { background: radial-gradient(circle at 50% 55%, rgb(31 74 53 / 0.1) 0 50%, rgb(31 74 53 / 0) 69%); }
+
+/* The mascot hops along a track on the light side: under the step text for the operator, in the
+   strip for the visitor. The walker crosses the track and turns at each end; the bird hops as it
+   goes, pecks in place while a model works, and jumps on the spot when celebrating. */
+.role .mascot, .caption .mascot { position: relative; width: 100%; height: 104px; margin: 0; border-radius: 0; background: none !important; animation: none; }
+.role .mascot { margin: auto 0 16px; }
+.caption .mascot { margin-top: 18px; max-width: 520px; }
+.role-spacer { margin-top: auto; }
+.mascot .walker { position: absolute; bottom: 0; left: 0; width: 92px; height: 92px; animation: wander 14s linear infinite; }
+.mascot img { width: 100%; height: 100%; transform-origin: 50% 90%; animation: hop-step 0.7s cubic-bezier(0.3, 0, 0.4, 1) infinite; }
+.mascot.work .walker, .mascot.celebrate .walker, .mascot.rest .walker { animation-play-state: paused; }
+.mascot.work img { animation: peck 0.7s ease-in-out infinite; }
+.mascot.celebrate img { animation: jump 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2) 4; }
+.mascot.rest img { animation: breathe 3.2s ease-in-out infinite; }
+.mascot.look img { animation: hop-step 0.9s cubic-bezier(0.3, 0, 0.4, 1) infinite; }
+.mascot.hop img { animation: hop-step 0.7s cubic-bezier(0.3, 0, 0.4, 1) infinite; }
+.mascot.work.hop img { animation: peck 0.7s ease-in-out infinite; }
+.mascot.celebrate.hop img { animation: jump 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2) 4; }
+.mascot.rest.hop img { animation: breathe 3.2s ease-in-out infinite; }
+@keyframes wander {
+  0% { left: 0; transform: scaleX(1); }
+  45% { left: calc(100% - 92px); transform: scaleX(1); }
+  50% { left: calc(100% - 92px); transform: scaleX(-1); }
+  95% { left: 0; transform: scaleX(-1); }
+  100% { left: 0; transform: scaleX(1); }
+}
+@keyframes hop-step { 0%, 100% { transform: translateY(0) scale(1, 1); } 12% { transform: translateY(0) scale(1.04, 0.94); } 45% { transform: translateY(-14px) scale(0.98, 1.03); } 78% { transform: translateY(0) scale(1.03, 0.96); } }
+.demo.visitor .mascot img { filter: none; }
+@media (prefers-reduced-motion: reduce) { .mascot .walker, .mascot img, .mascot.work img, .mascot.celebrate img, .mascot.rest img, .mascot.look img, .mascot.hop img { animation: none !important; } }
+@media (max-width: 760px) {
+  .role { padding-right: 16px; }
+  .role .mascot { position: relative; right: auto; top: auto; width: 100%; height: 84px; margin: 8px 0 0; }
+  .mascot .walker { width: 76px; height: 76px; }
+}
+
+/* The Wren wordmark heads the role strip: white on the dark operator side, black on the light
+   visitor side. */
+.role-logo { display: block; width: 168px; height: auto; margin: 0 0 28px; user-select: none; }
+@media (max-width: 1100px) { .role-logo { width: 132px; margin-bottom: 20px; } }
+@media (max-width: 760px) { .role-logo { width: 112px; margin-bottom: 12px; } }
+.fs-made { display: flex; align-items: center; gap: 8px; }
+.fs-made-logo { height: 14px; width: auto; opacity: 0.85; outline: 0 !important; }
