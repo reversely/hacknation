@@ -1,19 +1,30 @@
 # Technical video script
 
 The brief asks: "Please explain in 60 sec what was challenging to build, how you overcame the
-challenges and what are remaining limitations." The script records the demonstration Space
-(`https://reversely-wren.hf.space/`) and its chat evaluation page (`?view=evaluation`). It opens on
-why the team took on a less-resourced language, then the challenge, how the harness overcame it, and
-what remains. Each figure is said once, beside the challenge it is evidence for; the first-person
-lines are the team's own voice.
+challenges and what are remaining limitations." The voice-over is the team's own text, with the
+figures checked against the sources below and one sentence added on the remaining limitation.
 
-| Time | Part | Evidence on screen | Voice-over |
-| --- | --- | --- | --- |
-| 0:00–0:10 | Why | Demo, step 01: the Kiswahili phone and its English twin | We grew up speaking Hokkien and Hakka, and took it for granted that AI wouldn't handle languages with little data. Building Wren for Kiswahili-speaking farmers, we hit the same wall. |
-| 0:10–0:22 | Challenge | Demo, step 10: the chat; cut to the evaluation hero | Small local models struggle with less-resourced languages: the first one we tried understood about 1 in 20 typed Kiswahili requests, and our first chat setup gave a false reply 47% of the time. |
-| 0:22–0:42 | How we overcame it | Demo, step 07: the agent trace; step 13: the approval cards; the accuracy chart | So we built harnesses around the models, with a person in the loop. Prices, times and location come from a form, never a model. Code checks every reply, and anything unsupported goes to the farmer's phone for approval. False replies fell from 47% to under 2%. |
-| 0:42–0:52 | Remaining limitation | Evaluation page, Next steps | Voice isn't there yet: our spoken Kiswahili interview gets 70% of fields right, so real recorded speech comes next. |
-| 0:52–1:00 | Close | The Wren wordmark | We believe people who speak less-resourced languages deserve accurate AI, and that careful implementation can deliver it. |
+During our build, we quickly ran into a problem: small, local models don't work very well on obscure
+languages.
+
+Growing up speaking dialects like Hokkien and Hakka, with limited datasets we've essentially taken it
+for granted that AI won't be able to interact appropriately with these languages.
+
+In fact, when we first started working on this hackathon with Swahili prompts on small models, the
+first model we tried understood only about 1 in 20 Swahili requests, and 47% of our chatbot's answers
+to visitor questions were flat out incorrect. But we believe that people speaking rare languages
+deserve better AI.
+
+Using human-in-the-loop coding implementation, we designed agentic harnesses that minimized
+hallucinations from 47% to under 2% in essential functions such as describing the business' core
+functions & location.
+
+Voice is still ahead of us: our spoken Swahili interview gets 70% of details right, so real recorded
+speech is our next step.
+
+We believe that responsible, thoughtful implementation of AI can help provide accessible, accurate
+and inclusive access to Internet resources across the globe, and we hope our tool is a strong
+demonstration of this principle put in practice.
 
 ## Sources for the figures
 
