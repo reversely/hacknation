@@ -1,0 +1,4 @@
+spaces
+torch==2.8.0
+transformers==5.18.0
+sentencepiece

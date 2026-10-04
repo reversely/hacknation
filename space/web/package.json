@@ -1,0 +1,12 @@
+{
+  "name": "wren-space-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/assets.ts && bun build src/main.ts --outdir dist --entry-naming main-[hash].js --minify && bun run scripts/manifest.ts",
+    "typecheck": "bun run scripts/assets.ts && bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@gradio/client": "2.7.1"
+  }
+}

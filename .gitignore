@@ -28,3 +28,6 @@ docs/prd*.md
 
 # challenge brief: marked Official Use Only, kept local
 docs/spec.pdf
+space/web/dist/
+space/web/node_modules/
+space/web/src/assets/generated.ts

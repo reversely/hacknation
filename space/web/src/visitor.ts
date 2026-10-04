@@ -1,0 +1,8 @@
+// The operator's side of visitor requests: labels for the approval cards on the phone. The survey
+// strings do not carry these; the Kiswahili needs review by a native speaker.
+import type { Language } from '../../../app/src/survey/survey';
+
+export const INBOX = {
+  en: { live: 'Your site is live', requests: 'Requests', empty: "Visitors' bookings, questions and reviews appear here. Nothing reaches a visitor until you approve it.", booking: 'Booking request', question: 'Question', review: 'Review', approve: 'Approve', decline: 'Decline', send: 'Send reply', edit: 'Edit', publish: 'Publish', hide: 'Hide', approved: 'Approved', declined: 'Declined', sent: 'Reply sent', published: 'Published', hidden: 'Hidden', drafting: 'Wren is drafting a reply…', draftLabel: "Wren's draft reply", people: 'people', positive: 'Positive', neutral: 'Neutral', negative: 'Negative', unclear: 'Unclear' },
+  sw: { live: 'Tovuti yako iko hewani', requests: 'Maombi', empty: 'Nafasi, maswali na maoni ya wageni yataonekana hapa. Hakuna kinachomfikia mgeni hadi uidhinishe.', booking: 'Ombi la nafasi', question: 'Swali', review: 'Maoni', approve: 'Idhinisha', decline: 'Kataa', send: 'Tuma jibu', edit: 'Hariri', publish: 'Chapisha', hide: 'Ficha', approved: 'Imeidhinishwa', declined: 'Imekataliwa', sent: 'Jibu limetumwa', published: 'Imechapishwa', hidden: 'Imefichwa', drafting: 'Wren inaandaa jibu…', draftLabel: 'Rasimu ya jibu la Wren', people: 'watu', positive: 'Chanya', neutral: 'Wastani', negative: 'Hasi', unclear: 'Haijulikani' },
+} as const satisfies Record<Language, Record<string, string>>;

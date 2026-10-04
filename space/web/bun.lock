@@ -1,0 +1,17 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "wren-space-web",
+      "dependencies": {
+        "@gradio/client": "2.7.1",
+      },
+    },
+  },
+  "packages": {
+    "@gradio/client": ["@gradio/client@2.7.1", "", { "dependencies": { "fetch-event-stream": "^0.1.5" } }, "sha512-NdxHhkWKE+p+6NLgDrGKMoyF1Ldcl+tRKDyy2x9HKExqHUj/LpsR0UY46x6lLAM+QHAspHa2E6cFjkJMCVb6gQ=="],
+
+    "fetch-event-stream": ["fetch-event-stream@0.1.6", "", {}, "sha512-GREtJ5HNikdU2AXtZ6E/5bk+aslMU6ie5mPG6H9nvsdDkkHQ6m5lHwmmmDTOBexok9hApQ7EprsXCdmz9ZC68w=="],
+  }
+}
