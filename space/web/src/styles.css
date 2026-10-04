@@ -312,3 +312,99 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 @media (max-width: 1500px) { .wren-stage.with-site.with-twin > .site-slot { grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 900px; } }
 .request .sentiment { justify-self: start; }
 .farm-site section { scroll-margin-top: 64px; }
+
+/* The demonstration page. The creation side: a dark navy role panel with serif type, fading into a
+   light stage for the phones. The visitor side inverts it: a light panel with sans-serif type,
+   fading into a dark stage for the laptop. */
+.demo { --navy: #0b1426; --paper: #f7f6f2; --night: #0e0f11; --sand: #f2efe8; --serif-d: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; --sans-d: "Avenir Next", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  display: grid; grid-template-columns: 420px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(90deg, var(--navy) 0 420px, var(--paper) 640px); color: #1b1d1a; transition: background 0.4s; }
+.demo.visitor { background: linear-gradient(90deg, var(--sand) 0 420px, var(--night) 640px); }
+.role { position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 44px 40px; color: #e7ebf3; font-family: var(--serif-d); display: flex; flex-direction: column; }
+.demo.visitor .role { color: #1c1a17; font-family: var(--sans-d); }
+.role-kicker { margin: 0; font: 600 15px/1 var(--sans-d); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.8; }
+.role-title { margin: 22px 0 0; font-size: 50px; font-weight: 400; line-height: 1.08; }
+.demo.visitor .role-title { font-weight: 800; letter-spacing: -0.02em; font-size: 46px; }
+.role-text { margin: 22px 0 0; font-size: 22px; line-height: 1.55; font-style: italic; opacity: 0.88; }
+.demo.visitor .role-text { font-style: normal; font-size: 19px; }
+.role-switch { display: inline-flex; margin-top: 32px; border: 1px solid currentColor; border-radius: 999px; padding: 3px; align-self: flex-start; }
+.role-switch button { font: 600 14px var(--sans-d); border: 0; background: transparent; color: inherit; padding: 8px 18px; border-radius: 999px; cursor: pointer; }
+.role-switch button.on { background: #e7ebf3; color: var(--navy); }
+.demo.visitor .role-switch button.on { background: #1c1a17; color: var(--sand); }
+.role-count { margin: auto 0 0; font: 500 15px var(--sans-d); letter-spacing: 0.18em; opacity: 0.75; }
+.show { padding: 40px 48px 64px 200px; min-width: 0; }
+.stage { display: flex; justify-content: center; }
+.phones { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+.device { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.device-label { display: flex; gap: 8px; align-items: center; font: 500 13px var(--sans-d); color: #6b6e66; }
+.device-label .lang { background: #fff; border: 1px solid #ddd8ce; border-radius: 6px; padding: 3px 8px; color: #1b1d1a; font-weight: 600; }
+.caption { max-width: 900px; margin: 36px auto 0; font-family: var(--serif-d); color: #1b1d1a; }
+.demo.visitor .caption { font-family: var(--sans-d); color: #ecebe8; }
+.step-n { margin: 0; font: 500 18px var(--sans-d); letter-spacing: 0.2em; color: #6b6e66; }
+.demo.visitor .step-n { color: #9a978f; }
+.step-title { margin: 14px 0 0; font-size: 40px; font-weight: 400; line-height: 1.15; }
+.demo.visitor .step-title { font-weight: 800; letter-spacing: -0.02em; font-size: 36px; }
+.step-text { margin: 16px 0 0; font-size: 21px; line-height: 1.6; color: #55594f; }
+.demo.visitor .step-text { font-size: 19px; color: #c4c1ba; }
+.step-model { display: inline-block; margin: 18px 0 0; font: 600 13px var(--sans-d); padding: 5px 10px; border-radius: 6px; background: #e3ece6; color: #1f4a35; }
+.step-model.none { background: #ebe8e2; color: #6b6e66; }
+.demo.visitor .step-model { background: #1f2a24; color: #a8d5b5; }
+.demo.visitor .step-model.none { background: #222326; color: #9a978f; }
+.how { margin-top: 28px; font-family: var(--sans-d); }
+.how summary { cursor: pointer; font: 600 14px var(--sans-d); letter-spacing: 0.08em; text-transform: uppercase; color: #6b6e66; }
+.demo.visitor .how summary { color: #9a978f; }
+.how-body { display: grid; gap: 14px; margin-top: 14px; }
+.demo.visitor .how-body .panel { background: #18191c; color: #e2e0db; border-color: #2a2b2f; }
+.demo.visitor .how-body pre { color: #d6d3cc; }
+
+/* The visitor's laptop. */
+.laptop { width: min(1080px, 100%); display: flex; flex-direction: column; align-items: center; }
+.laptop-screen { width: 100%; height: 660px; display: flex; flex-direction: column; border: 14px solid #141416; border-bottom-width: 18px; border-radius: 22px 22px 0 0; background: #141416; overflow: hidden; box-shadow: 0 0 0 1px #2c2c30, 0 40px 80px rgba(0, 0, 0, 0.45); }
+.laptop-screen .browser-bar { border-radius: 6px 6px 0 0; }
+.laptop-base { width: 112%; height: 20px; background: linear-gradient(#e2e2e5, #a7a7ad); border-radius: 0 0 16px 16px; position: relative; }
+.laptop-base::after { content: ''; position: absolute; left: 50%; top: 0; width: 15%; height: 7px; transform: translateX(-50%); background: #8f8f95; border-radius: 0 0 8px 8px; }
+
+/* The farm site's pages. */
+.farm-site button { font-family: inherit; }
+.fs-logo { background: none; border: 0; color: inherit; cursor: pointer; padding: 0; }
+.fs-nav nav button { background: none; border: 0; color: #cbbfb0; font: 500 14px "Avenir Next", "Helvetica Neue", Arial, sans-serif; cursor: pointer; padding: 6px 2px; border-bottom: 2px solid transparent; }
+.fs-nav nav button.on { color: #fff; border-color: #e2a33b; }
+.fs-nav-cta { border: 0; cursor: pointer; }
+.fs-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 22px; }
+.fs-hero-actions .fs-cta { margin-top: 0; }
+.fs-hero-note { font-size: 15px; font-weight: 600; color: #efe6da; }
+.fs-contact .fs-hero-note { color: inherit; }
+.fs-about p { margin: 0; font-size: 19px; max-width: 640px; }
+.fs-field { display: flex; flex-direction: column; max-width: 360px; }
+.fs-confirm { margin: 0 0 24px; padding: 20px; background: #fff; border: 2px solid #1b1714; border-radius: 6px; }
+.fs-confirm .fs-label { margin-top: 0; }
+.fs-code { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+.fs-code span { font-size: 14px; color: #6b625a; }
+.fs-code strong { font: 800 30px/1.1 "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.06em; color: #1b1714; }
+.fs-confirm p { margin: 8px 0 0; }
+.fs-code-input { font-family: "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.fs-error { color: #a4402a; font-weight: 600; }
+.fs-muted-lead { margin: -8px 0 16px; color: #6b625a; }
+.fs-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.fs-chips button { font: 600 14px "Avenir Next", "Helvetica Neue", Arial, sans-serif; border: 1px solid #1b1714; background: #fff; color: #1b1714; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+.fs-thread { display: flex; flex-direction: column; gap: 10px; min-height: 120px; padding: 16px; background: #faf6f0; border-radius: 6px; }
+.fs-bubble { max-width: 78%; padding: 10px 14px; border-radius: 14px; line-height: 1.45; }
+.fs-bubble.visitor { align-self: flex-end; background: #1b1714; color: #fff; border-bottom-right-radius: 4px; }
+.fs-bubble.site { align-self: flex-start; background: #fff; border: 1px solid #eee7dc; border-bottom-left-radius: 4px; }
+.fs-bubble.handed { border-color: #e2a33b; background: #fff8ea; }
+.fs-composer { margin-top: 12px; }
+.fs-ghost { font: 700 16px "Avenir Next", "Helvetica Neue", Arial, sans-serif; background: transparent; border: 2px solid #1b1714; color: #1b1714; border-radius: 4px; padding: 12px 20px; cursor: pointer; }
+.fs-contact dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin: 0 0 8px; }
+.fs-contact dt { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #8a5a12; }
+.fs-contact dd { margin: 4px 0 0; font-size: 18px; }
+.fs-contact a { color: inherit; }
+
+@media (max-width: 1500px) { .show { padding-left: 120px; } .demo { background: linear-gradient(90deg, var(--navy) 0 420px, var(--paper) 540px); } .demo.visitor { background: linear-gradient(90deg, var(--sand) 0 420px, var(--night) 540px); } }
+@media (max-width: 1200px) {
+  .demo, .demo.visitor { grid-template-columns: 1fr; background: var(--paper); }
+  .demo.visitor { background: var(--night); }
+  .role { position: static; height: auto; background: var(--navy); padding: 28px 24px; }
+  .demo.visitor .role { background: var(--sand); }
+  .role-title { font-size: 38px; }
+  .role-count { margin-top: 20px; }
+  .show { padding: 28px 16px 48px; }
+}

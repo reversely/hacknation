@@ -8,7 +8,7 @@ import gradio as gr
 import spaces
 import torch
 
-from wren_models.generate import chat, json_generate
+from wren_models.generate import chat, json_generate, visitor
 from wren_models.translate import translate
 
 WEB = Path(__file__).parent / "web" / "dist"
@@ -33,5 +33,6 @@ with gr.Blocks(head=f'<script type="module" src="/gradio_api/file={WEB / BUNDLE}
     gr.api(translate, api_name="translate")
     gr.api(json_generate, api_name="json")
     gr.api(chat, api_name="chat")
+    gr.api(visitor, api_name="visitor")
 
 demo.launch()

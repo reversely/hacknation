@@ -76,16 +76,16 @@ export async function translate(texts: string[], source: string, target: string,
   return results as string[];
 }
 
-export type ModelEvent = { call: 'json' | 'chat'; model: string; ms: number; from: 'browser' | 'server cache' | 'model'; summary: string };
+export type ModelEvent = { call: 'json' | 'chat' | 'visitor'; model: string; ms: number; from: 'browser' | 'server cache' | 'model'; summary: string };
 
 // The json and chat calls, cached in the browser like translate.
-async function cachedCall(call: 'json' | 'chat', revision: string, payload: Record<string, unknown>, report: (event: ModelEvent) => void, summary: string): Promise<string> {
+async function cachedCall(call: 'json' | 'chat' | 'visitor', revision: string, payload: Record<string, unknown>, report: (event: ModelEvent) => void, summary: string): Promise<string> {
   const key = await sha256(JSON.stringify({ call, revision, payload }));
   const started = performance.now();
   const hit = memory.get(key) ?? (await stored(key));
   if (hit !== undefined) {
     memory.set(key, hit);
-    report({ call, model: call === 'json' ? models.website_copy.repo : models.agent.repo, ms: Math.round(performance.now() - started), from: 'browser', summary });
+    report({ call, model: { json: models.website_copy.repo, chat: models.agent.repo, visitor: models.visitor_chat.repo }[call], ms: Math.round(performance.now() - started), from: 'browser', summary });
     return hit;
   }
   const reply = await (await connect()).predict(`/${call}`, payload);
@@ -101,3 +101,6 @@ export const jsonCall = (prompt: string, schema: object, maxTokens: number, repo
 
 export const chatCall = (messages: { role: string; content: string }[], maxTokens: number, report: (event: ModelEvent) => void, summary: string) =>
   cachedCall('chat', models.agent.revision, { messages, max_tokens: maxTokens }, report, summary);
+
+export const visitorCall = (messages: { role: string; content: string }[], maxTokens: number, report: (event: ModelEvent) => void) =>
+  cachedCall('visitor', models.visitor_chat.revision, { messages, max_tokens: maxTokens }, report, 'Visitor chat');

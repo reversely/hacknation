@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "bun run scripts/assets.ts && bun build src/main.ts --outdir dist --entry-naming main-[hash].js --minify && bun run scripts/manifest.ts",
-    "typecheck": "bun run scripts/assets.ts && bunx tsc --noEmit"
+    "typecheck": "bun run scripts/assets.ts && bunx tsc --noEmit",
+    "test": "bun test src"
   },
   "dependencies": {
     "@gradio/client": "2.7.1"

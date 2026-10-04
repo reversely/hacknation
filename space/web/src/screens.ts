@@ -16,7 +16,7 @@ export type Context = {
   state: State;
   language: Language; // this phone's language
   s: Strings;
-  live(text: string): string; // operator-typed text in this phone's language
+  live(text: string, field?: string): string; // operator-typed text in this phone's language
   siteHtml: string | null; // the generated page in this phone's language
   inbox: { items: VisitorItem[]; url: string; editing: number | null; edit(id: number | null): void; approve(id: number, reply?: string): void; decline(id: number): void };
   go(screen: ScreenId): void;
@@ -42,9 +42,11 @@ export function dots(active: number): HTMLElement {
 
 const titleBlock = (title: string, lead: string) => [h('h1', { class: 'title' }, title), h('p', { class: 'subtitle' }, lead)];
 
-function text(ctx: Context, value: string, label: string, onInput: (v: string) => void, attrs: Record<string, string> = {}, multiline = false): HTMLElement {
-  const input = h(multiline ? 'textarea' : 'input', { class: `input ${multiline ? 'area' : ''}`, value: ctx.live(value), 'aria-label': label, ...attrs }) as HTMLInputElement;
-  if (multiline) input.value = ctx.live(value);
+// Free text the twin shows translated. A name or a phone number stays as typed (translatable false).
+function text(ctx: Context, value: string, label: string, onInput: (v: string) => void, attrs: Record<string, string> = {}, multiline = false, translatable = true): HTMLElement {
+  const shown = translatable ? ctx.live(value, attrs['data-field']) : value;
+  const input = h(multiline ? 'textarea' : 'input', { class: `input ${multiline ? 'area' : ''}`, value: shown, 'aria-label': label, ...attrs }) as HTMLInputElement;
+  if (multiline) input.value = shown;
   input.addEventListener('input', () => {
     onInput(input.value);
     ctx.changed();
@@ -97,8 +99,8 @@ export const SCREENS: Record<ScreenId, (ctx: Context) => Screen> = {
       h(
         'div',
         { class: 'card stack' },
-        field(ctx.s.name, text(ctx, ctx.state.name, ctx.s.name, (v) => (ctx.state.name = v), { 'data-field': 'name' })),
-        field(ctx.s.phone, text(ctx, ctx.state.phone, ctx.s.phone, (v) => (ctx.state.phone = v), { type: 'tel', inputmode: 'tel', placeholder: '+254 712 345 678', 'data-field': 'phone' })),
+        field(ctx.s.name, text(ctx, ctx.state.name, ctx.s.name, (v) => (ctx.state.name = v), { 'data-field': 'name' }, false, false)),
+        field(ctx.s.phone, text(ctx, ctx.state.phone, ctx.s.phone, (v) => (ctx.state.phone = v), { type: 'tel', inputmode: 'tel', placeholder: '+254 712 345 678', 'data-field': 'phone' }, false, false)),
         h('p', { class: 'hint' }, ctx.s.phoneHint),
         field(`${ctx.s.location} (${ctx.s.optional})`, text(ctx, ctx.state.location, ctx.s.location, (v) => (ctx.state.location = v), { 'data-field': 'location' })),
         field(`${ctx.s.about} (${ctx.s.optional})`, text(ctx, ctx.state.about, ctx.s.about, (v) => (ctx.state.about = v), { rows: '3', 'data-field': 'about' }, true)),
@@ -209,7 +211,7 @@ function serviceCard(ctx: Context, index: number): HTMLElement {
     });
     return input;
   };
-  const name = service.type === 'custom' ? ctx.live(service.customName) || `${ctx.s.serviceType} ${index + 1}` : service.type ? SERVICE_TYPES[service.type][ctx.language] : `${ctx.s.serviceType} ${index + 1}`;
+  const name = service.type === 'custom' ? ctx.live(service.customName, `custom-${index}`) || `${ctx.s.serviceType} ${index + 1}` : service.type ? SERVICE_TYPES[service.type][ctx.language] : `${ctx.s.serviceType} ${index + 1}`;
   return h(
     'div',
     { class: 'card service stack' },

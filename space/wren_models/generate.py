@@ -1,6 +1,7 @@
-"""The json and chat calls (docs/space.md, Model calls). Qwen2.5-Coder writes website copy as JSON;
-Gemma 4 E2B answers visitor questions and labels review sentiment. Both use greedy decoding, so a
-repeated input returns the cached result without reaching the GPU function.
+"""The json, chat and visitor calls (docs/space.md, Model calls). Qwen2.5-Coder writes website copy as
+JSON; Gemma 4 E2B drafts the operator's replies and labels review sentiment; Qwen2.5 0.5B answers the
+visitor's chat. All use greedy decoding, so a repeated input returns the cached result without
+reaching the GPU function.
 
 The JSON schema travels in the prompt as an instruction; the caller validates the result and retries
 (app/src/survey/pipeline.ts), so no constrained-decoding library is needed for now."""
@@ -29,6 +30,7 @@ def _load(role: str):
 # Placed on the GPU when the module loads, as ZeroGPU requires.
 _CODER = _load("website_copy")
 _AGENT = _load("agent")
+_VISITOR = _load("visitor_chat")
 
 
 def _run(loaded, messages: list[dict], max_tokens: int) -> str:
@@ -48,6 +50,11 @@ def _coder(messages: list[dict], max_tokens: int) -> str:
 @spaces.GPU(duration=MODELS["agent"]["gpu_seconds"])
 def _agent(messages: list[dict], max_tokens: int) -> str:
     return _run(_AGENT, messages, max_tokens)
+
+
+@spaces.GPU(duration=MODELS["visitor_chat"]["gpu_seconds"])
+def _visitor(messages: list[dict], max_tokens: int) -> str:
+    return _run(_VISITOR, messages, max_tokens)
 
 
 def _first_json_object(text: str) -> str:
@@ -73,6 +80,18 @@ def chat(messages: list[dict], max_tokens: int) -> dict:
     k = cache.key("chat", spec["revision"], spec["generation"], {"messages": messages, "max_tokens": max_tokens})
     hit = cache.get(k)
     text = hit if hit is not None else _agent(messages, max_tokens)
+    if hit is None:
+        cache.put(k, text)
+    return {"text": text, "model": spec["repo"], "revision": spec["revision"], "ms": int((time.time() - started) * 1000), "cached": hit is not None}
+
+
+def visitor(messages: list[dict], max_tokens: int) -> dict:
+    """The visitor's chat on the farm's site, in English (docs/space.md, Visitor's view)."""
+    spec = _VISITOR[0]
+    started = time.time()
+    k = cache.key("visitor", spec["revision"], spec["generation"], {"messages": messages, "max_tokens": max_tokens})
+    hit = cache.get(k)
+    text = hit if hit is not None else _visitor(messages, max_tokens)
     if hit is None:
         cache.put(k, text)
     return {"text": text, "model": spec["repo"], "revision": spec["revision"], "ms": int((time.time() - started) * 1000), "cached": hit is not None}

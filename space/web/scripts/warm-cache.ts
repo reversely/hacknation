@@ -8,7 +8,8 @@ import { Client } from '@gradio/client';
 import { buildSite } from '../../../app/src/survey/pipeline';
 import { englishSurvey } from '../src/state';
 import { DEMO_QUESTION, DEMO_REVIEW, DEMO_SURVEY } from '../src/demo-inputs';
-import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS } from '../src/prompts';
+import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, UNKNOWN, VISITOR_TOKENS, visitorFacts, visitorMessages } from '../src/prompts';
+import { SUGGESTED } from '../src/site';
 import type { SiteContent } from '../../../app/src/survey/pipeline';
 
 const token = process.env.HF_TOKEN as `hf_${string}` | undefined;
@@ -23,11 +24,13 @@ const deps = {
 // The operator's Kiswahili site, then the twin's English site, exactly as the page builds them.
 const surveys = [DEMO_SURVEY, await englishSurvey(DEMO_SURVEY, (text) => deps.translate(text, 'sw', 'en'))];
 let operatorSite: SiteContent | null = null;
+const built: SiteContent[] = [];
 for (const survey of surveys) {
   const language = survey.language;
   const started = Date.now();
   const result = await buildSite(survey, deps);
   operatorSite ??= result.site;
+  built.push(result.site);
   console.log(`${language}: ${Date.now() - started} ms, coder attempts ${result.attempts}, fell back ${result.fellBack}${result.problems.length ? `, last problems: ${result.problems.join('; ')}` : ''}`);
   console.log(`  headline: ${result.site.headline}`);
   console.log(`  introduction: ${result.site.introduction}`);
@@ -39,3 +42,15 @@ console.log(`question: ${answer.text} (${answer.cached ? 'cached' : `${answer.ms
 console.log(`draft in English: ${await deps.translate(answer.text, 'sw', 'en')}`);
 const sentiment = await call<{ text: string }>('chat', { messages: SENTIMENT_MESSAGES(DEMO_REVIEW), max_tokens: SENTIMENT_TOKENS });
 console.log(`review sentiment: ${parseSentiment(sentiment.text)} (raw: ${sentiment.text})`);
+
+// The chat's suggested questions on both versions of the site, as askSite (src/inference.ts) runs them.
+const english = built[1];
+for (const site of built) {
+  for (const question of SUGGESTED[site.language]) {
+    const asked = site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
+    const reply = await call<{ text: string }>('visitor', { messages: visitorMessages(visitorFacts(english, []), asked), max_tokens: VISITOR_TOKENS });
+    const unknown = reply.text.toLowerCase().includes(UNKNOWN.toLowerCase());
+    const shown = unknown || site.language === 'en' ? reply.text : await deps.translate(reply.text, 'en', site.language);
+    console.log(`chat ${site.language}: ${question} -> ${shown}`);
+  }
+}
