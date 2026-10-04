@@ -1,7 +1,7 @@
 # Development setup
 
-This guide sets up a macOS, Linux or Windows machine to build the Noor phone app (React Native,
-Expo development build, `llama.rn`) and the Next.js site. Teammates and coding agents follow it in
+This guide sets up a macOS, Linux or Windows machine to build the Wren phone app (React Native,
+Expo development build, `llama.rn`). Teammates and coding agents follow it in
 order. Each step names the version, the install command and a check command.
 
 Every machine needs the shared requirements. The phone app then needs one platform toolchain:
@@ -16,9 +16,9 @@ each tool's published install instructions and have not yet been run on a team m
 - **Package manager: bun.** Run `bun install`, `bun add <pkg>`, `bun add -d <pkg>` and
   `bunx <cli>`. Commit `bun.lock`. Never run `npm install`, `pnpm install` or `yarn`; they write a
   second lockfile.
-- **Runtime: Node 24 LTS.** bun installs packages; Node runs the Expo CLI, Metro and Next.js.
+- **Runtime: Node 24 LTS.** bun installs packages; Node runs the Expo CLI and Metro.
   `bunx` runs a CLI with Node when the CLI's script declares Node. Each `package.json` pins
-  `"engines": { "node": ">=24 <25" }` so Vercel builds on the same major version.
+  `"engines": { "node": ">=24 <25" }`.
 - **Node version file:** `.nvmrc` at the repository root pins Node 24. nvm, fnm and Volta read it.
 - **App targets:** the iOS Simulator on macOS and the Android emulator on Linux or Windows check
   that the app works. Performance figures come from a team iPhone (`docs/architecture.md`
@@ -110,23 +110,6 @@ bun install
 bunx expo run:ios        # macOS: builds the development build and opens it in the iOS Simulator
 bunx expo run:android    # any OS: builds it and opens it in a running Android emulator
 ```
-
-## Running the website
-
-Install the monorepo workspaces using the repository's package-manager convention, then start the
-Next.js dev server from `website/`:
-
-```sh
-bun install
-cd website
-bun run dev
-```
-
-For the hosted site, configure `DEVICE_TOKEN` and `GOOGLE_SERVICE_ACCOUNT_JSON` in Vercel. Grant
-the service account access to Sheets and Drive file creation. `GOOGLE_SHEETS_SPREADSHEET_ID` is
-optional; without it the backend finds or creates the `Noor Farm Business Records` spreadsheet.
-The website reads only an `APPROVED` Farm record. `USE_DEMO_PROFILE=true` enables the explicit
-demo-only sample page; leave it unset for real deployments.
 
 ## Loading a model
 

@@ -1,10 +1,14 @@
-# Sheets schema and API contracts
+# Record contracts
 
 The Coordinator publishes these contracts so the Website Creator, Search and Social, and Customer
-Management agents build against one record format and one set of API routes
-(`docs/architecture.md` sections 7 and 11). The zod schemas in `packages/contracts/src` are the
-source of truth; this file explains them. The phone app and the Vercel API both import
-`@noor/contracts`, so a request that passes validation on one side passes on the other.
+Management agents build against one record format (`docs/architecture.md` sections 7 and 11). The
+zod schemas in `packages/contracts/src` are the source of truth; this file explains them. The phone
+validates every record with `@noor/contracts` before writing it to Google.
+
+Records live in Noor's Google account: the farm profile in the Farm tab of the business
+spreadsheet, bookings in the "Wren tours" calendar, and email in Gmail. No API server sits between
+the phone and Google. `packages/contracts` still defines six tabs and the former Vercel API schemas
+until #34 trims it to this file.
 
 ## Conventions
 
@@ -19,26 +23,38 @@ source of truth; this file explains them. The phone app and the Vercel API both 
 - **Null:** a field that is unknown is `null`. The agent asks for a missing booking detail
   instead of filling it in.
 
-## Sheets tabs
+## Farm tab
 
-One spreadsheet holds six tabs. Columns follow the schema's field order (`columns(tab)` in
-`packages/contracts/src/rows.ts`). Object and array fields are stored as JSON text in one cell, and
-`null` as an empty cell. `toRow` and `fromRow` convert between records and rows and reject a row
-that fails validation.
+The business spreadsheet holds one tab, Farm. Columns follow the schema's field order
+(`columns(tab)` in `packages/contracts/src/rows.ts`). Object and array fields are stored as JSON
+text in one cell, and `null` as an empty cell. `toRow` and `fromRow` convert between records and
+rows and reject a row that fails validation.
 
-| Tab | Holds | Fields after `id`, `version`, `created_at`, `updated_at` |
-| --- | --- | --- |
-| Farm | The farm profile; the public website and listings read only an `APPROVED` profile | `status`, `approved_at`, `name`, `description`, `offerings`, `meeting_instructions`, `policies`, `whatsapp_number`, `email`, `timezone` |
-| Enquiries | One visitor request and the fields the model extracted from it | `source`, `thread_id`, `customer_name`, `customer_contact`, `language`, `original_text`, `extracted`, `status` |
-| Bookings | A requested tour slot and its Calendar event | `enquiry_id`, `offering_id`, `calendar_event_id`, `slot_start`, `slot_end`, `party_size`, `customer_name`, `customer_contact`, `channel`, `status`, `decided_at` |
-| Messages | Every inbound and outbound WhatsApp or email message | `channel`, `direction`, `thread_id`, `external_id`, `enquiry_id`, `contact`, `text`, `text_for_operator`, `delivery_status` |
-| Feedback | A visitor comment and its analysis | `booking_id`, `source`, `original_text`, `language`, `analysis` |
-| Actions | A receipt for every action the backend executed | `type`, `approved_by`, `approved_at`, `status`, `outcome`, `error` |
+Fields after `id`, `version`, `created_at`, `updated_at`: `status`, `approved_at`, `name`,
+`description`, `offerings`, `meeting_instructions`, `policies`, `whatsapp_number`, `email`,
+`timezone`. The Apps Script web app and the listings read only an `APPROVED` row.
 
 `description`, `meeting_instructions` and `policies` hold an English and a Kiswahili text. Each
 offering in `offerings` has a name, description, duration, price with a currency code, and capacity.
 
-The `extracted` field of an enquiry holds `intent` (`BOOKING`, `QUESTION`, `CHANGE`,
+## Bookings on the calendar
+
+Each booking is one event on the "Wren tours" calendar. The event's private extended properties
+carry `booking_id`, `enquiry_id`, `offering_id`, `party_size`, `channel` (`email` or `whatsapp`)
+and `contact`. The event's start and end are the slot.
+
+| Booking state | Event status | Guests |
+| --- | --- | --- |
+| `HELD` | `tentative` | None |
+| `CONFIRMED` | `confirmed` | The visitor, when the visitor gave an email address, invited with `sendUpdates=all` |
+| `DECLINED`, `CANCELLED` | `cancelled` | Unchanged |
+
+`REQUESTED` and `NEEDS_INFORMATION` have no event; the phone keeps them in SQLite.
+
+## Records on the phone
+
+SQLite keeps enquiries, shared WhatsApp messages, drafts and the activity log. The `extracted`
+field of an enquiry holds `intent` (`BOOKING`, `QUESTION`, `CHANGE`,
 `CANCELLATION`, `REFUND`, `FEEDBACK`, `OTHER`), `offering_id`, `requested_date`, `requested_time`,
 `party_size`, and `missing`, the list of details the visitor has not given yet.
 
@@ -52,50 +68,29 @@ The `extracted` field of an enquiry holds `intent` (`BOOKING`, `QUESTION`, `CHAN
 A message keeps its delivery status apart from the booking status, so the app can show a confirmed
 booking whose confirmation message failed to send.
 
-## API routes
+## Actions
 
-The Next.js backend on Vercel serves these routes. The phone sends
-`Authorization: Bearer <device token>` on every route except the public profile and the WhatsApp
-webhook. Errors return `{ "error": { "code", "message" } }` with one of the codes `UNAUTHORIZED`,
-`INVALID_REQUEST`, `NOT_FOUND`, `VERSION_CONFLICT`, `SLOT_UNAVAILABLE`, `UPSTREAM_FAILED`.
-
-| Route | Caller | Purpose | Schema |
-| --- | --- | --- | --- |
-| `GET /api/health` | Setup wizard | Reports `OK`, `NOT_CONFIGURED` or `FAILED` for Sheets, Calendar and WhatsApp | `HealthResponse` |
-| `GET /api/profile` | Public website | Returns the approved profile's public fields only | `PublicProfileResponse` |
-| `POST /api/setup/sheets` | Setup wizard | Creates or reuses the business spreadsheet, creates all six contract tabs and verifies read/write access | Device bearer token |
-| `GET /api/records/:tab` | Phone | Reads validated rows from a contract tab | Device bearer token |
-| `PUT /api/records/:tab` | Phone | Validates and writes one row to a contract tab | Device bearer token and tab record schema |
-| `GET /api/sync?since=` | Phone | Returns messages, enquiries, bookings and the profile changed after `since`, plus `server_time` for the next call | `SyncResponse` |
-| `POST /api/actions` | Phone offline queue | Executes up to 50 approved actions and returns one receipt each | `ActionsRequest`, `ActionsResponse` |
-| `GET /api/whatsapp/webhook` | Meta | Answers Meta's verification handshake | Meta's format |
-| `POST /api/whatsapp/webhook` | Meta | Checks `X-Hub-Signature-256`, then stores each message as an `INBOUND` Messages row | Meta's format |
-
-Gmail is not behind this API. The phone reads and sends email with the operator's own Google
-authorization (`docs/architecture.md` section 6).
-
-### Actions
-
-Each action carries an `id`, `approved_by` and `approved_at`. The `id` is the idempotency key: when
-the offline queue sends the same action twice, the backend returns the stored receipt and does not
-act again.
+The phone's outbox holds approved actions and runs each one against Google when connected. Each
+action carries an `id`, `approved_by` and `approved_at`. The `id` is the idempotency key: before
+writing, the phone looks for an event or sent message carrying that ID and skips the action when
+one exists.
 
 | Type | Effect | Approval |
 | --- | --- | --- |
-| `save_profile` | Writes the farm profile | Operator for an `APPROVED` profile |
-| `record_enquiry` | Writes an enquiry with its extracted fields | Policy |
-| `send_whatsapp` | Sends a WhatsApp message through the Cloud API and records its delivery status | Policy for an answer from the approved profile or the slot-held notice; operator for any other text |
-| `hold_slot` | Creates a tentative Calendar event and a `HELD` booking | Policy |
-| `confirm_booking` | Rechecks the Calendar slot and the booking version, then marks the event and the booking `CONFIRMED` | Operator only; the schema rejects `POLICY` |
-| `decline_booking` | Releases the Calendar event and marks the booking `DECLINED` | Operator only |
+| `save_profile` | Writes the Farm row | Operator for an `APPROVED` profile |
+| `send_email` | Sends a Gmail reply in the visitor's thread | Policy for an answer from the approved profile or the slot-held notice; operator for any other text |
+| `open_whatsapp_draft` | Opens `wa.me` with the approved text; Noor sends it | Policy for an answer from the approved profile or the slot-held notice; operator for any other text |
+| `hold_slot` | Checks capacity, then creates a `tentative` event | Policy |
+| `confirm_booking` | Rechecks capacity, sets the event to `confirmed`, invites the visitor by email | Operator only; the schema rejects `POLICY` |
+| `decline_booking` | Sets the event to `cancelled` | Operator only |
 
-The booking module behind `confirm_booking` is the only code that writes `CONFIRMED`
+The booking module behind `confirm_booking` is the only code that writes `confirmed`
 (`docs/architecture.md` section 7). The schema enforces the operator-only rule for confirming and
-declining. The backend enforces the content rule for policy-approved WhatsApp text.
+declining.
 
 ## Changing a contract
 
 Change the zod schema, run `bun test` in `packages/contracts`, and update this file in the same
-commit. A nullable field appended at the end of a schema keeps existing rows readable, because
-`fromRow` reads a missing cell as `null`. Inserting, renaming or removing a field shifts the
-columns, and the spreadsheet then needs migrating.
+commit. A nullable field appended at the end of the Farm schema keeps existing rows readable,
+because `fromRow` reads a missing cell as `null`. Inserting, renaming or removing a field shifts the
+columns, and the Farm tab then needs migrating.
