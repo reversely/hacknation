@@ -4,16 +4,21 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import '../gmail/gmailConnector';
-import { findWebsiteModelFile } from '../inference/localModel';
+import { completeJson, findWebsiteModelFile } from '../inference/localModel';
+import { REMOTE_WEBSITE_MODEL_URL, remoteJsonCompletion } from '../inference/remoteModel';
+import { remoteTranslator, TRANSLATOR_URL } from '../inference/translator';
 import type { GoogleApi } from '../store/google';
 import { newId } from '../store/ids';
 import { SPREADSHEET_ID_KEY } from '../store/outbox';
 import { syncOnce } from '../store/outbox';
 import type { LocalStore } from '../store/localStore';
-import { generateWebsitePage, loadWebsiteModel, renderWebsitePreviewHtml, type WebsitePage } from './websiteCreator';
+import { generateWebsitePage, loadWebsiteModel, renderWebsitePreviewHtml, type JsonGenerator, type WebsitePage } from './websiteCreator';
+
+// The Kiswahili copy comes from the translation service (docs/language.md).
+const translate = TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null;
 
 export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; google: GoogleApi }) {
-  const [model, setModel] = useState<Awaited<ReturnType<typeof loadWebsiteModel>> | null>(null);
+  const [generate, setGenerate] = useState<JsonGenerator | null>(null);
   const [modelMessage, setModelMessage] = useState('Loading the website model…');
   const [page, setPage] = useState<WebsitePage | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,6 +30,11 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
 
   useEffect(() => {
     let active = true;
+    if (REMOTE_WEBSITE_MODEL_URL) {
+      setGenerate(() => remoteJsonCompletion(REMOTE_WEBSITE_MODEL_URL));
+      setModelMessage(`Model server ${REMOTE_WEBSITE_MODEL_URL}`);
+      return;
+    }
     let loaded: Awaited<ReturnType<typeof loadWebsiteModel>> | null = null;
     const file = findWebsiteModelFile();
     if (!file) {
@@ -34,7 +44,7 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
     loadWebsiteModel(file).then((result) => {
       loaded = result;
       if (active) {
-        setModel(result);
+        setGenerate(() => (prompt: string, schema: object, maxTokens: number) => completeJson(result, prompt, schema, maxTokens));
         setModelMessage(`${result.fileName} ready on the ${result.gpu ? 'GPU' : 'CPU'}`);
       } else {
         result.context.release();
@@ -48,13 +58,22 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
     };
   }, []);
 
+  // Lets a scripted check run without a tap: start Metro with EXPO_PUBLIC_AUTORUN=website.
+  useEffect(() => {
+    if (process.env.EXPO_PUBLIC_AUTORUN === 'website' && generate && profile && !page && !busy) createPreview();
+  }, [generate]);
+
   async function createPreview() {
-    if (!model || !profile) return;
+    if (!generate || !profile) return;
+    if (!translate) {
+      setMessage('The Kiswahili copy needs the translation service. Set EXPO_PUBLIC_TRANSLATOR_URL.');
+      return;
+    }
     setBusy(true);
     setMessage(null);
     setConfirming(false);
     try {
-      setPage(await generateWebsitePage(model, profile));
+      setPage(await generateWebsitePage(generate, translate, profile));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'The page could not be created.');
     } finally {
@@ -99,7 +118,7 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
       ) : (
         <>
           <Text style={styles.detail}>Create a page in English and Kiswahili, preview it offline, then approve publication.</Text>
-          <Button label={busy ? 'Working…' : 'Create page preview'} disabled={busy || !model} onPress={createPreview} />
+          <Button label={busy ? 'Working…' : 'Create page preview'} disabled={busy || !generate} onPress={createPreview} />
         </>
       )}
       {message && <Text accessibilityRole="alert" style={styles.detail}>{message}</Text>}
