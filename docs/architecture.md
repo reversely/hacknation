@@ -155,20 +155,38 @@ The model receives only connection status and actionable error summaries, never 
   spreadsheet. The workflow pauses at these Google-owned consent steps and resumes when she returns.
 - **Visitor questions:** a visitor types a question into a chat box on the page and gets one of
   Noor's approved answers at once, or a note that Noor will answer it.
-  1. At publication, Wren's local models write the likely visitor questions and their answers from
-     the approved public fields, in the site's language. Noor approves them with the page, and the
-     phone computes each approved question's embedding and stores both in the Farm row.
-  2. The page loads transformers.js and the embedding model in the visitor's browser, embeds the
-     question and compares it with the approved questions' embeddings.
-  3. Above a similarity threshold, the page shows the closest question's approved answer, so every
-     answer a visitor reads is one Noor approved.
-  4. Below the threshold, the page sends the question through `google.script.run` to the Apps
-     Script, which appends it to the Questions tab. Wren lists new questions in Noor's weekly
-     review, and each answer Noor approves joins the page's approved answers at the next
-     publication.
+  1. At publication, Wren's local models write 20 to 40 likely visitor questions and their answers
+     from the approved public fields, in the site's language: price, times, meeting place,
+     duration, group size, children, what to bring, cancellation. The coding model also writes two
+     rephrasings of each question, so a visitor's own wording has more to match. Noor approves the
+     answers with the page, and the Farm row stores the questions, rephrasings and answers.
+  2. When the visitor first opens the chat box, the page loads transformers.js from a CDN and the
+     embedding model from Hugging Face, so the page itself opens without either download.
+     transformers.js keeps the model files in the browser's Cache API for later visits.
+  3. The page embeds every approved question and rephrasing once, in a batch, and keeps the
+     vectors in IndexedDB under the Farm row's `version`; a new publication changes the version and
+     recomputes them. The phone computes no embeddings, because it runs only llama.cpp models.
+  4. The page embeds the visitor's question and finds the approved question with the highest cosine
+     similarity. When that score is at least 0.85 and leads the best match for a different answer by
+     at least 0.02, the page shows the approved answer, so every answer a visitor reads is one Noor
+     approved.
+  5. Otherwise, the page sends the question through `google.script.run` to the Apps Script, which
+     appends it to the Questions tab, and tells the visitor that Noor will answer it. Wren lists new
+     questions in Noor's weekly review, and each answer Noor approves joins the page's approved
+     answers at the next publication, with the visitor's wording as a rephrasing.
 
-  The embedding model, the threshold, and whether the browser keeps the downloaded model inside
-  Apps Script's iframe are unmeasured.
+  Working choices, to be measured:
+
+  | Choice | Working value | Basis |
+  | --- | --- | --- |
+  | Embedding model | `Xenova/multilingual-e5-small`, 8-bit ONNX, about 120 MB | Trained on about 100 languages including Kiswahili; `paraphrase-multilingual-MiniLM-L12-v2` (about 120 MB) covers some 50 languages without Kiswahili, and the English-only `all-MiniLM-L6-v2` (about 23 MB) suits English sites only |
+  | Runtime | transformers.js on its WebAssembly backend | Runs on phones without WebGPU |
+  | Speed | About 50 to 150 ms per question on a mid-range phone, and 1 to 3 s for the one-time batch of 60 to 120 approved questions and rephrasings | Estimate for a model of this size on a phone CPU; unmeasured |
+  | Thresholds | Score at least 0.85, lead at least 0.02 | e5 models score unrelated sentences around 0.7 to 0.8, so a lower threshold answers off-topic questions; calibrate on rephrased and off-topic Kiswahili and English questions |
+  | Model caching | Kept per visitor and per site across visits | Apps Script serves the page in an iframe on `googleusercontent.com`; browsers that partition third-party storage keep it under the `script.google.com` site, and Safari may clear it after 7 days without a visit |
+
+  A visitor whose browser cannot load the model still has the chat box: every question then goes to
+  the Questions tab.
 - The deployed web app runs as Noor and is publicly readable. It reads only the approved Farm row
   from its bound spreadsheet and uses HtmlService's escaping `<?= ?>` tags. Apps Script web apps
   require the `spreadsheets` scope to open that sheet by ID. Its one write appends visitor
