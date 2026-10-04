@@ -10,7 +10,8 @@ export type TranslationEvent = { source: string; target: string; text: string; r
 const memory = new Map<string, string>();
 let client: Promise<Client> | null = null;
 // The page's own origin on the Space; a local preview names the Space with ?space=<url>.
-const server = new URLSearchParams(window.location.search).get('space') ?? window.location.origin;
+// Scripts import this module too, so `window` is read only in a browser.
+const server = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('space') ?? window.location.origin;
 // Test runs on this machine sign in with the owner's token from local storage, so they do not spend
 // the anonymous ZeroGPU allowance; a visitor's browser never has it.
 const testToken = (() => {

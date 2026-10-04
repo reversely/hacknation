@@ -6,10 +6,11 @@ import type { Translate } from '../../../app/src/inference/translator';
 import type { SiteContent } from '../../../app/src/survey/pipeline';
 import type { Language } from '../../../app/src/survey/survey';
 import type { OtherLanguage } from './universal';
-import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, insightLines, SUMMARY_TOKENS, summaryMessages, UNKNOWN, unsupported, VISITOR_TOKENS, visitorFacts, visitorMessages, type ActivityLine } from './prompts';
+import { FIXED, replyProblems, route, sanitise } from './chat-policy';
+import { parseSentiment, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, insightLines, SUMMARY_TOKENS, summaryMessages, UNKNOWN, VISITOR_TOKENS, visitorFacts, visitorMessages, type ActivityLine } from './prompts';
 import { chatCall, jsonCall, visitorCall, translate as translateTexts, type ModelEvent, type TranslationEvent } from './models';
 
-export type Reporters = { translation(event: TranslationEvent): void; model(event: ModelEvent): void; problem(text: string): void };
+export type Reporters = { translation(event: TranslationEvent): void; model(event: ModelEvent): void; problem(text: string): void; note?(text: string): void };
 
 export function pipelineDeps(report: Reporters): { translate: Translate; generate: JsonGenerator } {
   return {
@@ -37,17 +38,35 @@ export async function reviewSentiment(review: string, report: Reporters): Promis
   return parseSentiment(await chatCall(SENTIMENT_MESSAGES(review), SENTIMENT_TOKENS, report.model, 'Review sentiment'));
 }
 
-// The visitor's chat: the question crosses into English, the 0.5B model answers from the English
-// facts, and the answer crosses back into the site's language. An answer the facts do not support,
-// by the model's own word or by the grounding check, goes to the operator instead.
+// The visitor's chat, under the guidelines in chat-policy.ts. The question is cleaned and crosses
+// into English; the input rules decide whether it gets a fixed reply, goes straight to the owner, or
+// reaches the 0.5B model; the model answers from the English facts alone; the output checks send
+// any unsupported answer to the owner; and the answer crosses back into the visitor's language.
 export async function askSite(site: SiteContent, english: SiteContent, reviews: string[], question: string, report: Reporters, other: OtherLanguage | null = null): Promise<{ text: string; unknown: boolean; english: string }> {
   const deps = pipelineDeps(report);
-  const toEnglish = other ? (await translateTexts([question], other.code, 'en', report.translation))[0] : site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
+  const clean = sanitise(question);
+  const language = other?.code ?? site.language;
+  const toVisitor = async (text: string) => (language === 'en' ? text : (await translateTexts([text], 'en', language, report.translation))[0]);
+  const toEnglish = language === 'en' ? clean : (await translateTexts([clean], language, 'en', report.translation))[0];
   const facts = visitorFacts(english, reviews);
+  const decided = route(toEnglish, clean, facts);
+  if (decided.kind === 'fixed') {
+    report.note?.(`Chat policy: fixed reply, ${decided.reason}`);
+    const text = !other && (site.language === 'en' || site.language === 'sw') ? FIXED[decided.reply][site.language] : await toVisitor(FIXED[decided.reply].en);
+    return { text, unknown: false, english: toEnglish };
+  }
+  if (decided.kind === 'owner') {
+    report.note?.(`Chat policy: sent to the owner, ${decided.reason}`);
+    return { text: '', unknown: true, english: toEnglish };
+  }
   const reply = await visitorCall(visitorMessages(facts, toEnglish), VISITOR_TOKENS, report.model);
-  const unknown = reply.toLowerCase().includes(UNKNOWN.toLowerCase()) || !reply.trim() || unsupported(toEnglish, reply, facts);
-  if (other) return { text: unknown ? reply : (await translateTexts([reply], 'en', other.code, report.translation))[0], unknown, english: toEnglish };
-  return { text: unknown || site.language === 'en' ? reply : await deps.translate(reply, 'en', site.language), unknown, english: toEnglish };
+  const saysUnknown = reply.toLowerCase().includes(UNKNOWN.toLowerCase()) || !reply.trim();
+  const problems = saysUnknown ? [] : replyProblems(toEnglish, reply, facts);
+  if (saysUnknown || problems.length) {
+    report.note?.(`Chat policy: sent to the owner, ${saysUnknown ? 'the facts do not answer it' : problems[0]}`);
+    return { text: reply, unknown: true, english: toEnglish };
+  }
+  return { text: await toVisitor(reply), unknown: false, english: toEnglish };
 }
 
 // Wren's insights on the operator's phone: the on-device agent (Gemma 4 E2B) writes up to three lines

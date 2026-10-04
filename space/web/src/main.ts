@@ -104,6 +104,10 @@ function mount(): void {
       problems.push(text);
       refreshCaption();
     },
+    note: (text) => {
+      lastCall = { step: stepKey(), text };
+      refreshCaption();
+    },
   };
   const deps = pipelineDeps(reporters);
   const twinShown = () => state.language !== 'en';

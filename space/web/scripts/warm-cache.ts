@@ -8,7 +8,8 @@ import { Client } from '@gradio/client';
 import { buildSite } from '../../../app/src/survey/pipeline';
 import { englishSurvey } from '../src/state';
 import { DEMO_QUESTION, DEMO_REVIEW, DEMO_SURVEY, DEMO_VISITOR } from '../src/demo-inputs';
-import { activityLines, insightLines, parseSentiment, SUMMARY_TOKENS, summaryMessages, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, UNKNOWN, unsupported, VISITOR_TOKENS, visitorFacts, visitorMessages } from '../src/prompts';
+import { activityLines, insightLines, parseSentiment, SUMMARY_TOKENS, summaryMessages, QUESTION_TOKENS, questionMessages, SENTIMENT_MESSAGES, SENTIMENT_TOKENS, UNKNOWN, VISITOR_TOKENS, visitorFacts, visitorMessages } from '../src/prompts';
+import { replyProblems } from '../src/chat-policy';
 import { SUGGESTED, type VisitorItem } from '../src/site';
 import { encodeBooking } from '../src/booking-code';
 import type { SiteContent } from '../../../app/src/survey/pipeline';
@@ -51,7 +52,7 @@ for (const site of built) {
     const asked = site.language === 'en' ? question : await deps.translate(question, site.language, 'en');
     const facts = visitorFacts(english, []);
     const reply = await call<{ text: string }>('visitor', { messages: visitorMessages(facts, asked), max_tokens: VISITOR_TOKENS });
-    const unknown = reply.text.toLowerCase().includes(UNKNOWN.toLowerCase()) || unsupported(asked, reply.text, facts);
+    const unknown = reply.text.toLowerCase().includes(UNKNOWN.toLowerCase()) || replyProblems(asked, reply.text, facts).length > 0;
     const shown = unknown || site.language === 'en' ? reply.text : await deps.translate(reply.text, 'en', site.language);
     console.log(`chat ${site.language}: ${question} -> ${unknown ? '(handed to the operator) ' : ''}${shown}`);
   }

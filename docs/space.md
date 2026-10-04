@@ -83,6 +83,23 @@ cream screen or the farm site's own colours. A walkthrough under the device offe
 does what a visitor would on that page, and Next. Back on the phone, Wren's on-device agent (Gemma
 4 E2B) summarises what visitors did above the requests waiting for approval.
 
+### Visitor chat guidelines
+
+The site's chat answers visitors only from the site's facts and published reviews, and routes
+everything else to the website's owner. `space/web/src/chat-policy.ts` enforces the rules in code
+around the model, with tests beside it.
+
+| Layer | Rule |
+| --- | --- |
+| Isolation | One question at a time, no tools, no memory between visitors; the model's context holds the guidelines, the site's facts and published reviews, and nothing else |
+| Input | Control and invisible characters removed, 300 characters at most |
+| Before the model | A card number or password gets a privacy reply; an attempt to change the chat's instructions gets a fixed decline; a request to book is pointed to the Book page; complaints, cancellations, refunds, safety, medical needs and special arrangements go to the owner; a question about anything the facts never mention goes to the owner |
+| The model | Answers in one or two sentences from the facts, or says it does not know; never confirms bookings, promises refunds or discounts, gives contact details or prices beyond the facts, or asks for personal details |
+| After the model | A reply that names something the facts never mention, gives a number, link or email not in the facts, makes a commitment, or runs long goes to the owner instead of the visitor |
+
+A question that goes to the owner reaches the phone with Wren's draft reply, and the visitor sees that
+the farm will answer.
+
 ### Universal translation
 
 The browser bar's language menu offers French, Spanish, German, Portuguese, Simplified Chinese and
