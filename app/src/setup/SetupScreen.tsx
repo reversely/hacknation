@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import '../gmail/gmailConnector';
+import { CalendarConnector } from '../calendar/calendarConnector';
 import type { LocalStore } from '../store/localStore';
+import { CALENDAR_ID_KEY } from '../store/outbox';
 import { readConfig, readProgress, saveBusiness, saveProgress } from './setupStore';
 import { currentStep, runCheck, STEP_IDS, type SetupProgress, type StepId } from './steps';
 
@@ -21,7 +25,7 @@ const HINTS: Record<StepId, string> = {
   sheets: 'Set up the Farm spreadsheet and bound Apps Script after choosing a setup method',
   website: 'Create an offline preview in the Website tab; script deployment setup is still pending',
   whatsapp: 'Confirm the business WhatsApp number saved in Business details',
-  calendar: 'Create the Wren tours calendar when calendar setup is available',
+  calendar: 'Connect Google Calendar and create the Wren tours booking calendar',
   listings: 'Please create your Google and Facebook listings and then mark this step done',
 };
 
@@ -44,8 +48,27 @@ export function SetupScreen({ store }: Props) {
   async function check(step: StepId) {
     setChecking(true);
     try {
+      if (step === 'calendar') {
+        const existingCalendarId = store.getMeta(CALENDAR_ID_KEY);
+        if (existingCalendarId) {
+          update(step, { status: 'DONE', checkedAt: new Date().toISOString(), error: null });
+          return;
+        }
+        const business = readConfig(store).business;
+        if (!business) throw new Error('Add the farm details before setting up its calendar.');
+        const calendar = await new CalendarConnector(GoogleSignin).createWrenCalendar(business.timezone);
+        store.setMeta(CALENDAR_ID_KEY, calendar.id);
+        update(step, { status: 'DONE', checkedAt: new Date().toISOString(), error: null });
+        return;
+      }
       const state = await runCheck(step, { config: readConfig(store) }, new Date().toISOString());
       update(step, state);
+    } catch (error) {
+      update(step, {
+        status: 'FAILED',
+        checkedAt: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Setup could not be completed.',
+      });
     } finally {
       setChecking(false);
     }

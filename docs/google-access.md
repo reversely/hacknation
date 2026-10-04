@@ -44,3 +44,51 @@ account must appear on the test-user list. Google also expires each refresh toke
 consent, so the demonstration needs a fresh sign-in within the week before it. Publishing for other
 operators requires Google's verification, and `gmail.readonly` falls in Google's restricted class,
 which adds a security assessment.
+
+## Calendar smoke test with OAuth 2.0 Playground
+
+For a temporary Playground test, use the existing **Web application** OAuth client (the web client
+ID configured in `app/src/gmail/gmailConnector.ts`). In Google Cloud Console, open **APIs & Services
+> Credentials**, edit that client, and add this one value under **Authorized redirect URIs**:
+
+```text
+https://developers.google.com/oauthplayground
+```
+
+Leave **Authorized JavaScript origins** empty. Enable **Google Calendar API** in the same Cloud
+project. On the OAuth consent screen, add
+`https://www.googleapis.com/auth/calendar.app.created` as a data-access scope and make the Google
+account used for the test a test user if the app is in Testing mode. Do not add API request URLs as
+redirect URIs; the Playground redirect above is the only redirect URI needed for this test.
+
+In [OAuth 2.0 Playground](https://developers.google.com/oauthplayground), open the gear menu, select
+**Use your own OAuth credentials**, and enter the Web client ID and its client secret. In Step 1,
+request this scope and authorize it:
+
+```text
+https://www.googleapis.com/auth/calendar.app.created
+```
+
+Exchange the code in Step 2. In Step 3, create the test calendar with:
+
+```http
+POST https://www.googleapis.com/calendar/v3/calendars
+Content-Type: application/json
+
+{"summary":"Wren tours","timeZone":"Africa/Nairobi"}
+```
+
+Copy the response's `id`, then create a tentative hold:
+
+```http
+POST https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events?sendUpdates=none
+Content-Type: application/json
+
+{"summary":"Playground smoke test (delete me)","description":"Temporary Wren calendar API check.","start":{"dateTime":"2026-10-10T09:00:00+03:00","timeZone":"Africa/Nairobi"},"end":{"dateTime":"2026-10-10T09:30:00+03:00","timeZone":"Africa/Nairobi"},"status":"tentative","extendedProperties":{"private":{"booking_id":"playground-smoke-test"}}}
+```
+
+The `events.insert` response should include an event `id` and `status: tentative`. Delete the test
+event with `DELETE /calendars/{calendarId}/events/{eventId}`, then delete the empty test calendar
+with `DELETE /calendars/{calendarId}`. In the app, the Calendar setup step requests this scope,
+creates the calendar through `CalendarConnector.createWrenCalendar()`, and saves the returned ID
+for the booking outbox.
