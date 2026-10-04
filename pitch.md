@@ -12,40 +12,37 @@ The need is consistent with the wider context, while the evidence has limits. GS
 
 ## 2. What Wren does
 
-Wren is a React Native phone app with a conversational coordinator and task-specific tools. It helps Noor set up an approved farm profile, prepare a simple public page, handle visitor enquiries and manage tour requests. The app is designed for local model inference and offline drafting; Gmail, Google Sheets, Calendar and WhatsApp handoffs need a connection to complete their online steps.
+Wren is a phone app with a conversational coordinator and task-specific tools. Its MVP is agentic website creation and maintenance: Wren helps Noor create and update an approved farm website, and the site lets visitors request bookings, find answers to basic questions and leave reviews. Wren analyzes review sentiment so Noor can see what visitors value or where they have concerns. Booking requests become tentative holds in a dedicated Google Calendar for Noor to review and confirm.
 
 For the demonstration, the language pair is Kiswahili and English. Noor can review Wren's proposed action in Kiswahili, while the visitor-facing reply is in English. Kikuyu is Noor's possible home language in the Kenyan stand-in scenario, but the brief does not establish it and Wren's Kikuyu support has not been tested. We will say that plainly rather than imply language coverage we have not shown.
 
 The workflow is:
 
 1. Noor provides her farm information and reviews the structured profile. Wren asks about missing facts instead of making them up.
-2. Wren prepares a one-page website using approved public information. Noor previews and approves it before publication.
-3. A visitor writes by email or WhatsApp. Email enquiries remain in Gmail; for WhatsApp, Noor brings the message into Wren by pasting or sharing it. Wren extracts the request and any missing booking details.
-4. Wren drafts a profile-grounded response. For a booking request, it checks capacity and, when available, creates a tentative hold in the Wren tours Google Calendar. The reply says the slot is held pending Noor's decision; it does not claim the booking is confirmed.
-5. Noor reviews holds in a weekly queue, then confirms or declines them. Wren rechecks availability before confirmation.
-6. For a WhatsApp reply, Wren opens WhatsApp with an approved `wa.me` draft. Noor presses Send. Wren records the handoff, not a delivery it cannot verify. Email replies use Gmail under the approval rules.
+2. Wren generates a website from approved public information. Noor previews and approves it before publication; later profile changes can be used to prepare approved updates.
+3. Visitors use the website to request a tour, ask a basic question or leave a review. The site uses Noor's approved profile to answer basic questions; questions outside that information need Noor's attention.
+4. For a booking request, Wren checks capacity and creates a tentative hold in the Wren tours Google Calendar when a slot is available. The visitor is told the request is pending Noor's decision, not that the booking is confirmed.
+5. Wren analyzes each review's sentiment and shows the result with its source review. Noor reviews holds and other consequential actions, then confirms or declines bookings. Wren rechecks availability before confirmation.
 
 ## 3. Where AI helps, and where it does not decide
 
 Small models help classify a request, extract fields such as date and party size, translate between Kiswahili and English, and draft a reply from Noor's approved facts. Website copy generation is constrained to structured content rendered in an app-owned template; the model does not generate executable site code.
 
-Application code validates model outputs, checks calendar capacity, enforces approval rules and records actions. Visitor messages are treated as data, not instructions to the agent. Noor's Google tokens stay in secure device storage and are not passed to the model. Farm information and website content go to Noor's Google account; enquiry details and local workflow records are kept in the phone's SQLite store. Wren does not put an operator's data through a shared team backend.
+Application code validates model outputs, checks calendar capacity, enforces approval rules and records actions. Visitor submissions are treated as data, not instructions to the agent. Noor's Google tokens stay in secure device storage and are not passed to the model. Farm information and website content go to Noor's Google account; workflow records are kept in the phone's SQLite store. Wren does not put an operator's data through a shared team backend.
 
-The key guardrail is the distinction between a proposal and an action. A profile answer or a slot-held notice can follow the documented policy; other replies need Noor's approval. Booking confirmation, decline, website publication and other consequential changes require her approval. A calendar hold is tentative. A WhatsApp draft is not a sent message. Offline work may be saved locally or queued, but it does not reserve a calendar slot or deliver a reply until the relevant online action succeeds.
+The key guardrail is the distinction between a proposal and an action. Answers must come from Noor's approved profile, and questions it cannot answer should be surfaced to Noor. A calendar hold is tentative; booking confirmation, website publication and other consequential changes require her approval. Sentiment is an aid to reviewing feedback, not an objective judgment about a visitor. Offline work may be saved locally or queued, but it does not publish a page or reserve a calendar slot until the relevant online action succeeds.
 
 ## 4. Why this is useful on a phone with limited connectivity
 
-The app keeps drafts, profile information and workflow state on the phone, so Noor can prepare work without a live connection. Network-dependent steps—Google authorization, importing or sending email, publishing the site, syncing a calendar hold and opening WhatsApp for a reply—need connectivity. Wren should show which work is local, queued, completed or failed instead of implying that offline work has reached a visitor.
+The app keeps drafts, profile information and workflow state on the phone, so Noor can prepare work without a live connection. Network-dependent steps—Google authorization, publishing the site and syncing a calendar hold—need connectivity. Wren should show which work is local, queued, completed or failed instead of implying an offline change has reached visitors.
 
 This design addresses the costs of repeated translation and record keeping without assuming that Noor lacks a phone. GSMA's 2026 survey points to affordability as a barrier to greater mobile internet use among Kenyan women; it does not prove that every user or every farm faces the same constraint. We will present offline operation as a design choice for intermittent access, not as evidence that Wren has already increased bookings or income.
 
 ## 5. Demonstration and honest status
 
-The end-to-end demonstration should show Noor reviewing a farm profile, handling one enquiry, creating a tentative Calendar hold, drafting a WhatsApp reply and later confirming or declining the request in the review queue. It should visibly distinguish the generated draft, Noor's approval, the calendar result and the WhatsApp handoff.
+The end-to-end demonstration should show Noor reviewing a farm profile, generating and previewing the website, publishing it, and walking through a visitor booking request, a basic site question and a review. It should show the tentative Calendar hold, sentiment tied to the source review, and Noor confirming or declining the booking in the review queue. Website publishing, the visitor booking and question flows, review capture and sentiment analysis must be demonstrated before we describe them as working features.
 
-The project architecture specifies an Expo development build with embedded `llama.rn`/llama.cpp and local GGUF models. Development notes also describe model-server use during development, and the setup guide says automatic Apps Script provisioning is still to be implemented. We will label a server-assisted development run as such and will not present it as proof of on-phone inference. Website generation, Google account provisioning, phone performance, offline end-to-end operation and the real WhatsApp send path must be demonstrated before we describe them as working features.
-
-Early Kiswahili pipeline measurements used a small set of typed, project-written requests on a development server: the language notes report correct extraction for 18 runs of nine messages containing tour details. This is a useful engineering check, not a representative benchmark. The test set is synthetic and small; translation quality, code-switching, dialects, Kikuyu coverage, phone speed and memory use remain open validation work. The translation model's licence and on-device runtime also remain undecided, so model choice is not presented as finalized.
+The project architecture specifies an Expo development build with embedded `llama.rn`/llama.cpp and local GGUF models. The voice interview benchmark reports 70% field accuracy on eight synthetic personas, against a 71% ceiling; this is a small engineering evaluation, not evidence of reliable performance with real operators. The selected speech, translation and text-to-speech models include non-commercial licenses, which limits commercial release. Google account provisioning, phone performance, offline end-to-end operation and the website visitor flows must be demonstrated before we describe them as working features. The architecture leaves the website's question-answering and review storage implementation open, so those details remain implementation work.
 
 ## 6. Why localizing AI matters
 
