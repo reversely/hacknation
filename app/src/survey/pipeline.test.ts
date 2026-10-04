@@ -16,17 +16,30 @@ const survey = {
 const translate = async (text: string, from: string, to: string) => `[${from}>${to}] ${text}`;
 const good = JSON.stringify({ headline: 'Walk the coffee rows', introduction: 'A family coffee farm.', services: ['See the rows and taste fresh coffee.', 'Roast your own beans.'] });
 
-test('the site keeps every number from the survey and shows both languages', async () => {
+test('a Kiswahili survey makes a Kiswahili-only site with every number from the survey', async () => {
   const result = await buildSite(survey, { translate, generate: async () => good });
   expect(result.fellBack).toBe(false);
   expect(result.html).toContain('KES 1,500');
   expect(result.html).toContain('KES 2,500');
   expect(result.html).toContain('saa tatu asubuhi – saa tano asubuhi');
+  expect(result.html).not.toContain('09:00');
+  expect(result.html).not.toContain('Guided tour');
+  expect(result.html).not.toContain('Services');
+  // The coder's English is translated into Kiswahili; her own sentences and names appear as written.
+  expect(result.site.headline).toBe('[en>sw] Walk the coffee rows');
+  expect(result.site.services[0]).toMatchObject({ name: 'Ziara ya kuongozwa', blurb: 'Tembea kwenye mistari ya kahawa na uonje kahawa safi.' });
+  expect(result.site.services[1]).toMatchObject({ name: 'Warsha ya kuchoma kahawa', blurb: '[en>sw] Roast your own beans.' });
+});
+
+test('an English survey makes an English-only site without translation', async () => {
+  let translations = 0;
+  const counting = async (text: string) => (translations++, text);
+  const english = { ...survey, language: 'en', business: { ...survey.business, description: 'A family coffee farm.' }, services: [{ ...survey.services[0], description: 'Walk the rows.' }] };
+  const result = await buildSite(english, { translate: counting, generate: async () => JSON.stringify({ headline: 'Walk the coffee rows', introduction: 'A family coffee farm.', services: ['See the rows.'] }) });
+  expect(translations).toBe(0);
   expect(result.html).toContain('09:00 – 11:00');
-  expect(result.site.services[0].name).toEqual({ en: 'Guided tour', sw: 'Ziara ya kuongozwa' });
-  // The operator's own Kiswahili sentence is kept; the English comes from the coder.
-  expect(result.site.services[0].blurb).toEqual({ en: 'See the rows and taste fresh coffee.', sw: 'Tembea kwenye mistari ya kahawa na uonje kahawa safi.' });
-  expect(result.site.services[1].name).toEqual({ en: '[sw>en] Warsha ya kuchoma kahawa', sw: 'Warsha ya kuchoma kahawa' });
+  expect(result.html).toContain('Guided tour');
+  expect(result.html).not.toContain('Huduma');
 });
 
 test('copy that invents places, numbers or markup is retried, then built from the survey', async () => {
@@ -35,7 +48,8 @@ test('copy that invents places, numbers or markup is retried, then built from th
   const result = await buildSite(survey, { translate, generate: inventive });
   expect(calls).toBe(3);
   expect(result.fellBack).toBe(true);
-  expect(result.site.headline.en).toBe('Ondera Coffee Farm');
+  expect(result.site.headline).toBe('Ondera Coffee Farm');
+  expect(result.site.introduction).toBe('Shamba la kahawa la familia.');
   expect(result.html).not.toContain('Nairobi');
 });
 

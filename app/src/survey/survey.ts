@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 // The setup survey (the onboarding mockup: business, services, availability, review). Every answer
-// is a structured field except a few free-text ones, which the translation model renders into the
-// site's other language. Labels for fixed choices come from the tables below, never from a model.
+// is a structured field except a few free-text ones in the operator's language. The screens and the
+// site use that one language. Labels for fixed choices come from the tables below, never from a model.
 // Kiswahili wording needs review by a native speaker.
 
 export const LANGUAGES = ['en', 'sw'] as const;
@@ -47,7 +47,7 @@ export const Service = z
 export type Service = z.infer<typeof Service>;
 
 export const Survey = z.object({
-  // The language the operator answered in; the site shows it and English.
+  // The language the operator chose; the screens and the site use only this language.
   language: z.enum(LANGUAGES),
   business: z.object({
     name: z.string().trim().min(1).max(80),
