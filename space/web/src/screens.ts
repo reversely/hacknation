@@ -7,6 +7,7 @@ import { DAYS, SERVICE_TYPES, type Day, type Language, type ServiceType } from '
 import { h, field } from './ui';
 import { INBOX } from './visitor';
 import { gearIcon } from './icons';
+import { poseUrl } from './mascot';
 import { formatSlot } from '../../../app/src/survey/render';
 import { dateLabel, PHOTO, upcomingOpenDates, type VisitorItem } from './site';
 import { businessComplete, newService, scheduleComplete, serviceComplete, siteSlug, type State } from './state';
@@ -86,7 +87,7 @@ export const SCREENS: Record<ScreenId, (ctx: Context) => Screen> = {
 
   signin: (ctx) => ({
     bare: true,
-    body: [h('div', { class: 'card signin' }, h('h1', { class: 'title' }, ctx.s.signInTitle), h('p', { class: 'subtitle' }, ctx.s.signInLead))],
+    body: [h('div', { class: 'signin-mascot', 'aria-hidden': 'true' }, h('img', { src: poseUrl('celebrate'), alt: '' })), h('div', { class: 'card signin' }, h('h1', { class: 'title' }, ctx.s.signInTitle), h('p', { class: 'subtitle' }, ctx.s.signInLead))],
     // The Space makes no Google call; the button only moves on.
     footer: { label: ctx.s.google, secondary: true, enabled: () => true, action: () => ctx.go('business') },
     dot: 0,

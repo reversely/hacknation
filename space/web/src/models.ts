@@ -22,6 +22,19 @@ const testToken = (() => {
 })();
 const connect = () => (client ??= Client.connect(server, testToken ? { token: testToken } : {}));
 
+// Calls on their way to the model server right now, so the page can show work in progress.
+export const inflight = { count: 0, changed: () => {} };
+async function tracked<T>(call: () => Promise<T>): Promise<T> {
+  inflight.count++;
+  inflight.changed();
+  try {
+    return await call();
+  } finally {
+    inflight.count--;
+    inflight.changed();
+  }
+}
+
 async function sha256(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
@@ -73,7 +86,7 @@ export async function translate(texts: string[], source: string, target: string,
   });
   const misses = results.flatMap((result, i) => (result === undefined ? [i] : []));
   if (misses.length) {
-    const reply = await (await connect()).predict('/translate', { texts: misses.map((i) => texts[i]), source, target });
+    const reply = await tracked(async () => (await connect()).predict('/translate', { texts: misses.map((i) => texts[i]), source, target }));
     const data = (reply.data as [{ texts: string[]; cached: number; generated: number; ms: number }])[0];
     misses.forEach((i, n) => {
       results[i] = data.texts[n];
@@ -97,7 +110,7 @@ async function cachedCall(call: 'json' | 'chat' | 'visitor', revision: string, p
     report({ call, model: { json: models.website_copy.repo, chat: models.agent.repo, visitor: models.visitor_chat.repo }[call], ms: Math.round(performance.now() - started), from: 'browser', summary });
     return hit;
   }
-  const reply = await (await connect()).predict(`/${call}`, payload);
+  const reply = await tracked(async () => (await connect()).predict(`/${call}`, payload));
   const data = (reply.data as [{ text: string; cached: boolean; ms: number; model: string }])[0];
   memory.set(key, data.text);
   void store(key, data.text);

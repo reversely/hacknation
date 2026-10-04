@@ -654,3 +654,46 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
   .demo { background: linear-gradient(90deg, var(--navy) 0 420px, var(--paper) 560px); }
   .demo.visitor { background: linear-gradient(90deg, var(--sand) 0 420px, var(--night) 560px); }
 }
+
+/* The mascot beside the step number: a gentle bob, a hop when its pose changes. */
+.step-head { display: flex; align-items: center; gap: 14px; }
+.mascot { width: 72px; height: 72px; flex: 0 0 auto; animation: bob 2.6s ease-in-out infinite; }
+.mascot img { width: 100%; height: 100%; display: block; user-select: none; pointer-events: none; }
+.mascot.hop img { animation: hop 360ms cubic-bezier(0.2, 0.8, 0.3, 1.2); }
+.demo.visitor .mascot img { filter: drop-shadow(0 0 0.5px rgb(255 255 255 / 0.6)) brightness(1.35); }
+@keyframes bob { 50% { transform: translateY(-3px); } }
+@keyframes hop { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-10px) scale(1.04); } 100% { transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .mascot, .mascot.hop img { animation: none; } }
+.show.side .mascot { width: 60px; height: 60px; }
+
+/* The mascot greets the operator on the sign-in screen. */
+.signin-mascot { display: flex; justify-content: center; margin: 0 0 -18px; position: relative; z-index: 1; }
+.signin-mascot img { width: 168px; height: 168px; animation: bob 2.6s ease-in-out infinite; user-select: none; }
+@media (prefers-reduced-motion: reduce) { .signin-mascot img { animation: none; } }
+
+/* The mascot as a companion in the role panel's empty space, with a soft halo so it reads on the
+   dark operator side. Idle it bobs and blinks; working it pecks; celebrating it jumps. */
+.role .mascot { margin: auto auto 18px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle at 50% 58%, rgb(229 235 227 / 0.22), rgb(229 235 227 / 0) 68%); animation: none; }
+.demo.visitor .role .mascot { background: radial-gradient(circle at 50% 58%, rgb(31 74 53 / 0.12), rgb(31 74 53 / 0) 68%); }
+.demo.visitor .role .mascot img { filter: none; }
+.role-count { margin-top: 0; }
+.role .mascot img { animation: bob 2.6s ease-in-out infinite; transform-origin: 50% 85%; }
+.role .mascot.work img { animation: peck 0.7s ease-in-out infinite; }
+.role .mascot.celebrate img { animation: jump 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2) 4; }
+.role .mascot.answer img { animation: lean 1.4s ease-in-out infinite; }
+.role .mascot.rest img { animation: breathe 3.2s ease-in-out infinite; }
+.role .mascot.hop img { animation: hop 360ms cubic-bezier(0.2, 0.8, 0.3, 1.2), bob 2.6s ease-in-out 360ms infinite; }
+.role .mascot.work.hop img { animation: peck 0.7s ease-in-out infinite; }
+.role .mascot.celebrate.hop img { animation: jump 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2) 4; }
+@keyframes peck { 0%, 100% { transform: rotate(0); } 45% { transform: rotate(9deg) translateY(3px); } }
+@keyframes jump { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-16px) rotate(-3deg); } }
+@keyframes lean { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02, 0.985); } }
+@media (prefers-reduced-motion: reduce) { .role .mascot img, .role .mascot.work img, .role .mascot.celebrate img, .role .mascot.answer img, .role .mascot.rest img, .role .mascot.hop img { animation: none; } }
+@media (min-width: 1101px) and (max-height: 760px) { .role .mascot { width: 110px; height: 110px; } }
+@media (max-width: 760px) {
+  .role { position: relative; padding-right: 96px; }
+  .role .mascot { position: absolute; right: 12px; top: 12px; margin: 0; width: 76px; height: 76px; }
+}
+.role .mascot { background: radial-gradient(circle at 50% 55%, rgb(229 235 227 / 0.92) 0 50%, rgb(229 235 227 / 0) 69%); }
+.demo.visitor .role .mascot { background: radial-gradient(circle at 50% 55%, rgb(31 74 53 / 0.1) 0 50%, rgb(31 74 53 / 0) 69%); }

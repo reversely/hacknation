@@ -11,12 +11,13 @@ import { answerQuestion, askSite, forOperator, pipelineDeps, reviewSentiment, su
 import { OTHER_LANGUAGES, translatePage, type OtherLanguage } from './universal';
 import { DEMO_VISITOR } from './demo-inputs';
 import { activityLines } from './prompts';
-import { cachedTranslation, translate, type ModelEvent, type TranslationEvent } from './models';
+import { cachedTranslation, inflight, translate, type ModelEvent, type TranslationEvent } from './models';
 import { details, ROLES, step, type Mode } from './narration';
 import { dots, SCREENS, stringsFor, type Context, type ScreenId } from './screens';
 import { fillDraft, firstOpenDate, laptop, SITE_PAGES, SUGGESTED, type ChatLine, type SitePage, type SiteView, type VisitorItem } from './site';
 import { englishSurvey, initialState, siteSlug, toSurvey, type State } from './state';
 import css from './styles.css' with { type: 'text' };
+import { Mascot, type Pose } from './mascot';
 import { Trace, tracePanel } from './trace';
 import { batteryIcon, signalIcon, wifiIcon } from './icons';
 import { h } from './ui';
@@ -61,6 +62,26 @@ function mount(): void {
   const page$ = h('div', { class: 'demo' }, role, h('div', { class: 'show' }, stage, caption));
   shadow.replaceChildren(h('style', {}, css), page$);
   const footers: { button: HTMLButtonElement; enabled: () => boolean }[] = [];
+  // The mascot's pose: working while any call is in flight, celebrating for a moment after a
+  // success, leaning in after a chat answer, resting after a quiet spell.
+  const mascot = new Mascot();
+  mascot.startBlinking();
+  let celebrateUntil = 0;
+  let answeredUntil = 0;
+  let lastActivity = Date.now();
+  const mood = (): Pose => {
+    const now = Date.now();
+    if (inflight.count > 0 || (current === 'building' && mode === 'operator' && !trace.done)) return 'work';
+    if (celebrateUntil > now) return 'celebrate';
+    if (answeredUntil > now) return 'answer';
+    if (now - lastActivity > 25_000) return 'rest';
+    return mode === 'visitor' && page === 'ask' ? 'look' : 'idle';
+  };
+  const celebrate = () => (celebrateUntil = Date.now() + 3500);
+  inflight.changed = () => mascot.show(mood());
+  setInterval(() => mascot.show(mood()), 1000);
+  shadow.addEventListener('pointerdown', () => (lastActivity = Date.now()));
+  shadow.addEventListener('keydown', () => (lastActivity = Date.now()));
   // The agent trace beside the phone during the build; it redraws only its own slot.
   const traceSlot = h('div', { class: 'device trace-device' });
   const trace = new Trace(() => {
@@ -152,6 +173,7 @@ function mount(): void {
           const item = find(id);
           if (!item) return;
           item.status = 'approved';
+          celebrate();
           if (item.kind === 'question') {
             item.reply = reply ?? item.draft;
             if (item.reply) chat.push({ from: 'site', text: item.reply });
@@ -205,6 +227,7 @@ function mount(): void {
       }
       // The site is live; the walkthrough's Next opens the visitor's view.
       showing = state.language;
+      celebrate();
     } catch (error) {
       buildError = `The site could not be created: ${error instanceof Error ? error.message : String(error)}`;
       current = 'review';
@@ -282,6 +305,7 @@ function mount(): void {
           .then(async ({ text: reply, unknown }) => {
             line.pending = false;
             line.text = reply;
+            answeredUntil = Date.now() + 3000;
             if (!unknown) return;
             // The facts do not answer it: the question goes to the operator, with Wren's draft.
             line.handedOver = true;
@@ -404,6 +428,7 @@ function mount(): void {
 
   function refreshCaption(): void {
     const s = step(mode, mode === 'operator' ? current : page);
+    mascot.show(mood());
     caption.replaceChildren(
       h('p', { class: 'step-n' }, String(s.n).padStart(2, '0')),
       h('h2', { class: 'step-title' }, s.title),
@@ -429,6 +454,7 @@ function mount(): void {
             ...(['operator', 'visitor'] as const).map((m) => h('button', { type: 'button', role: 'tab', 'aria-selected': m === mode ? 'true' : 'false', class: m === mode ? 'on' : '', onclick: () => { mode = m; render(0); } }, m === 'operator' ? 'Operator' : 'Visitor')),
           )
         : h('span'),
+      mascot.element,
       h('p', { class: 'role-count' }, `${String(s.n).padStart(2, '0')} / ${String(s.total).padStart(2, '0')}`),
     );
   }

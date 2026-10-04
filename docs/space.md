@@ -93,6 +93,15 @@ translation whose digits differ from the English keeps the English. A question a
 languages crosses into English for the chat and the answer crosses back. A handed-over question or a
 review reaches the operator in the operator's language, with the original beside it.
 
+### Mascot
+
+A wren mascot in six poses, cut from the contact sheet in `app/assets/birds.png`, keeps the viewer
+company in the role panel's empty space. Its pose follows the page: pecking while a model call is in
+flight, wings up for a moment when the site goes live or the operator approves something, leaning in
+when the chat answers, eyes closed after 25 seconds with no interaction; idle, it bobs and blinks.
+The sign-in screen shows it large as a greeting. CSS animates it, and nothing moves for a viewer who
+prefers reduced motion.
+
 ## Twin phone
 
 When the operator chooses a language other than English, a second phone beside the first mirrors
