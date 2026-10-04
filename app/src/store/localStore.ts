@@ -1,4 +1,4 @@
-import type { Action, ActionReceipt, SheetTab } from '@noor/contracts';
+import type { Action, ActionReceipt, SheetTab } from '@wren/contracts';
 
 import type { SqlDatabase } from './sql';
 

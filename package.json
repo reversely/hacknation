@@ -1,5 +1,5 @@
 {
-  "name": "noor-workspace",
+  "name": "wren-workspace",
   "private": true,
   "engines": { "node": ">=24 <25" },
   "workspaces": ["app", "packages/contracts", "website"],

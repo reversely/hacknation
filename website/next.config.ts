@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   poweredByHeader: false,
-  transpilePackages: ['@noor/contracts'],
+  transpilePackages: ['@wren/contracts'],
   turbopack: { root: path.resolve(process.cwd(), '..') },
 };
 export default config;

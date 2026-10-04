@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HealthResponse } from '@noor/contracts';
+import { HealthResponse } from '@wren/contracts';
 import { checkSheetConnection } from '@/lib/sheets';
 
 export const dynamic = 'force-dynamic';

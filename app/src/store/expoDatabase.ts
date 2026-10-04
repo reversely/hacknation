@@ -2,7 +2,7 @@ import { openDatabaseSync } from 'expo-sqlite';
 
 import type { SqlDatabase } from './sql';
 
-export function openExpoDatabase(name = 'noor.db'): SqlDatabase {
+export function openExpoDatabase(name = 'wren.db'): SqlDatabase {
   const db = openDatabaseSync(name);
   return {
     exec: (sql) => db.execSync(sql),

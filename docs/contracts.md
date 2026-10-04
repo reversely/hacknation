@@ -3,7 +3,7 @@
 The Coordinator publishes these contracts so the Website Creator, Search and Social, and Customer
 Management agents build against one record format (`docs/architecture.md` sections 7 and 11). The
 zod schemas in `packages/contracts/src` are the source of truth; this file explains them. The phone
-validates every record with `@noor/contracts` before writing it to Google.
+validates every record with `@wren/contracts` before writing it to Google.
 
 Records live in Noor's Google account: the farm profile in the Farm tab of the business
 spreadsheet, bookings in the "Wren tours" calendar, and email in Gmail. No API server sits between

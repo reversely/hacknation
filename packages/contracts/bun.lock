@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@noor/contracts",
+      "name": "@wren/contracts",
       "dependencies": {
         "zod": "^4.6.5",
       },

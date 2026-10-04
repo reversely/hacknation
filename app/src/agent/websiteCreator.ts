@@ -1,4 +1,4 @@
-import { PublicProfileResponse } from '@noor/contracts';
+import { PublicProfileResponse } from '@wren/contracts';
 import { complete, loadModel, type LoadedModel } from '../inference/localModel';
 import type { File } from 'expo-file-system';
 import type { SecretVault } from '../setup/secrets';

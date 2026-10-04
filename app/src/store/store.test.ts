@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import type { Action, ActionReceipt, Booking } from '@noor/contracts';
+import type { Action, ActionReceipt, Booking } from '@wren/contracts';
 
 import { LocalStore } from './localStore';
 import type { SqlDatabase } from './sql';

@@ -5,7 +5,8 @@
     "": {
       "name": "app",
       "dependencies": {
-        "@noor/contracts": "file:../packages/contracts",
+        "@wren/contracts": "file:../packages/contracts",
+        "@react-native-google-signin/google-signin": "^16.1.1",
         "expo": "~57.0.26",
         "expo-file-system": "~57.0.7",
         "expo-secure-store": "~57.0.4",
@@ -239,7 +240,9 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@noor/contracts": ["@noor/contracts@file:../packages/contracts", { "dependencies": { "zod": "^4.6.5" }, "devDependencies": { "@types/bun": "^1.4.2", "typescript": "~6.0.3" } }],
+    "@wren/contracts": ["@wren/contracts@file:../packages/contracts", { "dependencies": { "zod": "^4.6.5" }, "devDependencies": { "@types/bun": "^1.4.2", "typescript": "~6.0.3" } }],
+
+    "@react-native-google-signin/google-signin": ["@react-native-google-signin/google-signin@16.1.5", "", { "peerDependencies": { "expo": ">=52.0.40", "react": "*", "react-native": "*" }, "optionalPeers": ["expo"] }, "sha512-9rmMwACzHK9Cbd0Yp7efg5uWgiYoLwmNAJh4gRCuMcSQH+qplpK7E4d1Q4tbsD8M9jvvVtRX2Z0AP9wwBKmPrQ=="],
 
     "@react-native/assets-registry": ["@react-native/assets-registry@0.86.3", "", {}, "sha512-TDhgCZA4wjJg84d5A9swiOQYPIWSKEEVdg9IwMFZDupQzW/F3QoLUrfAJOcalgqTDA9/buTB8awhE3Whwg6u9Q=="],
 

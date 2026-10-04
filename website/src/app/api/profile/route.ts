@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PublicProfileResponse } from '@noor/contracts';
+import { PublicProfileResponse } from '@wren/contracts';
 import { readApprovedFarm } from '@/lib/sheets';
 
 export const dynamic = 'force-dynamic';

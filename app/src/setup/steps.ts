@@ -1,4 +1,4 @@
-import { HealthResponse } from '@noor/contracts';
+import { HealthResponse } from '@wren/contracts';
 
 import type { SecretVault } from './secrets';
 

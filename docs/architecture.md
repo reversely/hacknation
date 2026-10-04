@@ -30,7 +30,7 @@ Selected decisions:
 - **Demonstration language pair: Kiswahili and English.** Noor reads and approves in Kiswahili; the visitor receives English.
 - **Setup: a central agent-guided wizard** with account authorization, secure key entry and connection checks.
 - **Toolchain: bun** installs packages and **Node 24 LTS** runs the Expo CLI and Metro (`docs/setup.md`).
-- **Validation: zod.** One schema package, `@noor/contracts`, validates tool arguments and the records the phone writes to Google (`docs/contracts.md`).
+- **Validation: zod.** One schema package, `@wren/contracts`, validates tool arguments and the records the phone writes to Google (`docs/contracts.md`).
 - **On-device storage: Expo modules.** `expo-sqlite` for the local store, `expo-secure-store` for credentials (iOS Keychain, Android Keystore) and `expo-file-system` for model files.
 
 Working assumptions:

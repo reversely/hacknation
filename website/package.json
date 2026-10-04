@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@noor/contracts": "workspace:*",
+    "@wren/contracts": "workspace:*",
     "googleapis": "^160.0.0",
     "next": "16.3.8",
     "react": "19.2.3",

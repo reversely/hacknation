@@ -1,4 +1,4 @@
-import { ActionsResponse, SyncResponse, type Action } from '@noor/contracts';
+import { ActionsResponse, SyncResponse, type Action } from '@wren/contracts';
 
 import type { LocalStore } from './localStore';
 

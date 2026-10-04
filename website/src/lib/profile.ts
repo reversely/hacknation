@@ -1,4 +1,4 @@
-import { PublicProfileResponse } from '@noor/contracts';
+import { PublicProfileResponse } from '@wren/contracts';
 
 export type PublicFarmProfile = PublicProfileResponse;
 

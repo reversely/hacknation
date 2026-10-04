@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@noor/contracts": "file:../packages/contracts",
+    "@wren/contracts": "file:../packages/contracts",
     "@react-native-google-signin/google-signin": "^16.1.1",
     "expo": "~57.0.26",
     "expo-file-system": "~57.0.7",
