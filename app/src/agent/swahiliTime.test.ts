@@ -20,3 +20,21 @@ test('a duration without a time-of-day word is left alone', () => {
   const text = 'Tunaendesha matembezi ya saa mbili kwa KES 1500.';
   expect(normalizeSwahiliTimes(text)).toBe(text);
 });
+
+test.each([
+  ['Tunakutana Jumamosi saa 9:00.', 'Tunakutana Jumamosi saa tatu asubuhi.'],
+  ['Ziara inaanza 14:00.', 'Ziara inaanza saa nane mchana.'],
+  ['Ziara ya jioni 19:00.', 'Ziara ya jioni saa moja usiku.'],
+  ['Tunaanza 09:30.', 'Tunaanza saa tatu na nusu asubuhi.'],
+  ['Saa 12:00 mchana.', 'saa sita mchana.'],
+])('outgoing %s', (input, expected) => {
+  const { formatSwahiliTimes } = require('./swahiliTime');
+  expect(formatSwahiliTimes(input)).toBe(expected);
+});
+
+test('a time converted in and back out returns to the same Kiswahili clock time', () => {
+  const { formatSwahiliTimes } = require('./swahiliTime');
+  for (const phrase of ['saa tatu asubuhi', 'saa nane mchana', 'saa kumi jioni']) {
+    expect(formatSwahiliTimes(normalizeSwahiliTimes(phrase))).toBe(phrase);
+  }
+});

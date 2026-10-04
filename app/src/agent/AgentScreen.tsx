@@ -32,6 +32,8 @@ type AgentModel = {
   chat: (messages: ChatMessage[], tools: ToolSpec[], onText: (textSoFar: string) => void) => Promise<ModelTurn>;
 };
 
+const SHARED_TRANSLATOR = TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null;
+
 type ModelState = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; model: AgentModel } | { status: 'error'; message: string };
 
 export function AgentScreen({ store }: { store: LocalStore }) {
@@ -41,11 +43,11 @@ export function AgentScreen({ store }: { store: LocalStore }) {
   const harness = useRef<Harness | null>(null);
   if (!harness.current) {
     harness.current = new Harness({ log: memoryActivityStore(), newId, now: () => new Date().toISOString() });
-    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current);
+    registerCoordinatorTools(harness.current, store, () => new Date().toISOString(), () => languageRef.current, SHARED_TRANSLATOR);
   }
   // With a translator, the agent works in English and only the operator reads Kiswahili
   // (docs/language.md). Without one, the agent is told to reply in the operator's language.
-  const translate = useRef(TRANSLATOR_URL ? remoteTranslator(TRANSLATOR_URL) : null).current;
+  const translate = SHARED_TRANSLATOR;
   const agentLanguage = (operator: Language): Language => (translate ? 'en' : operator);
   const history = useRef<ChatMessage[]>([{ role: 'system', content: coordinatorPrompt(agentLanguage(language)) }]);
   const text = TEXT[language];
@@ -143,9 +145,13 @@ export function AgentScreen({ store }: { store: LocalStore }) {
   async function answer(approval: PendingApproval, approved: boolean) {
     const h = harness.current!;
     let note: string;
+    let reply: string | null = null;
     if (approved) {
       const outcome = await h.approve(approval.activityId);
       note = outcome.status === 'COMPLETED' ? `${approval.tool} done` : `${approval.tool} ${outcome.status.toLowerCase()}: ${'error' in outcome ? outcome.error : ''}`;
+      // A tool's own operator-facing line, such as "the profile is approved", is shown as the reply.
+      const said = outcome.status === 'COMPLETED' ? (outcome.result as { reply?: unknown } | null)?.reply : null;
+      if (typeof said === 'string') reply = said;
     } else {
       h.decline(approval.activityId, 'The operator declined');
       note = `${approval.tool} declined`;
@@ -158,6 +164,7 @@ export function AgentScreen({ store }: { store: LocalStore }) {
         line.kind === 'approval' && line.approval.activityId === approval.activityId ? { ...line, answer: answered } : line,
       ),
       { kind: 'tool', text: note },
+      ...(reply ? [{ kind: 'agent' as const, text: reply }] : []),
     ]);
   }
 

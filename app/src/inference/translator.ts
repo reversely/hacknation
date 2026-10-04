@@ -1,4 +1,4 @@
-import { normalizeSwahiliTimes } from '../agent/swahiliTime';
+import { formatSwahiliTimes, normalizeSwahiliTimes } from '../agent/swahiliTime';
 
 // Development only: a dedicated translation model (not a chat model) on a server, for the
 // English-core agent (docs/language.md). Set EXPO_PUBLIC_TRANSLATOR_URL to a service that answers
@@ -17,6 +17,8 @@ export function remoteTranslator(baseUrl: string): Translate {
       body: JSON.stringify({ text: input, source, target }),
     });
     if (!response.ok) throw new Error(`The translator answered with error ${response.status}`);
-    return ((await response.json()) as { text: string }).text;
+    const translated = ((await response.json()) as { text: string }).text;
+    // Clock times going to the operator are written the Kiswahili way ("saa tatu asubuhi").
+    return target === 'sw' ? formatSwahiliTimes(translated) : translated;
   };
 }

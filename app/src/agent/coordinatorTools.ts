@@ -2,7 +2,12 @@ import { z } from 'zod';
 
 import { readConfig, readProgress } from '../setup/setupStore';
 import { currentStep, setupSummary } from '../setup/steps';
+import type { FarmProfile } from '@wren/contracts';
+
+import type { Translate } from '../inference/translator';
 import type { LocalStore } from '../store/localStore';
+import { newId } from '../store/ids';
+import { buildFarmRecord, farmRecordProblems } from './farmRecord';
 import { defineTool, type Harness } from './harness';
 import { TEXT, type Language } from './language';
 
@@ -36,6 +41,7 @@ export function keepStated(fields: ProfileDraft): { kept: ProfileDraft; dropped:
 
 // What each field means, shown to the model as the field's description.
 const FIELD_HINTS = {
+  name: 'The business name, if the operator states it',
   description: "What the tour is, in the operator's words",
   duration: 'How long the tour lasts, for example "2 hours"',
   price: 'Price per person with currency, for example "1500 KES"',
@@ -46,6 +52,7 @@ const FIELD_HINTS = {
 } as const;
 
 export const ProfileDraft = z.object({
+  name: stated(FIELD_HINTS.name).optional(),
   description: stated(FIELD_HINTS.description).optional(),
   duration: stated(FIELD_HINTS.duration).optional(),
   price: stated(FIELD_HINTS.price).optional(),
@@ -88,7 +95,14 @@ export function describeDraft(fields: ProfileDraft, missing: RequiredField[], la
   return parts.join(' ');
 }
 
-export function registerCoordinatorTools(harness: Harness, store: LocalStore, now: () => string, language: () => Language): void {
+// The translator, when set, writes the Kiswahili side of the Farm record built at approval.
+export function registerCoordinatorTools(
+  harness: Harness,
+  store: LocalStore,
+  now: () => string,
+  language: () => Language,
+  translate: Translate | null = null,
+): void {
   // Every turn must call a tool (tool_choice "required"): Gemma 4 understood Kiswahili requests
   // but, left to choose, answered in text and never called a tool. Plain conversation goes here.
   harness.register(
@@ -159,16 +173,32 @@ export function registerCoordinatorTools(harness: Harness, store: LocalStore, no
       description: 'Ask the operator to approve the profile draft so it can be used for the website and listings.',
       args: z.object({}),
       approval: 'operator',
+      // Approval builds the Farm record the website and listings read, so everything that record
+      // needs is checked here, before the operator is asked: missing fields, a duration or price the
+      // app cannot read, and the WhatsApp number from Setup.
       precondition: () => {
-        const missing = missingFields(readDraft(store).fields);
-        if (!missing.length) return null;
+        const fields = readDraft(store).fields;
         const text = TEXT[language()];
-        return `${text.draftIncomplete} ${text.stillNeeded}: ${missing.map((field) => text.fields[field]).join(', ')}. ${text.questions[missing[0]]}`;
+        const problems = farmRecordProblems(fields, readConfig(store).business);
+        if (problems.includes('whatsapp_number') && problems.length === 1) return text.whatsappMissing;
+        const ask = problems.filter((field): field is keyof typeof text.questions => field in text.questions);
+        if (!ask.length) return problems.length ? text.whatsappMissing : null;
+        return `${text.draftIncomplete} ${text.stillNeeded}: ${ask.map((field) => text.fields[field]).join(', ')}. ${text.questions[ask[0]]}`;
       },
       run: async () => {
         const draft = readDraft(store);
+        const existing = store.list<FarmProfile>('Farm')[0] ?? null;
+        const record = await buildFarmRecord({
+          fields: draft.fields,
+          business: readConfig(store).business,
+          existing,
+          translate,
+          newId,
+          now: now(),
+        });
+        store.upsert('Farm', record);
         writeDraft(store, { ...draft, status: 'APPROVED', updatedAt: now() });
-        return { status: 'APPROVED' };
+        return { status: 'APPROVED', farm_id: record.id, version: record.version, reply: TEXT[language()].profilePublished };
       },
     }),
     ['coordinator'],

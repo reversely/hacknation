@@ -39,3 +39,22 @@ export function normalizeSwahiliTimes(text: string): string {
     return format24(swahiliHourTo24(hour, period.toLowerCase() as Period), minutes);
   });
 }
+
+const WORDS_BY_HOUR = Object.fromEntries(Object.entries(HOURS).map(([word, hour]) => [hour, word]));
+
+// The reverse for text going to the operator: "09:00" becomes "saa tatu asubuhi". The translator
+// writes "saa 9:00", which a Kiswahili reader takes as 3 pm.
+export function hour24ToSwahili(hour24: number, minutes: number): string {
+  const swahiliHour = ((hour24 + 6) % 12) || 12; // 07:00 -> saa 1, 12:00 -> saa 6, 18:00 -> saa 12
+  const period: Period = hour24 >= 4 && hour24 < 12 ? 'asubuhi' : hour24 >= 12 && hour24 < 16 ? 'mchana' : hour24 >= 16 && hour24 < 19 ? 'jioni' : 'usiku';
+  const base = `saa ${WORDS_BY_HOUR[swahiliHour]}`;
+  const withMinutes = minutes === 0 ? base : minutes === 30 ? `${base} na nusu` : minutes === 15 ? `${base} na robo` : `${base} na dakika ${minutes}`;
+  return `${withMinutes} ${period}`;
+}
+
+export function formatSwahiliTimes(text: string): string {
+  // A time-of-day word already after the time is replaced too, so it is not said twice.
+  return text.replace(/\b(?:saa\s+)?([01]?\d|2[0-3]):([0-5]\d)\b(?:\s+(?:asubuhi|mchana|alasiri|jioni|usiku)\b)?/gi, (_match, hour: string, minutes: string) =>
+    hour24ToSwahili(Number(hour), Number(minutes)),
+  );
+}

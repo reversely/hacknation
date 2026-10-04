@@ -29,6 +29,7 @@ export const TEXT = {
     placeholder: 'Mweleze msaidizi kuhusu ziara yako',
     send: 'Tuma',
     questions: {
+      name: 'Biashara yako inaitwaje?',
       description: 'Ungeielezaje ziara yako kwa mgeni?',
       duration: 'Ziara inachukua muda gani?',
       price: 'Ziara inagharimu kiasi gani kwa kila mtu?',
@@ -37,6 +38,7 @@ export const TEXT = {
       availability: 'Ziara zinafanyika siku gani na saa ngapi?',
     },
     fields: {
+      name: 'Jina la biashara',
       description: 'Maelezo',
       duration: 'Muda',
       price: 'Bei',
@@ -46,6 +48,8 @@ export const TEXT = {
       policies: 'Masharti',
     },
     saved: 'Nimehifadhi',
+    whatsappMissing: 'Tafadhali weka namba yako ya WhatsApp kwenye Maandalizi kwanza.',
+    profilePublished: 'Wasifu umeidhinishwa. Sasa unaweza kutengeneza tovuti yako.',
     stillNeeded: 'Bado inahitajika',
     nothingSaved: 'Bado sijahifadhi chochote kuhusu ziara yako.',
     draftIncomplete: 'Wasifu bado haujakamilika.',
@@ -73,6 +77,7 @@ export const TEXT = {
     placeholder: "Tell Noor's assistant about your tour",
     send: 'Send',
     questions: {
+      name: 'What is your business called?',
       description: 'How would you describe the tour to a visitor?',
       duration: 'How long does the tour last?',
       price: 'What does the tour cost per person?',
@@ -81,6 +86,7 @@ export const TEXT = {
       availability: 'On which days and at what times do tours run?',
     },
     fields: {
+      name: 'Business name',
       description: 'Description',
       duration: 'Duration',
       price: 'Price',
@@ -90,6 +96,8 @@ export const TEXT = {
       policies: 'Policies',
     },
     saved: 'Saved',
+    whatsappMissing: 'Please add your WhatsApp number in Setup first.',
+    profilePublished: 'Your profile is approved. You can now create your website.',
     stillNeeded: 'Still needed',
     nothingSaved: 'Nothing is saved about your tour yet.',
     draftIncomplete: 'The profile is not complete yet.',
