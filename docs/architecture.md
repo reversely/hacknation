@@ -21,6 +21,7 @@ Selected decisions:
 - **Local inference: llama.cpp**, embedded in the phone app through `llama.rn`, loading quantised GGUF models. No Ollama installation, terminal or separate local HTTP server is required on the phone.
 - **Google account: Noor's personal Gmail account.** No paid Google Workspace and no domain. The phone calls the Gmail, Calendar and Sheets APIs directly with Noor's Google sign-in; the refresh token stays in the phone's secure storage.
 - **Public website: a Google Apps Script web app bound to the business spreadsheet.** The script runs as Noor and serves the approved page from the spreadsheet's Farm tab. Publishing writes that row; no build or deploy step follows.
+- **Visitor questions on the website: transformers.js** runs a small multilingual sentence-embedding model in the visitor's browser and matches each question to an answer Noor approved (section 5). The Apps Script runs no model.
 - **Online records: the Farm tab** of the business spreadsheet holds the approved profile and page. Gmail holds email threads, the booking calendar holds bookings, and SQLite on the phone holds everything else.
 - **Customer mailbox: Gmail**, created during onboarding if needed. Wren reads enquiries and sends approved replies through the Gmail API.
 - **Appointments: a "Wren tours" Google Calendar** that Wren creates with the `calendar.app.created` scope, which grants access to that calendar only. A visitor requests a slot, Customer Management creates a tentative event, and Noor confirms it in the weekly review. No Google booking page.
@@ -152,10 +153,26 @@ The model receives only connection status and actionable error summaries, never 
   approve Google's OAuth consent; the app can open that settings page but cannot enable it for her.
   Google may also require a one-time authorization of the deployed script before it can read the
   spreadsheet. The workflow pauses at these Google-owned consent steps and resumes when she returns.
+- **Visitor questions:** a visitor types a question into a chat box on the page and gets one of
+  Noor's approved answers at once, or a note that Noor will answer it.
+  1. At publication, Wren's local models write the likely visitor questions and their answers from
+     the approved public fields, in the site's language. Noor approves them with the page, and the
+     phone computes each approved question's embedding and stores both in the Farm row.
+  2. The page loads transformers.js and the embedding model in the visitor's browser, embeds the
+     question and compares it with the approved questions' embeddings.
+  3. Above a similarity threshold, the page shows the closest question's approved answer, so every
+     answer a visitor reads is one Noor approved.
+  4. Below the threshold, the page sends the question through `google.script.run` to the Apps
+     Script, which appends it to the Questions tab. Wren lists new questions in Noor's weekly
+     review, and each answer Noor approves joins the page's approved answers at the next
+     publication.
+
+  The embedding model, the threshold, and whether the browser keeps the downloaded model inside
+  Apps Script's iframe are unmeasured.
 - The deployed web app runs as Noor and is publicly readable. It reads only the approved Farm row
   from its bound spreadsheet and uses HtmlService's escaping `<?= ?>` tags. Apps Script web apps
-  require the `spreadsheets` scope to open that sheet by ID. It does not read other
-  tabs, visitor records or OAuth tokens. Apps Script serves live page data, so routine profile data
+  require the `spreadsheets` scope to open that sheet by ID. Its one write appends visitor
+  questions to the Questions tab; it does not read other tabs, visitor records or OAuth tokens. Apps Script serves live page data, so routine profile data
   changes do not require redeploying the script.
 - Model performance and the end-to-end provisioning flow must still be verified on the selected
   phone and Google account.
@@ -182,7 +199,8 @@ Each record lives in one Google service, and SQLite on the phone caches it and q
 
 | Record | Store |
 | --- | --- |
-| Farm profile and published page | Farm tab of the business spreadsheet |
+| Farm profile, published page and approved visitor answers | Farm tab of the business spreadsheet |
+| Visitor questions the page could not answer | Questions tab of the business spreadsheet |
 | Email threads | Gmail |
 | WhatsApp, Messenger and Instagram threads | Each platform's app; Wren keeps the shared text and its draft in SQLite |
 | Bookings | "Wren tours" Google Calendar |
@@ -270,7 +288,7 @@ Decisions before implementation:
 5. The translation model's licence: NLLB-200 (best scores, CC BY-NC 4.0), HPLT v1 (CC BY 4.0) or MADLAD-400 (Apache 2.0, 3B parameters) (`docs/language.md`).
 6. How the translation model runs on the phone: it needs a second runtime beside llama.cpp, such as ONNX Runtime, which is a new dependency.
 7. Phone memory for the agent and translation models together, or loading them one at a time.
-8. How the website answers visitor questions and stores reviews: the Apps Script cannot run the local model, so the answer source (a profile-based FAQ on the page, or questions queued for Wren) and the review store (a spreadsheet tab or another record) are open.
+8. How the website stores reviews: a spreadsheet tab or another record. ~~How the website answers visitor questions.~~ **Resolved:** transformers.js matches each question to an approved answer in the visitor's browser, and an unmatched question goes to the Questions tab for Noor's weekly review (section 5).
 
 ## 11. Task split
 

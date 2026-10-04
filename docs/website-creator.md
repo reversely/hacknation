@@ -48,11 +48,11 @@ its `script.google.com` URL. The script holds three files:
 | File | Content |
 | --- | --- |
 | `appsscript.json` | `"webapp": { "executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS" }` and the `https://www.googleapis.com/auth/spreadsheets` scope |
-| `Code.gs` | `doGet()` reads the Farm tab of its own spreadsheet, takes the `APPROVED` row with the highest `version`, and returns the page template evaluated with that row |
-| `page.html` | The HTML template; every profile value enters through HtmlService's escaping `<?= ?>` tags |
+| `Code.gs` | `doGet()` reads the Farm tab of its own spreadsheet, takes the `APPROVED` row with the highest `version`, and returns the page template evaluated with that row; `askQuestion(text)` appends a question the page could not answer to the Questions tab |
+| `page.html` | The HTML template; every profile value enters through HtmlService's escaping `<?= ?>` tags. Its chat box matches a visitor's question to an approved answer with transformers.js (`docs/architecture.md` section 5) |
 
 `doGet()` sets the page title to the farm name and adds a `viewport` meta tag for phone widths. It
-opens the bound spreadsheet by its ID and reads only the Farm tab. Apps Script does not expose
+opens the bound spreadsheet by its ID and reads only the Farm tab; `askQuestion` only appends rows to the Questions tab. Apps Script does not expose
 `getActiveSpreadsheet()` to a web app, and `openById()` requires the broader `spreadsheets` scope;
 Google prompts Noor to authorize the script when it first runs. The public response contains only
 the highest-version approved Farm row. Google shows visitors of a personal account's web app a
