@@ -21,6 +21,9 @@ import { Mascot, type Pose } from './mascot';
 import { Trace, tracePanel } from './trace';
 import { batteryIcon, signalIcon, wifiIcon } from './icons';
 import { h } from './ui';
+import { writeupPage } from './writeup/page';
+import writeupCss from './writeup/writeup.css' with { type: 'text' };
+import { poseUrl } from './mascot';
 
 const state: State = initialState();
 let mode: Mode = 'operator';
@@ -55,6 +58,18 @@ function mount(): void {
   }
   // A shadow root keeps Gradio's page styles away from the design; only styles.css applies inside.
   const shadow = root.shadowRoot ?? root.attachShadow({ mode: 'open' });
+  // The evaluation write-up: ?view=evaluation, or the link in the role panel.
+  const showWriteup = () => {
+    shadow.replaceChildren(h('style', {}, writeupCss), writeupPage(() => {
+      history.replaceState(null, '', location.pathname);
+      location.reload();
+    }, wordmarkWhite, poseUrl('celebrate')));
+    window.scrollTo(0, 0);
+  };
+  if (new URLSearchParams(location.search).get('view') === 'evaluation') {
+    showWriteup();
+    return;
+  }
   const phones = { main: h('div', { class: 'screen' }), twin: h('div', { class: 'screen' }) };
   const role = h('aside', { class: 'role' });
   const stage = h('div', { class: 'stage' });
@@ -461,6 +476,7 @@ function mount(): void {
         : h('span'),
       // The visitor side's strip is light, so the mascot hops there.
       ...(mode === 'visitor' ? [mascot.element] : [h('div', { class: 'role-spacer' })]),
+      h('button', { type: 'button', class: 'role-link', onclick: () => { history.replaceState(null, '', '?view=evaluation'); showWriteup(); } }, 'Chat evaluation →'),
       h('p', { class: 'role-count' }, `${String(s.n).padStart(2, '0')} / ${String(s.total).padStart(2, '0')}`),
     );
   }

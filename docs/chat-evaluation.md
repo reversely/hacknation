@@ -6,6 +6,9 @@ something the site's facts do not say or that contradicts them, under three conf
 strict pipeline delivered a hallucinated reply for 1 of 58 questions, against 27 of 58 for the
 chat's first prompt.
 
+The Space shows these results as an animated page at `https://reversely-wren.hf.space/?view=evaluation`,
+also linked from the demonstration's role panel; `space/web/src/writeup/data.ts` holds its figures.
+
 ## Configurations
 
 | Configuration | What it adds |

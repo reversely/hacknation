@@ -99,7 +99,9 @@ around the model, with tests beside it.
 
 A question that goes to the owner reaches the phone with Wren's draft reply, and the visitor sees that
 the farm will answer. `docs/chat-evaluation.md` measures the effect: on 58 questions, the strict
-pipeline delivered 1 hallucinated reply, against 27 for the chat's first prompt.
+pipeline delivered 1 hallucinated reply, against 27 for the chat's first prompt. The same results
+appear as an animated page in the Space at `?view=evaluation`, with SVG charts drawn in
+`space/web/src/writeup/` and no chart library.
 
 ### Universal translation
 
