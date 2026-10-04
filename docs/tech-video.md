@@ -2,28 +2,26 @@
 
 The brief asks: "Please explain in 60 sec what was challenging to build, how you overcame the
 challenges and what are remaining limitations." The script records the demonstration Space
-(`https://reversely-wren.hf.space/`) and its chat evaluation page (`?view=evaluation`). It opens
-with the problem and its figures, takes the build challenges in the order the demonstration reaches
-them, and ends on what remains. The voice-over runs 148 words, about 60 seconds at 150 words a
-minute. Each figure is said once, beside the challenge it is evidence for.
+(`https://reversely-wren.hf.space/`) and its chat evaluation page (`?view=evaluation`). It opens on
+why the team took on a less-resourced language, then the challenge, how the harness overcame it, and
+what remains. Each figure is said once, beside the challenge it is evidence for; the first-person
+lines are the team's own voice.
 
-| Time | Challenge | Evidence on screen | Voice-over |
+| Time | Part | Evidence on screen | Voice-over |
 | --- | --- | --- | --- |
-| 0:00–0:16 | The operator's: falling prices, and no time or computer to sell tours | Evaluation page, Why it matters: the challenges beside the 27.5% and 2.55 million cards | Kenya's coffee auction price fell 27.5% in early 2026, yet 2.5 million international visitors arrived in 2025. Noor could sell them farm tours, but has a phone, patchy internet, no computer, and no time for bookings or messages. |
-| 0:16–0:24 | What Wren does about it | Demo, steps 01 to 03: the Kiswahili phone and its English twin | With Wren, Noor answers enquiries quickly, sees what reviews say, and runs the farm's website from the phone, in Kiswahili. |
-| 0:24–0:35 | Building: small models invent facts | Demo, step 07: the agent trace, with the coder's JSON and the copy check | The hard part: models small enough for a phone invent facts. So prices, times and the phone number come from a form, never a model, and code checks the short copy it writes. |
-| 0:35–0:46 | Building: the visitor chat makes things up | Demo, step 10: the chat hands the parking question to Noor; cut to the 53% → 98% chart | The visitor chat used to make things up. Now anything the facts don't support goes to Noor, and accuracy rose from 53% to 98%. |
-| 0:46–0:52 | Building: nothing reaches a visitor unapproved | Demo, step 13: the phone dashboard and an approval card | Noor checks in once a week: review insights, bookings and questions, each waiting for approval. |
-| 0:52–1:00 | Remaining: voice | Evaluation page, Next steps: the 70% figure | Voice isn't reliable yet: our spoken Kiswahili interview gets 70% of fields right. Real recorded speech comes next. |
+| 0:00–0:10 | Why | Demo, step 01: the Kiswahili phone and its English twin | We grew up speaking Hokkien and Hakka, and took it for granted that AI wouldn't handle languages with little data. Building Wren for Kiswahili-speaking farmers, we hit the same wall. |
+| 0:10–0:22 | Challenge | Demo, step 10: the chat; cut to the evaluation hero | Small local models struggle with less-resourced languages: the first one we tried understood about 1 in 20 typed Kiswahili requests, and our first chat setup gave a false reply 47% of the time. |
+| 0:22–0:42 | How we overcame it | Demo, step 07: the agent trace; step 13: the approval cards; the accuracy chart | So we built harnesses around the models, with a person in the loop. Prices, times and location come from a form, never a model. Code checks every reply, and anything unsupported goes to the farmer's phone for approval. False replies fell from 47% to under 2%. |
+| 0:42–0:52 | Remaining limitation | Evaluation page, Next steps | Voice isn't there yet: our spoken Kiswahili interview gets 70% of fields right, so real recorded speech comes next. |
+| 0:52–1:00 | Close | The Wren wordmark | We believe people who speak less-resourced languages deserve accurate AI, and that careful implementation can deliver it. |
 
 ## Sources for the figures
 
-- Coffee auction price, US$7.82/kg in January to US$5.67/kg in March 2026, a 27.5% fall calculated
-  from the table; the figures are provisional: KNBS, *Leading Economic Indicators, June 2026*,
-  Table 6, p. 13.
-- International visitor arrivals, 2,550,600 in 2025, including 1,219,300 for holidays: KNBS,
-  *Economic Survey 2026: Popular Version*, tourism section, p. 12.
-- Chat accuracy: `docs/chat-evaluation.md`. Interview fields: `docs/interview.md`.
+- About 1 in 20 typed Kiswahili requests understood by Qwen3 1.7B on llama.cpp, the first agent model
+  tried: `docs/architecture.md`.
+- False replies, 27 of 58 (47%) for the chat's first setup and 1 of 58 (under 2%) with the harness, on
+  58 visitor questions written in English: `docs/chat-evaluation.md`.
+- 70% of interview fields correct for the phone stack: `docs/interview.md`.
 
 ## Recording notes
 
@@ -31,5 +29,5 @@ minute. Each figure is said once, beside the challenge it is evidence for.
   Hugging Face, so every step answers from the cache or the account's GPU allowance.
 - Use the walkthrough's Show me and Next buttons from step 08 onward; they enter the inputs the
   warm-up cached.
-- The pitch draft's claims that Wren is free and works in Kikuyu stay out: the app supports Kiswahili
-  and English, and the repository records no pricing decision.
+- The 47% comes from visitor questions written in English, not from Kiswahili prompts; the Kiswahili
+  figure is the 1 in 20.
