@@ -11,6 +11,7 @@ def local_path(role: str) -> str:
     try:
         return snapshot_download(spec["repo"], revision=spec["revision"], allow_patterns=spec["files"], cache_dir=WEIGHTS, local_files_only=True)
     except Exception:
-        # First start with this revision: download once into the bucket; later starts skip this.
+        # First start on this machine: download the pinned revision to local disk; a restart that keeps
+        # the disk skips this.
         print(f"Downloading {spec['repo']}@{spec['revision'][:12]} into {WEIGHTS}", flush=True)
         return snapshot_download(spec["repo"], revision=spec["revision"], allow_patterns=spec["files"], cache_dir=WEIGHTS)

@@ -17,6 +17,7 @@ import { fillDraft, firstOpenDate, laptop, SITE_PAGES, SUGGESTED, type ChatLine,
 import { englishSurvey, initialState, siteSlug, toSurvey, type State } from './state';
 import css from './styles.css' with { type: 'text' };
 import { Trace, tracePanel } from './trace';
+import { batteryIcon, signalIcon, wifiIcon } from './icons';
 import { h } from './ui';
 
 const state: State = initialState();
@@ -41,6 +42,7 @@ const summary = { key: '', en: null as string[] | null, local: null as string[] 
 // The latest model call in the current step, shown live under the step.
 let lastCall: { step: string; text: string } | null = null;
 let view: SiteView | null = null;
+let inboxTab: 'insights' | 'bookings' = 'insights';
 
 function mount(): void {
   const root = document.getElementById('wren-root');
@@ -126,6 +128,17 @@ function mount(): void {
           mode = 'visitor';
           page = 'home';
           render(0);
+        },
+        tab: inboxTab,
+        setTab(tab) {
+          inboxTab = tab;
+          render();
+        },
+        // Change the live site: back through the setup screens with every answer kept, then
+        // Create site rebuilds it; visitor requests stay.
+        editSite() {
+          current = 'business';
+          render();
         },
         summarising: summary.busy,
         editing,
@@ -215,7 +228,7 @@ function mount(): void {
       footer = h('div', { class: 'footer' }, button, screen.dot !== undefined ? dots(screen.dot) : null);
     }
     phones[phone].replaceChildren(
-      h('div', { class: 'statusbar', 'aria-hidden': 'true' }, h('span', {}, '9:41'), h('span', { class: 'icons' }, '▂▄▆ ◉ ▭')),
+      h('div', { class: 'statusbar', 'aria-hidden': 'true' }, h('span', { class: 'clock' }, '9:41'), h('span', { class: 'island' }), h('span', { class: 'icons' }, signalIcon(), wifiIcon(), batteryIcon())),
       top,
       h('div', { class: `body ${current === 'signin' ? 'signin-body' : ''}` }, ...screen.body),
       ...(footer ? [footer] : []),

@@ -6,6 +6,7 @@ import { DAY_LETTERS, LANGUAGE_CHOICES, STRINGS, type Strings } from '../../../a
 import { DAYS, SERVICE_TYPES, type Day, type Language, type ServiceType } from '../../../app/src/survey/survey';
 import { h, field } from './ui';
 import { INBOX } from './visitor';
+import { gearIcon } from './icons';
 import { formatSlot } from '../../../app/src/survey/render';
 import { dateLabel, PHOTO, upcomingOpenDates, type VisitorItem } from './site';
 import { businessComplete, newService, scheduleComplete, serviceComplete, siteSlug, type State } from './state';
@@ -18,7 +19,7 @@ export type Context = {
   s: Strings;
   live(text: string, field?: string): string; // operator-typed text in this phone's language
   siteHtml: string | null; // the generated page in this phone's language
-  inbox: { items: VisitorItem[]; url: string; summary: string[] | null; summarising: boolean; openSite(): void; editing: number | null; edit(id: number | null): void; approve(id: number, reply?: string): void; decline(id: number): void };
+  inbox: { items: VisitorItem[]; url: string; summary: string[] | null; summarising: boolean; openSite(): void; tab: 'insights' | 'bookings'; setTab(tab: 'insights' | 'bookings'): void; editSite(): void; editing: number | null; edit(id: number | null): void; approve(id: number, reply?: string): void; decline(id: number): void };
   go(screen: ScreenId): void;
   redraw(): void; // rebuilds every phone after a structural change
   changed(): void; // re-checks the footer, the twin and the narration after a value change
@@ -277,6 +278,7 @@ function siteScreen(ctx: Context): Screen {
       h('div', { class: 'live-title' }, h('span', { class: 'live-dot', 'aria-hidden': 'true' }), t.live),
       h('div', { class: 'url' }, ctx.inbox.url),
     ),
+    h('button', { type: 'button', class: 'site-settings', title: t.settings, onclick: () => ctx.inbox.editSite() }, gearIcon(t.settings)),
     h('button', { type: 'button', class: 'open-site', 'aria-label': t.open, title: t.open, onclick: () => ctx.inbox.openSite() }, '↗'),
   );
   const items = [...ctx.inbox.items].reverse();
@@ -289,6 +291,7 @@ function siteScreen(ctx: Context): Screen {
         h('span', { class: 'kind' }, t.booking),
         h('strong', {}, `${item.name}: ${item.people} ${t.people}`),
         h('span', {}, `${item.service}, ${dateLabel(item.date, ctx.language)}, ${formatSlot(item.slot, ctx.language)}`),
+        h('span', { class: 'ref' }, item.code),
         item.status === 'pending' ? actions([t.decline, () => ctx.inbox.decline(item.id)], [t.approve, () => ctx.inbox.approve(item.id), true]) : h('span', { class: `done ${item.status}` }, item.status === 'approved' ? t.approved : t.declined),
       );
     }
@@ -321,12 +324,23 @@ function siteScreen(ctx: Context): Screen {
       item.status === 'pending' ? actions([t.hide, () => ctx.inbox.decline(item.id)], [t.publish, () => ctx.inbox.approve(item.id), true]) : h('span', { class: `done ${item.status}` }, item.status === 'approved' ? t.published : t.hidden),
     );
   };
+  const pendingBookings = items.filter((i) => i.kind === 'booking' && i.status === 'pending').length;
+  const tabs = h(
+    'div',
+    { class: 'inbox-tabs', role: 'tablist' },
+    ...(['insights', 'bookings'] as const).map((tab) =>
+      h('button', { type: 'button', role: 'tab', 'aria-selected': ctx.inbox.tab === tab ? 'true' : 'false', class: ctx.inbox.tab === tab ? 'on' : '', onclick: () => ctx.inbox.setTab(tab) }, tab === 'insights' ? t.tabInsights : `${t.tabBookings}${pendingBookings ? ` (${pendingBookings})` : ''}`),
+    ),
+  );
+  const others = items.filter((i) => i.kind !== 'booking');
+  const bookings = items.filter((i) => i.kind === 'booking').sort((x, y) => (x as { date: string }).date.localeCompare((y as { date: string }).date));
+  const insightsBody = items.length
+    ? [dashboard(ctx, items), ...(others.length ? [h('div', { class: 'card-heading' }, h('span', {}, t.waiting), h('span', { class: 'muted' }, String(others.filter((i) => i.status === 'pending').length))), ...others.map(card)] : [])]
+    : [h('p', { class: 'hint left' }, t.empty)];
+  const bookingsBody = bookings.length ? bookings.map(card) : [h('p', { class: 'hint left' }, t.noBookings)];
   return {
     back: 'review',
-    body: [
-      live,
-      items.length ? dashboard(ctx, items) : h('span'),
-      h('div', { class: 'card-heading' }, h('span', {}, items.length ? t.waiting : t.requests), h('span', { class: 'muted' }, String(items.filter((i) => i.status === 'pending').length))), ...(items.length ? items.map(card) : [h('p', { class: 'hint left' }, t.empty)])],
+    body: [live, tabs, ...(ctx.inbox.tab === 'insights' ? insightsBody : bookingsBody)],
   };
 }
 

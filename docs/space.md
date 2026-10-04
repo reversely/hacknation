@@ -133,6 +133,37 @@ Prompts and schemas travel in each call; the model server holds none. The visito
 cache keys. Each response carries the model's repository and revision, the milliseconds spent and
 whether it came from the cache.
 
+## Caching
+
+| Layer | What | How |
+| --- | --- | --- |
+| Model weights | Every file in `models.json` | Each start downloads the pinned revisions from the Hub to the Space's local disk (`space/wren_models/weights.py`), at about 700 MB/s. Reading Gemma 4's 10 GB from the bucket mount instead took over 12 minutes a start |
+| GPU placement | Loaded models | Placed on the GPU when the module loads, as ZeroGPU requires |
+| Connection | The bundle's link to the model server | One `@gradio/client` connection per page load, reused for every call |
+| Results, in the browser | Every call the visitor's browser has made | A SHA-256 key of the call, model revision, settings and input, looked up in memory, then IndexedDB; a hit never reaches the server or the visitor's GPU quota |
+| Results, on the server | Every call | The same key over files in `/data/cache` in the bucket, which outlive restarts; every call is deterministic, so a repeated input never reaches the GPU function |
+| Demonstration inputs | The walkthrough's scripted inputs | `space/web/scripts/warm-cache.ts` runs them with the repository's token. The phone's summary includes the first open day from today, so it runs again on the day of the demonstration |
+| Bundle | JavaScript, CSS and photos | The bundle's file name carries a content hash |
+
+A visitor without a Hugging Face account gets a few ZeroGPU runs; anything typed beyond the warmed
+inputs spends them.
+
+## Build and deploy
+
+`bun run build` in `space/web` generates the image module, bundles `src/main.ts` under a hashed
+name, writes `dist/manifest.json` for `app.py`, and copies the photos. `huggingface_hub`'s
+`upload_folder` then sends `app.py`, `requirements.txt`, `models.json`, `wren_models/` and
+`web/dist/` to the Space, with the token read from the repository's `.env`, which stays out of the
+repository. Each upload restarts the Space, so the next one waits until the Space reports
+`RUNNING`.
+
+## Checks
+
+- `bun test src` in `space/web`: booking codes and the chat's grounding check.
+- `bun run typecheck` in `space/web`, which also checks the imported `app/src/survey` modules.
+- A Playwright walk through the whole demonstration at 1280 and 1920 px wide, with screenshots in
+  `docs/progress/`.
+
 ## Decisions
 
 1. Constrained decoding for `json`, a new library: `outlines` (Apache 2.0) or `lm-format-enforcer`
