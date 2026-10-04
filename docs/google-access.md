@@ -24,6 +24,7 @@ per step.
 | `gmail.send` | 2, mailbox | Send approved replies |
 | `drive.file` | 3, spreadsheet | Create the business spreadsheet and read and write that file only; the Sheets API accepts this scope for files the app created |
 | `script.projects`, `script.deployments` | 3, spreadsheet | Create and deploy the bound Apps Script, when the Apps Script API setup is chosen (`docs/website-creator.md`) |
+| `spreadsheets` | deployed Apps Script | Read the Farm tab from the public web app. Apps Script web apps need this scope with `openById`; the phone continues to use `drive.file` for its created spreadsheet. |
 | `calendar.app.created` | 6, calendar | Create the "Wren tours" calendar and manage its events, with no access to Noor's other calendars (`docs/bookings.md`) |
 
 Full scope names start with `https://www.googleapis.com/auth/`.

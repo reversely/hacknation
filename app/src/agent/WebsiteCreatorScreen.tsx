@@ -1,6 +1,6 @@
 import type { FarmProfile } from '@wren/contracts';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import '../gmail/gmailConnector';
@@ -12,6 +12,7 @@ import { newId } from '../store/ids';
 import { SPREADSHEET_ID_KEY } from '../store/outbox';
 import { syncOnce } from '../store/outbox';
 import type { LocalStore } from '../store/localStore';
+import { WEBSITE_URL_KEY } from '../website/appsScriptWebsite';
 import { generateWebsitePage, loadWebsiteModel, renderWebsitePreviewHtml, type JsonGenerator, type WebsitePage } from './websiteCreator';
 
 // The Kiswahili copy comes from the translation service (docs/language.md).
@@ -27,6 +28,7 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
   const [profile, setProfile] = useState<FarmProfile | null>(() =>
     store.list<FarmProfile>('Farm').find((record) => record.status === 'APPROVED') ?? null,
   );
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(() => store.getMeta(WEBSITE_URL_KEY));
 
   useEffect(() => {
     let active = true;
@@ -88,6 +90,12 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
       setConfirming(false);
       return;
     }
+    const deployedUrl = store.getMeta(WEBSITE_URL_KEY);
+    if (!deployedUrl) {
+      setMessage('Build the public website in Setup before publishing this page.');
+      setConfirming(false);
+      return;
+    }
     setBusy(true);
     setConfirming(false);
     const now = new Date().toISOString();
@@ -100,7 +108,8 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
     // Check the specific action receipt so the UI describes the publication result accurately.
     if (receipt?.status === 'COMPLETED') {
       setProfile(updated);
-      setMessage('The approved page was saved to the Farm spreadsheet.');
+      setWebsiteUrl(deployedUrl);
+      setMessage('The approved page is live on the public website.');
     } else if (receipt?.status === 'FAILED') {
       setMessage('Google rejected this page write. Check the spreadsheet access and try again.');
     } else {
@@ -122,6 +131,11 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
         </>
       )}
       {message && <Text accessibilityRole="alert" style={styles.detail}>{message}</Text>}
+      {websiteUrl && (
+        <Pressable onPress={() => void Linking.openURL(websiteUrl)} accessibilityRole="link">
+          <Text style={styles.link}>Open Noor’s website: {websiteUrl}</Text>
+        </Pressable>
+      )}
       {page && profile && (
         <>
           <View style={styles.preview}>
@@ -135,7 +149,7 @@ export function WebsiteCreatorScreen({ store, google }: { store: LocalStore; goo
           </View>
           {confirming ? (
             <View style={styles.confirm}>
-              <Text style={styles.detail}>This saves the page to the Farm spreadsheet. The public Apps Script address must be set up separately.</Text>
+              <Text style={styles.detail}>This publishes the approved page to Noor’s public website.</Text>
               <Button label="Confirm and publish" disabled={busy} onPress={publish} />
               <Button label="Cancel" disabled={busy} onPress={() => setConfirming(false)} secondary />
             </View>
@@ -160,6 +174,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12, flexGrow: 1 },
   title: { fontSize: 22, fontWeight: '700', color: '#1d2c20' },
   detail: { fontSize: 14, lineHeight: 20, color: '#425247' },
+  link: { fontSize: 14, lineHeight: 20, color: '#315c3a', textDecorationLine: 'underline' },
   button: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingHorizontal: 16, backgroundColor: '#315c3a' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   secondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#315c3a' },

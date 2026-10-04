@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import '../gmail/gmailConnector';
 import { CalendarConnector } from '../calendar/calendarConnector';
 import type { LocalStore } from '../store/localStore';
 import { CALENDAR_ID_KEY } from '../store/outbox';
+import { AppsScriptWebsiteConnector, SPREADSHEET_ID_KEY, WEBSITE_URL_KEY } from '../website/appsScriptWebsite';
 import { readConfig, readProgress, saveBusiness, saveProgress } from './setupStore';
 import { currentStep, runCheck, STEP_IDS, type SetupProgress, type StepId } from './steps';
 
@@ -22,8 +23,8 @@ const TITLES: Record<StepId, string> = {
 const HINTS: Record<StepId, string> = {
   business: 'Please enter your farm name and WhatsApp number',
   gmail: 'Connect Noor’s Gmail account when the Google sign-in step is available',
-  sheets: 'Set up the Farm spreadsheet and bound Apps Script after choosing a setup method',
-  website: 'Create an offline preview in the Website tab; script deployment setup is still pending',
+  sheets: 'Create Noor’s Farm spreadsheet in Google Drive',
+  website: 'Build the public Apps Script website. On first visit, Google may ask Noor to authorize the site to read the Farm sheet.',
   whatsapp: 'Confirm the business WhatsApp number saved in Business details',
   calendar: 'Connect Google Calendar and create the Wren tours booking calendar',
   listings: 'Please create your Google and Facebook listings and then mark this step done',
@@ -58,6 +59,19 @@ export function SetupScreen({ store }: Props) {
         if (!business) throw new Error('Add the farm details before setting up its calendar.');
         const calendar = await new CalendarConnector(GoogleSignin).createWrenCalendar(business.timezone);
         store.setMeta(CALENDAR_ID_KEY, calendar.id);
+        update(step, { status: 'DONE', checkedAt: new Date().toISOString(), error: null });
+        return;
+      }
+      if (step === 'sheets' || step === 'website') {
+        const connector = new AppsScriptWebsiteConnector(GoogleSignin, store);
+        if (step === 'sheets') {
+          const profile = store.list<import('@wren/contracts').FarmProfile>('Farm').find((record) => record.status === 'APPROVED') ?? null;
+          const id = await connector.ensureSpreadsheet(profile);
+          store.setMeta(SPREADSHEET_ID_KEY, id);
+        } else {
+          if (!store.getMeta(SPREADSHEET_ID_KEY)) throw new Error('Create the Farm spreadsheet before building the website.');
+          await connector.deployWebsite();
+        }
         update(step, { status: 'DONE', checkedAt: new Date().toISOString(), error: null });
         return;
       }
@@ -101,6 +115,14 @@ export function SetupScreen({ store }: Props) {
             {expanded && (
               <View style={styles.stepBody}>
                 <Text style={styles.detail}>{HINTS[id]}</Text>
+                {id === 'website' && store.getMeta(WEBSITE_URL_KEY) && (
+                  <Pressable onPress={() => void Linking.openURL(store.getMeta(WEBSITE_URL_KEY)!)} accessibilityRole="link">
+                    <Text style={styles.link}>{store.getMeta(WEBSITE_URL_KEY)}</Text>
+                  </Pressable>
+                )}
+                {id === 'website' && state.status === 'FAILED' && state.error?.includes('Enable the Google Apps Script API') && (
+                  <Button label="Open Apps Script API settings" onPress={() => void Linking.openURL('https://script.google.com/home/usersettings')} />
+                )}
                 <StepFields step={id} store={store} />
                 {state.error && <Text style={styles.error}>{state.error}</Text>}
                 {id === 'listings' ? (
@@ -109,7 +131,11 @@ export function SetupScreen({ store }: Props) {
                     onPress={() => update(id, { status: 'DONE', checkedAt: new Date().toISOString(), error: null })}
                   />
                 ) : (
-                  <Button label={checking ? 'Checking…' : 'Check connection'} disabled={checking} onPress={() => check(id)} />
+                  <Button
+                    label={checking ? 'Working…' : id === 'sheets' ? 'Create Farm spreadsheet' : id === 'website' ? 'Build public website' : id === 'calendar' ? 'Set up calendar' : 'Check connection'}
+                    disabled={checking}
+                    onPress={() => check(id)}
+                  />
                 )}
               </View>
             )}
@@ -186,6 +212,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12 },
   title: { fontSize: 22, fontWeight: '600' },
   detail: { fontSize: 14, color: '#444' },
+  link: { fontSize: 14, color: '#1f4e79', textDecorationLine: 'underline' },
   error: { fontSize: 14, color: '#b00020' },
   step: { borderWidth: 1, borderColor: '#dde2e7', borderRadius: 8 },
   stepHeader: {

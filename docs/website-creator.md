@@ -32,27 +32,32 @@ its `script.google.com` URL. The script holds three files:
 
 | File | Content |
 | --- | --- |
-| `appsscript.json` | `"webapp": { "executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS" }` and `"oauthScopes": ["https://www.googleapis.com/auth/spreadsheets.currentonly"]` |
+| `appsscript.json` | `"webapp": { "executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS" }` and the `https://www.googleapis.com/auth/spreadsheets` scope |
 | `Code.gs` | `doGet()` reads the Farm tab of its own spreadsheet, takes the `APPROVED` row with the highest `version`, and returns the page template evaluated with that row |
 | `page.html` | The HTML template; every profile value enters through HtmlService's escaping `<?= ?>` tags |
 
-`doGet()` sets the page title to the farm name and adds a `viewport` meta tag for phone widths. The
-`spreadsheets.currentonly` scope limits the script to its own spreadsheet. The script serves no
-other tab. Google shows visitors of a personal account's web app a banner saying another user made
-the page.
+`doGet()` sets the page title to the farm name and adds a `viewport` meta tag for phone widths. It
+opens the bound spreadsheet by its ID and reads only the Farm tab. Apps Script does not expose
+`getActiveSpreadsheet()` to a web app, and `openById()` requires the broader `spreadsheets` scope;
+Google prompts Noor to authorize the script when it first runs. The public response contains only
+the highest-version approved Farm row. Google shows visitors of a personal account's web app a
+banner saying another user made the page.
 
 ## Spreadsheet and script setup
 
 The selected method is automatic provisioning through the Apps Script API (architecture section
 10, decision 3 resolved). After Google sign-in and consent, Wren creates the spreadsheet and Farm
 tab, then creates the bound script with `POST https://script.googleapis.com/v1/projects` and the
-spreadsheet ID as `parentId`. The app uploads the checked-in `Code.gs`, `page.html` and
-`appsscript.json` through `PUT /v1/projects/{scriptId}/content`, creates a version, and deploys a
+spreadsheet ID as `parentId`. The app uploads checked-in Apps Script and HTML template sources and
+the manifest through `PUT /v1/projects/{scriptId}/content`, creates a version, and deploys a
 web app. It saves the deployment's `entryPoints[].webApp.url` in local setup state and the Farm
 record.
 
 Before provisioning, Noor must enable "Google Apps Script API" at
 `script.google.com/home/usersettings`; Wren can open this page but Google requires the account owner
 to enable it. Noor also approves OAuth scopes, and may need to authorize the deployed script once
-to read its bound spreadsheet. Setup should report each pause clearly and resume after she returns.
+to read the Farm tab. The phone uses `drive.file` to create and write the spreadsheet; the deployed
+script separately requests `spreadsheets` because Apps Script web apps cannot use the narrower
+`spreadsheets.currentonly` scope with `openById`. Setup should report each pause clearly and resume
+after she returns.
 There is no manual template-copy/editor workflow in the selected design.

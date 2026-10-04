@@ -148,7 +148,8 @@ The model receives only connection status and actionable error summaries, never 
   Google may also require a one-time authorization of the deployed script before it can read the
   spreadsheet. The workflow pauses at these Google-owned consent steps and resumes when she returns.
 - The deployed web app runs as Noor and is publicly readable. It reads only the approved Farm row
-  from its bound spreadsheet and uses HtmlService's escaping `<?= ?>` tags. It does not read other
+  from its bound spreadsheet and uses HtmlService's escaping `<?= ?>` tags. Apps Script web apps
+  require the `spreadsheets` scope to open that sheet by ID. It does not read other
   tabs, visitor records or OAuth tokens. Apps Script serves live page data, so routine profile data
   changes do not require redeploying the script.
 - Model performance and the end-to-end provisioning flow must still be verified on the selected
