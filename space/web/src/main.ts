@@ -445,8 +445,6 @@ function mount(): void {
         return act || n ? h('div', { class: 'step-actions' }, act ? h('button', { type: 'button', class: 'show-me', onclick: act }, 'Show me') : null, n ? h('button', { type: 'button', class: 'next', onclick: n.go }, `${n.label} →`) : null) : h('span');
       })(),
       details(state, events, modelEvents, problems, result, buildError),
-      // The operator side's strip is dark, so the mascot hops under the step text on the light stage.
-      ...(mode === 'operator' ? [mascot.element] : []),
     );
     const r = ROLES[mode];
     role.replaceChildren(
@@ -484,6 +482,11 @@ function mount(): void {
         // The twin mirrors the operator's phone and takes no input of its own.
         devices.push(h('div', { class: 'device twin' }, label('English', 'Twin, translated'), h('div', { class: 'phone', role: 'region', 'aria-label': 'English twin', inert: true }, phones.twin)));
       }
+      // The operator side's strip is dark, so the mascot stands on the light stage beside the
+      // bottom-right corner of the right-hand phone.
+      const lastPhone = devices[devices.length - 1];
+      lastPhone.classList.add('with-mascot');
+      lastPhone.append(mascot.element);
       if (current === 'building') {
         trace.redrawNow();
         devices.push(traceSlot);

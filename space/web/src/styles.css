@@ -739,3 +739,11 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
 @media (max-width: 760px) { .role-logo { width: 112px; margin-bottom: 12px; } }
 .fs-made { display: flex; align-items: center; gap: 8px; }
 .fs-made-logo { height: 14px; width: auto; opacity: 0.85; outline: 0 !important; }
+
+/* Operator side: the mascot beside the right-hand phone's bottom-right corner, hopping on the spot. */
+.device.with-mascot { position: relative; }
+.device.with-mascot .mascot { position: absolute; left: calc(100% - 18px); bottom: 6px; width: 132px; height: 100px; margin: 0; max-width: none; }
+.device.with-mascot .mascot .walker { width: 96px; height: 96px; animation-duration: 6s; }
+@media (max-width: 760px) { .device.with-mascot .mascot { left: auto; right: 0; bottom: -84px; } }
+.device.with-mascot .mascot { left: calc(100% + 20px); bottom: 0; }
+@media (max-width: 760px) { .device.with-mascot .mascot { left: auto; right: 0; bottom: -84px; } }
