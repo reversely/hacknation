@@ -1,30 +1,25 @@
 # Technical video script
 
-The brief asks for 60 seconds on what was challenging to build, how the team overcame it, and what
-limitations remain. The script runs 159 words, which fits 60 seconds at a brisk 160 words a minute. Each
-segment names the screen to record; every chart comes from the Space's chat evaluation page
-(`https://reversely-wren.hf.space/?view=evaluation`), and every figure from `docs/chat-evaluation.md`,
-`docs/interview.md` and the sources cited below.
+The brief asks: "Please explain in 60 sec what was challenging to build, how you overcame the
+challenges and what are remaining limitations." The script records the demonstration Space
+(`https://reversely-wren.hf.space/`), takes the challenges in the order the demonstration reaches
+them, and cuts to the chat evaluation page (`?view=evaluation`) for the figures. The voice-over runs
+156 words, which fits 60 seconds at a brisk 160 words a minute. Every figure comes from
+`docs/chat-evaluation.md` and `docs/interview.md`.
 
-| Time | Screen | Voice-over |
-| --- | --- | --- |
-| 0:00–0:08 | Evaluation page, Why it matters | Kenya's coffee auction price fell 27.5% in early 2026, while 2.5 million international visitors arrived in 2025. Wren lets a smallholder sell farm tours from a phone. |
-| 0:08–0:22 | Four questions, three setups: "Is lunch included?" and the discount example | The hard part was trust. A model small enough for a phone makes things up. In our first chat setup, 27 of 58 replies said something false: lunch included, a group discount nobody offered. |
-| 0:22–0:44 | From a conversation to a form, then Replies with nothing false | So facts never pass through the model. Prices, times and the phone number come from a form. The model writes only short copy, and code checks every reply: an unknown topic, a new number or a promise goes to the owner's phone instead. Accuracy rose from 53% to 98%, every reply checked by hand. |
-| 0:44–1:00 | Next steps | What remains is voice. Our spoken Kiswahili interview got 70% of fields right, and a fine-tune cut speech errors from 24.5% to 15.7%. That is not yet enough to trust a price heard on a farm, so next we record real speech, with consent. |
+| Time | Part | Screen | On-screen figure | Voice-over |
+| --- | --- | --- | --- | --- |
+| 0:00–0:07 | Setting | Demo, steps 01 to 03: the Kiswahili phone and its English twin | | Wren sets up a farm-tour business on a phone, in the owner's own language. Noor works in Kiswahili; the twin shows English. |
+| 0:07–0:20 | Challenge, then fix | Demo, step 07: the agent trace streaming the coder's JSON and the copy check | No model touches prices, times or the phone number | First challenge: models small enough for a phone invent facts. So prices, times and the phone number come from the form, never from a model. The coding model writes only short copy, and code rejects any name or number the form doesn't hold. |
+| 0:20–0:38 | Challenge, then fix | Demo, step 10: the chat answers a suggested question, then hands the parking question to the owner; cut to "Replies with nothing false" | 53% → 98% accurate, 58 questions | Second: the visitor chat. Our first setup gave a false reply to 27 of 58 questions, like a discount nobody offered. Checks in code now send anything the facts don't support to the owner. Accuracy rose from 53% to 98%, every reply checked by hand. |
+| 0:38–0:48 | Fix | Demo, step 13: the phone dashboard and an approval card | | And nothing reaches a visitor unapproved: bookings, questions and reviews wait on Noor's phone. |
+| 0:48–1:00 | Remaining limitation | Evaluation page, Next steps | 70% of interview fields; 24.5% → 15.7% speech errors | What remains is voice. Our spoken Kiswahili interview got 70% of fields right, and fine-tuning cut speech errors to 15.7%. Until real recorded speech closes that gap, the form takes the facts. |
 
-## Sources for the context figures
+## Recording notes
 
-- Coffee auction price, US$7.82/kg in January to US$5.67/kg in March 2026, a 27.5% fall calculated
-  from the table; the figures are provisional: KNBS, *Leading Economic Indicators, June 2026*,
-  Table 6, p. 13.
-- International visitor arrivals, 2,550,600 in 2025, including 1,219,300 for holidays: KNBS,
-  *Economic Survey 2026: Popular Version*, tourism section, p. 12.
-- More than 800,000 smallholder farmers in Kenya's coffee sector: FAO Kenya, *Investment roundtable on
-  coffee value chains in Kenya takes shape*, 21 July 2025.
-
-## Claims kept out of the script
-
-The pitch draft says Wren is free and that operators can describe their farm in Kikuyu. The app
-supports Kiswahili and English, and the repository records no pricing decision, so both stay out
-until the team confirms them.
+- Run the cache warm-up on the day (`space/web/scripts/warm-cache.ts`) and record signed in to
+  Hugging Face, so every step answers from the cache or the account's GPU allowance.
+- Use the walkthrough's Show me and Next buttons from step 08 onward; they enter the inputs the
+  warm-up cached.
+- The figures shown on screen are the page's own; no figure in the voice-over appears without its
+  source chart on screen or in the demonstration.
