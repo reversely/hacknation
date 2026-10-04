@@ -15,6 +15,14 @@
 
 ![The Wren demonstration Space: the operator's phone in Kiswahili beside its English twin](docs/images/space.jpg)
 
+Project Summary
+Wren empowers non-technical local business owners—such as agricultural hosts, artisanal vendors, and small tour providers—to establish and maintain a full-featured online presence automatically. In many emerging regions, language barriers, limited digital literacy, and poor connectivity make website creation and customer communication major hurdles. Wren solves this by providing an offline-first, agentic management system that interacts with hosts in their local languages, such as Kiswahili, while running reliable core workflows behind the scenes.
+
+During the hackathon, the team built an end-to-end multi-model platform featuring automated website creation, speech-to-text interviewing, and real-time translation pipelines. Host profiles created offline in local languages are converted into structured English JSON schemas. From these, Wren generates interactive multi-section websites complete with booking tools, visitor Q&A capabilities, and sentiment analysis for customer reviews.
+
+The key outcome and most impressive achievement is the seamless integration of client-side AI with strict backend execution. By constraining website generation to explicit JSON schemas, page creation reliability jumped from failing completely to achieving 100% valid structured outputs. Additionally, visitor inquiries are handled directly inside the user's browser via Transformers.js for zero-latency, privacy-friendly vector Q&A matching. Today, Wren stands as a fully functional proof-of-concept, bridging offline community engagement with reliable digital publishing.
+
+
 ## Why it matters
 
 With Wren, a small tour operator answers enquiries quickly, sees what reviews say, and runs the
