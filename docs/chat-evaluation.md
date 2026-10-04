@@ -12,7 +12,10 @@ The Space shows these results as an animated page at `https://reversely-wren.hf.
 also linked from the demonstration's role panel; `space/web/src/writeup/data.ts` holds its figures.
 The page also covers the move from the spoken interview to the form (`docs/interview.md`,
 `app/src/survey`), the benchmarks behind the model choices (`docs/interview.md`), and privacy and data
-retention (`docs/architecture.md` for the phone; Caching in `docs/space.md` for the Space).
+retention (`docs/architecture.md` for the phone; Caching in `docs/space.md` for the Space). It opens
+with the context figures (KNBS and FAO, cited on the page) and closes with next steps for the spoken
+interview, which stays unshipped while its accuracy gap remains. `docs/tech-video.md` turns the page
+into a 60-second technical video script.
 
 ## Configurations
 

@@ -113,3 +113,20 @@ export const MODELS_USED: { model: string; role: string; licence: string }[] = [
   { model: 'w2v-BERT 2.0 Kiswahili fine-tune', role: 'Speech to text', licence: 'CC BY 4.0' },
   { model: 'MMS-TTS Kiswahili', role: 'Wren\'s voice', licence: 'CC BY-NC 4.0' },
 ];
+
+// Why it matters: figures with the source the write-up cites for each.
+export const CONTEXT: { figure: string; label: string; source: string; url: string }[] = [
+  { figure: '27.5%', label: 'fall in Kenya\'s coffee auction price, from US$7.82/kg in January to US$5.67/kg in March 2026 (provisional)', source: 'KNBS, Leading Economic Indicators, June 2026, Table 6', url: 'https://www.knbs.or.ke/wp-content/uploads/2026/08/Kenya-Leading-Economic-Indicators-June-2026.pdf' },
+  { figure: '800,000+', label: 'smallholder farmers in Kenya\'s coffee sector', source: 'FAO Kenya, 21 July 2025', url: 'https://www.fao.org/kenya/news/newsdetails/investment-roundtable-on-coffee-value-chains-in-kenya-takes-shape/en' },
+  { figure: '2.55 million', label: 'international visitor arrivals in Kenya in 2025, 1.22 million of them on holiday', source: 'KNBS, Economic Survey 2026: Popular Version, p. 12', url: 'https://www.knbs.or.ke/wp-content/uploads/2026/04/2026-Economic-Survey-Popular-version.pdf' },
+];
+
+// Next steps: what stopped the spoken interview shipping, and what would close the gap.
+export const SPEECH_GAP = { fieldsCorrect: 70, werBefore: 24.5, werAfter: 15.7 };
+export const NEXT_STEPS: { step: string; detail: string }[] = [
+  { step: 'Record real speech, with consent', detail: 'Operators reading and answering the interview on their own phones, outdoors, in more than one accent, so training and testing use voices like the ones Wren will hear.' },
+  { step: 'Fine-tune on real and synthetic speech together', detail: 'The 196 synthetic clips cut word errors on unseen voices from 24.5% to 15.7%; real recordings test whether that holds beyond synthetic speech.' },
+  { step: 'Run the fine-tuned model through the full interview', detail: 'The 15.7% figure is word errors on single clips. Fields correct across a whole interview, the measure that decides shipping, has not been measured for it yet.' },
+  { step: 'Confirm what speech gets wrong', detail: 'Numbers and English names said inside Kiswahili are where transcripts fail; reading them back for a tap to confirm keeps a misheard price off the site.' },
+  { step: 'Measure on the phone', detail: 'Quantise the fine-tuned model and time it on a phone, since every benchmark so far ran on a desktop GPU.' },
+];

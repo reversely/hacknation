@@ -118,3 +118,17 @@
 
 /* The write-up's header leaves room for the page bar in the top-left corner. */
 .wu-hero { padding-top: 76px; }
+.wu-context-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.wu-fact { padding: 20px; border-radius: 14px; background: #f4f7f3; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06); display: grid; gap: 8px; align-content: start; opacity: 0; transform: translateY(14px); transition: opacity 600ms ease-out, transform 600ms ease-out; }
+.wu-fact.in { opacity: 1; transform: none; }
+.wu-fact strong { font-size: 40px; font-weight: 400; line-height: 1; color: var(--g2); font-variant-numeric: tabular-nums; }
+.wu-fact p { margin: 0; font: 15px/1.5 var(--sans); color: var(--ink); }
+.wu-fact a { font: 12px/1.4 var(--sans); color: var(--ink2); }
+.wu-steps { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; max-width: 820px; }
+.wu-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; padding: 16px 18px; border-radius: 14px; background: #f4f7f3; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06); opacity: 0; transform: translateY(14px); transition: opacity 600ms ease-out var(--delay, 0ms), transform 600ms ease-out var(--delay, 0ms); }
+.reveal.in .wu-steps li { opacity: 1; transform: none; }
+.wu-steps strong { font-size: 19px; font-weight: 400; }
+.wu-steps p { margin: 4px 0 0; font: 15px/1.5 var(--sans); color: var(--ink2); }
+.wu-next .wu-key + .wu-detail + .wu-key { margin-top: 26px; }
+@media (prefers-reduced-motion: reduce) { .wu-fact, .wu-steps li { opacity: 1 !important; transform: none !important; transition: none !important; } }
+@media (max-width: 900px) { .wu-context-grid { grid-template-columns: minmax(0, 1fr); } }

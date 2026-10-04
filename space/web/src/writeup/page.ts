@@ -4,7 +4,7 @@
 
 import { h } from '../ui';
 import { barChart, countUp, growBars, runLines, stackedColumns } from './charts';
-import { BY_KIND, CONFIGS, EXAMPLES, FINE_TUNE, FORM_FIELDS, HALLUCINATIONS, INTERVIEW_PIPELINES, LAYERS, MODELS_USED, QUESTIONS, RUNS, STT_WER, type Config } from './data';
+import { BY_KIND, CONFIGS, CONTEXT, EXAMPLES, NEXT_STEPS, SPEECH_GAP, FINE_TUNE, FORM_FIELDS, HALLUCINATIONS, INTERVIEW_PIPELINES, LAYERS, MODELS_USED, QUESTIONS, RUNS, STT_WER, type Config } from './data';
 
 const pct = (n: number) => Math.round((n / QUESTIONS.total) * 100);
 // Accuracy: replies that say nothing false (a correct answer, "I don't know", or a hand-over).
@@ -32,6 +32,14 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
       ...CONFIGS.map((c) => h('div', { class: `wu-stat ${TONE[c.id]}` }, h('strong', { 'data-count': pct(accurate(c.id)) }, `${pct(accurate(c.id))}%`), h('span', {}, c.label), h('small', {}, `${accurate(c.id)} of ${QUESTIONS.total} replies accurate`))),
     ),
     h('img', { src: mascot, alt: '', class: 'wu-mascot', 'aria-hidden': 'true' }),
+  );
+
+  const context = section(
+    'wu-context',
+    h('h2', {}, 'Why it matters'),
+    key('Coffee prices fell. Visitors kept coming.'),
+    detail('A farm-tour booking is income that does not move with the auction price. Wren helps a farm sell one.'),
+    h('div', { class: 'wu-context-grid' }, ...CONTEXT.map((c) => h('div', { class: 'wu-fact reveal' }, h('strong', {}, c.figure), h('p', {}, c.label), h('a', { href: c.url, target: '_blank', rel: 'noopener' }, c.source)))),
   );
 
   const harness = section(
@@ -179,7 +187,17 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
     h('p', { class: 'wu-source' }, 'Method, grading review and raw replies: docs/chat-evaluation.md in the Wren repository. scripts/eval-chat.ts reruns the evaluation.'),
   );
 
-  const page = h('div', { class: 'wu' }, hero, h('main', { class: 'wu-main' }, harness, setups, hallucinations, kinds, pipeline, examples, runs, benchmarks, privacy, limits));
+  const next = section(
+    'wu-next',
+    h('h2', {}, 'Next steps'),
+    key('Voice is built but not shipped. It still gets too many facts wrong.'),
+    detail(`Wren was meant to set a farm up from a spoken Kiswahili interview. Offline, the phone stack got ${SPEECH_GAP.fieldsCorrect}% of fields right, and a fine-tune cut speech-to-text errors from ${SPEECH_GAP.werBefore}% to ${SPEECH_GAP.werAfter}%. That still leaves misheard prices and phone numbers, so the form takes the facts for now.`),
+    key('The gap comes from the data.'),
+    detail('The Kiswahili fine-tunes tested here learned from public sets such as Common Voice and FLEURS, which people read aloud, not farmers talking outdoors. Every test voice here was synthetic, and one person wrote all the sentences. Numbers and English names said inside Kiswahili are where transcripts break.'),
+    h('ol', { class: 'wu-steps' }, ...NEXT_STEPS.map((n, i) => h('li', { style: `--delay:${i * 160}ms` }, h('span', { class: 'wu-step' }, String(i + 1)), h('div', {}, h('strong', {}, n.step), h('p', {}, n.detail))))),
+  );
+
+  const page = h('div', { class: 'wu' }, hero, h('main', { class: 'wu-main' }, context, harness, setups, hallucinations, kinds, pipeline, examples, runs, benchmarks, privacy, limits, next));
 
   // Each section animates once, the first time it scrolls into view.
   const seen = new IntersectionObserver(
