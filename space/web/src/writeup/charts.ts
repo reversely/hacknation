@@ -18,14 +18,14 @@ export function barChart(rows: Bar[], max: number, unit = '', labelWidth = 178):
   const labelW = labelWidth;
   const width = 480 + (labelWidth - 178);
   const plotW = width - labelW - 76;
-  const chart = svg('svg', { viewBox: `0 0 ${width} ${rows.length * rowH + 8}`, class: 'chart bars-h', role: 'img' });
+  const chart = svg('svg', { viewBox: `0 0 ${width} ${rows.length * rowH + 8}`, class: 'wu-svg bars-h', role: 'img' });
   rows.forEach((r, i) => {
     const y = i * rowH + 8;
     const w = Math.max(2, (r.value / max) * plotW);
     chart.append(
       svg('text', { x: 0, y: y + 22, class: 'row-label' }, r.label),
       svg('rect', { x: labelW, y: y + 6, width: plotW, height: 24, rx: 5, class: 'track' }),
-      svg('rect', { x: labelW, y: y + 6, width: w, height: 24, rx: 5, class: `fill ${r.tone}`, style: `--w:${w}px; --delay:${i * 120}ms` }),
+      svg('rect', { x: labelW, y: y + 6, width: w, height: 24, rx: 5, class: `fill ${r.tone}`, 'data-grow': 'width', 'data-final': w, 'data-delay': i * 120 }),
       svg('text', { x: labelW + w + 10, y: y + 23, class: 'row-value', 'data-count': r.value, style: `--delay:${i * 120}ms` }, `${r.value}${unit}${r.of ? ` of ${r.of}` : ''}`),
     );
   });
@@ -40,7 +40,7 @@ export function stackedColumns(groups: { label: string; parts: { value: number; 
   const colW = 92;
   const gap = (width - groups.length * colW) / (groups.length + 1);
   const scale = (base - 64) / max;
-  const chart = svg('svg', { viewBox: `0 0 ${width} ${height}`, class: 'chart columns', role: 'img' });
+  const chart = svg('svg', { viewBox: `0 0 ${width} ${height}`, class: 'wu-svg columns', role: 'img' });
   chart.append(svg('line', { x1: 0, x2: width, y1: base, y2: base, class: 'axis' }));
   groups.forEach((g, i) => {
     const x = gap + i * (colW + gap);
@@ -48,7 +48,7 @@ export function stackedColumns(groups: { label: string; parts: { value: number; 
     g.parts.forEach((p, j) => {
       const h = p.value * scale;
       top -= h;
-      chart.append(svg('rect', { x, y: top, width: colW, height: Math.max(h, 0.01), class: `col ${p.key}`, style: `--delay:${i * 160 + j * 80}ms` }));
+      chart.append(svg('rect', { x, y: top, width: colW, height: Math.max(h, 0.01), class: `col ${p.key}`, 'data-grow': 'height', 'data-final': h, 'data-base': top + h, 'data-delay': i * 160 + j * 80 }));
     });
     const total = g.parts.reduce((s, p) => s + p.value, 0);
     chart.append(
@@ -69,7 +69,7 @@ export function runLines(runs: { run: string; a: number; b: number }[], labels: 
   const max = Math.max(...runs.flatMap((r) => [r.a, r.b]), 1);
   const x = (i: number) => left + (i * (right - left)) / (runs.length - 1);
   const y = (v: number) => base - (v / max) * (base - 40);
-  const chart = svg('svg', { viewBox: `0 0 ${width} ${height}`, class: 'chart lines', role: 'img' });
+  const chart = svg('svg', { viewBox: `0 0 ${width} ${height}`, class: 'wu-svg lines', role: 'img' });
   chart.append(svg('line', { x1: left, x2: right, y1: base, y2: base, class: 'axis' }));
   (['a', 'b'] as const).forEach((key, k) => {
     const d = runs.map((r, i) => `${i ? 'L' : 'M'}${x(i)},${y(r[key])}`).join(' ');
@@ -79,6 +79,33 @@ export function runLines(runs: { run: string; a: number; b: number }[], labels: 
   runs.forEach((r, i) => chart.append(svg('text', { x: x(i), y: base + 26, class: 'col-label', 'text-anchor': 'middle' }, r.run)));
 
   return chart;
+}
+
+// Grows each bar from zero to the size it was drawn at, by animating its SVG attributes. The bars are
+// drawn at full size, so a page that never runs this still shows every value; CSS transforms on SVG
+// rectangles misplace them in some browsers, so none are used.
+export function growBars(root: Element): void {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const bars = [...root.querySelectorAll<SVGRectElement>('rect[data-grow]')];
+  const start = performance.now();
+  const set = (el: SVGRectElement, size: number) => {
+    if (el.dataset.grow === 'width') el.setAttribute('width', String(size));
+    else {
+      el.setAttribute('height', String(size));
+      el.setAttribute('y', String(Number(el.dataset.base) - size));
+    }
+  };
+  bars.forEach((el) => set(el, 0));
+  const tick = (now: number) => {
+    let running = false;
+    for (const el of bars) {
+      const t = Math.min(1, Math.max(0, (now - start - Number(el.dataset.delay ?? 0)) / 900));
+      if (t < 1) running = true;
+      set(el, Number(el.dataset.final) * (1 - Math.pow(1 - t, 3)));
+    }
+    if (running) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 // Counts each [data-count] text up from zero once its chart is visible.

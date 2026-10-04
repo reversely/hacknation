@@ -3,7 +3,7 @@
 // motion. Every number comes from data.ts, which carries the hand-reviewed results.
 
 import { h } from '../ui';
-import { barChart, countUp, runLines, stackedColumns } from './charts';
+import { barChart, countUp, growBars, runLines, stackedColumns } from './charts';
 import { BY_KIND, CONFIGS, EXAMPLES, FINE_TUNE, FORM_FIELDS, HALLUCINATIONS, INTERVIEW_PIPELINES, LAYERS, MODELS_USED, QUESTIONS, RUNS, STT_WER, type Config } from './data';
 
 const pct = (n: number) => Math.round((n / QUESTIONS.total) * 100);
@@ -188,6 +188,7 @@ export function writeupPage(_back: () => void, logo: string, mascot: string): HT
         if (!entry.isIntersecting) continue;
         entry.target.classList.add('in');
         countUp(entry.target);
+        growBars(entry.target);
         seen.unobserve(entry.target);
       }
     },

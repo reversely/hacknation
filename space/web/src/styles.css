@@ -761,3 +761,11 @@ textarea.fs-input { resize: vertical; margin-bottom: 4px; }
    the bottom right. */
 .view-nav { top: auto; bottom: 16px; right: 16px; }
 @media (max-width: 760px) { .view-nav { top: auto; bottom: 10px; right: 10px; } }
+
+/* The page bar sits in the top-left corner, above the Wren logo, clear of Hugging Face's badge on the
+   right and of the devices and step text. */
+.view-nav { top: 14px; left: 16px; right: auto; bottom: auto; }
+@media (max-width: 760px) { .view-nav { top: 8px; left: 8px; right: auto; bottom: auto; } }
+.role { padding-top: 72px; }
+@media (max-width: 1100px) { .role { padding-top: 64px; } }
+@media (max-width: 760px) { .role, .demo.visitor .role { padding-top: 56px; } }
