@@ -473,6 +473,42 @@ function mount(): void {
     };
   }
 
+  // Walkthrough hints: an outline and a short label on the one control to use next, so a first-time
+  // viewer can follow the demonstration without instructions. Recomputed on every redraw.
+  function hintTarget(): { el: Element; label: string; labelOn?: Element } | null {
+    const showMeButton = caption.querySelector('.show-me');
+    if (showMeButton) return { el: showMeButton, label: 'Click to try it' };
+    if (mode === 'operator' && current === 'site') {
+      const approve = phones.main.querySelector('.actions .approve');
+      if (approve) return { el: approve, label: 'Approve' };
+    }
+    if (mode === 'operator' && current !== 'building' && current !== 'site') {
+      const footer = phones.main.querySelector<HTMLButtonElement>('.footer button');
+      if (footer && !footer.disabled) return { el: footer, label: 'Click here' };
+      // The first required field still empty; optional fields carry "(optional)" in their label.
+      const empty = [...phones.main.querySelectorAll<HTMLInputElement | HTMLSelectElement>('.field input, .field select, .field textarea')].find(
+        (c) => !c.value.trim() && !/\)\s*$/.test(c.closest('.field')?.querySelector('.label span')?.textContent ?? ''),
+      );
+      if (empty) return { el: empty, label: 'Fill this in', labelOn: empty.closest('.field')?.querySelector('.label') ?? undefined };
+      const day = current === 'availability' && !phones.main.querySelector('.days .day.on') ? phones.main.querySelector('.days .day') : null;
+      if (day) return { el: day, label: 'Pick the open days' };
+    }
+    const nextButton = caption.querySelector('.next');
+    return nextButton ? { el: nextButton, label: 'Next step' } : null;
+  }
+  function markHint(): void {
+    shadow.querySelectorAll('.click-here, .hint-label').forEach((el) => {
+      el.classList.remove('click-here', 'hint-label');
+      el.removeAttribute('data-hint');
+    });
+    const target = hintTarget();
+    if (!target) return;
+    target.el.classList.add('click-here');
+    const host = target.labelOn ?? target.el;
+    host.classList.add('hint-label');
+    host.setAttribute('data-hint', target.label);
+  }
+
   function refreshCaption(): void {
     const s = step(mode, mode === 'operator' ? current : page);
     mascot.show(mood());
@@ -506,6 +542,7 @@ function mount(): void {
       ...(mode === 'visitor' ? [mascot.element] : [h('div', { class: 'role-spacer' })]),
       h('p', { class: 'role-count' }, `${String(s.n).padStart(2, '0')} / ${String(s.total).padStart(2, '0')}`),
     );
+    markHint();
   }
 
   // scrollTo resets the laptop's page to the top when the visitor moves to another page.
